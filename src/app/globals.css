@@ -1,26 +1,53 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #ffffff;
+	--foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		--background: #0a0a0a;
+		--foreground: #ededed;
+	}
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+/* INPUT & TEXTAREA */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+	-webkit-box-shadow: 0 0 0 1000px transparent inset;
+	box-shadow: 0 0 0 1000px transparent inset;
+
+	-webkit-text-fill-color: #fff !important;
+	font-family: 'Poppins', 'Poppins-fallback' !important;
+	font-size: 16px !important;
+
+	transition: background-color 5000s ease-in-out 0s;
+	font-weight: 500;
+}
+
+/* SELECT — do NOT force font-size */
+select:-webkit-autofill {
+	-webkit-box-shadow: 0 0 0 1000px transparent inset;
+	box-shadow: 0 0 0 1000px transparent inset;
+
+	-webkit-text-fill-color: #fff !important;
+	font-family: 'Poppins', 'Poppins-fallback' !important;
+	font-weight: 500;
+	font-size: 16px !important;
 }
