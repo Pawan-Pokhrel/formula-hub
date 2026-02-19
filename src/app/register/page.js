@@ -75,10 +75,14 @@ export default function RegisterPage() {
 				);
 				setUserEmail(data.email);
 				setShowOtpModal(true);
+				reset();
+				router.push('/login');
 			}
 		} catch (err) {
+			console.log(err);
+
 			const msg =
-				err.response?.data?.message ||
+				err.response?.data?.detail ||
 				err.message ||
 				'Registration failed. Please try again.';
 			toast.error(msg);
@@ -114,7 +118,7 @@ export default function RegisterPage() {
 					<FiArrowLeft className="text-white text-2xl" />
 				</button>
 
-				<div className="relative z-10 w-full max-w-2xl">
+				<div className="relative z-10 w-full max-w-3xl">
 					{/* Logo & Title */}
 					<div className="flex flex-col items-center mb-6">
 						{/* <div className="flex items-center gap-4 mb-4">
@@ -136,7 +140,7 @@ export default function RegisterPage() {
 						</p>
 					</div>
 
-					<div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 px-10 py-8 shadow-2xl">
+					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-10 py-8 shadow-2xl">
 						<div className="text-center mb-6">
 							<h2 className="text-3xl font-bold text-white">Create Account</h2>
 							<p className="text-white/60 mt-2">

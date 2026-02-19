@@ -1,5 +1,31 @@
 @import 'tailwindcss';
 
+/* ── Subtle entrance animations ── */
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slide-across {
+	from {
+		transform: translateX(-100%);
+	}
+	to {
+		transform: translateX(100%);
+	}
+}
+
+@theme inline {
+	--animate-fade-in: fade-in 0.5s ease-out both;
+	--animate-slide-across: slide-across 3s linear infinite;
+}
+
 :root {
 	--background: #ffffff;
 	--foreground: #171717;

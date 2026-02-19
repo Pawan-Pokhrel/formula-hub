@@ -47,7 +47,7 @@ export default function LoginPage() {
 			}
 		} catch (err) {
 			const msg =
-				err.response?.data?.message ||
+				err.response?.data?.detail ||
 				err.message ||
 				'Login failed. Please check your credentials.';
 			toast.error(msg);

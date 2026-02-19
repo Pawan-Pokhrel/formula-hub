@@ -34,10 +34,10 @@ export default function Navbar() {
 						Standings
 					</Link>
 					<Link
-						href="/schedule"
+						href="/track"
 						className="text-white hover:text-red-500 transition-colors"
 					>
-						Schedule
+						Track
 					</Link>
 					<Link
 						href="/news"
@@ -48,12 +48,14 @@ export default function Navbar() {
 					<Link
 						href="/login"
 						className="text-white hover:text-red-500 transition-colors"
+						prefetch={true}
 					>
 						Login
 					</Link>
 					<Link
 						href="/register"
 						className="bg-red-600 px-4 py-2 rounded-full font-bold text-white hover:bg-red-700 transition-colors"
+						prefetch={true}
 					>
 						Register
 					</Link>
@@ -90,6 +92,12 @@ export default function Navbar() {
 						className="text-white hover: text-white transition-colors"
 					>
 						Standings
+					</Link>
+					<Link
+						href="/track"
+						className="text-white hover: text-white transition-colors"
+					>
+						Track
 					</Link>
 					<Link
 						href="/schedule"

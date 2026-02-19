@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Poppins } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import ClientLayout from '../components/ClientLayout';
 import './globals.css';
 
 const geistSans = Geist({
@@ -29,8 +30,10 @@ export default function RootLayout({ children }) {
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${poppins.className} antialiased`}
 			>
-				<Toaster position="top-right" />
-				{children}
+				<ClientLayout>
+					<Toaster position="top-right" />
+					{children}
+				</ClientLayout>
 			</body>
 		</html>
 	);
