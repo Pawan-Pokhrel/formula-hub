@@ -40,6 +40,12 @@ export default function Navbar() {
 						Track
 					</Link>
 					<Link
+						href="/predict"
+						className="text-white hover:text-red-500 transition-colors"
+					>
+						Predict
+					</Link>
+					<Link
 						href="/news"
 						className="text-white hover:text-red-500 transition-colors"
 					>
@@ -83,37 +89,43 @@ export default function Navbar() {
 				<div className="md:hidden px-6 pb-4 flex flex-col gap-4">
 					<Link
 						href="/dashboard"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						Dashboard
 					</Link>
 					<Link
 						href="/standings"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						Standings
 					</Link>
 					<Link
 						href="/track"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						Track
 					</Link>
 					<Link
+						href="/predict"
+						className="text-white hover:text-red-500 transition-colors"
+					>
+						Predict
+					</Link>
+					<Link
 						href="/schedule"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						Schedule
 					</Link>
 					<Link
 						href="/news"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						News
 					</Link>
 					<Link
 						href="/login"
-						className="text-white hover: text-white transition-colors"
+						className="text-white hover:text-red-500 transition-colors"
 					>
 						Login
 					</Link>
