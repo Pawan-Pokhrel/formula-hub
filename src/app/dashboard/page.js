@@ -1,272 +1,427 @@
 'use client';
 
-import { getLastRace, getNextRace, getSchedule } from '@/lib/api/scheduleApi';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 import {
-	FaCalendarAlt,
-	FaFlagCheckered,
-	FaMapMarkerAlt,
-	FaTrophy,
-} from 'react-icons/fa';
+	ChampionshipPulseWidget,
+	KpisWidget,
+	LastRaceWidget,
+	NextRaceWidget,
+	QuickActionsWidget,
+	UpcomingSessionsWidget,
+} from '@/components/dashboard/widgets';
+import { parseRaceDateTime } from '@/components/schedule/scheduleHelpers';
+import {
+	getMyPreferences,
+	resetMyPreferences,
+	updateMyFavorites,
+	updateMyLayout,
+} from '@/lib/api/preferencesApi';
+import { getLastRace, getNextRace, getSchedule } from '@/lib/api/scheduleApi';
+import {
+	getConstructorStandings,
+	getDriverStandings,
+} from '@/lib/api/standingsApi';
+import { getYearSchedule } from '@/lib/api/trackApi';
+import {
+	clearLocalDashboardPreferences,
+	FAVORITE_DRIVER_LIMIT,
+	FAVORITE_TEAM_LIMIT,
+	getDefaultDashboardPreferences,
+	normalizeDashboardPreferences,
+	normalizeWidgetOrder,
+	readLocalDashboardPreferences,
+	writeLocalDashboardPreferences,
+} from '@/lib/dashboard/preferences';
+import {
+	DEFAULT_WIDGET_ORDER,
+	WIDGET_REGISTRY,
+} from '@/lib/dashboard/widgetRegistry';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { FaCalendarAlt } from 'react-icons/fa';
 
-export default function Dashboard() {
+function formatDate(dateString) {
+	if (!dateString) return 'TBA';
+	const d = new Date(dateString);
+	return d.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+	});
+}
+
+function getCountdown(targetDate, targetTime) {
+	const target = parseRaceDateTime(targetDate, targetTime);
+	if (!target) return null;
+
+	const now = new Date();
+	const diff = target.getTime() - now.getTime();
+	if (Number.isNaN(target.getTime()) || diff <= 0) return null;
+
+	const totalHours = Math.floor(diff / (1000 * 60 * 60));
+	const days = Math.floor(totalHours / 24);
+	const hours = totalHours % 24;
+	const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+	return { days, hours, minutes };
+}
+
+function formatStartTime(targetDate, targetTime) {
+	const dt = parseRaceDateTime(targetDate, targetTime);
+	if (!dt) return 'Start time unavailable';
+	return dt.toLocaleString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		timeZoneName: 'short',
+	});
+}
+
+export default function DashboardPage() {
+	const currentYear = new Date().getFullYear();
+	const validWidgetIds = useMemo(
+		() => WIDGET_REGISTRY.map((widget) => widget.id),
+		[]
+	);
+	const defaultPreferences = useMemo(
+		() => getDefaultDashboardPreferences(DEFAULT_WIDGET_ORDER),
+		[]
+	);
+
+	const [loading, setLoading] = useState(true);
 	const [nextRace, setNextRace] = useState(null);
 	const [lastRace, setLastRace] = useState(null);
 	const [schedule, setSchedule] = useState([]);
-	const [loading, setLoading] = useState(true);
+	const [trackSchedule, setTrackSchedule] = useState([]);
+	const [driverStandings, setDriverStandings] = useState([]);
+	const [constructorStandings, setConstructorStandings] = useState([]);
 
-	const nextRaceRef = useRef(null);
+	const [widgetOrder, setWidgetOrder] = useState(defaultPreferences.widgetOrder);
+	const [hiddenWidgets, setHiddenWidgets] = useState(
+		defaultPreferences.hiddenWidgets
+	);
+	const [favoriteDrivers, setFavoriteDrivers] = useState(
+		defaultPreferences.favoriteDrivers
+	);
+	const [favoriteTeams, setFavoriteTeams] = useState(
+		defaultPreferences.favoriteTeams
+	);
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [authResolved, setAuthResolved] = useState(false);
+	const [prefsHydrated, setPrefsHydrated] = useState(false);
+	const [savingPrefs, setSavingPrefs] = useState(false);
 
 	useEffect(() => {
-		const fetchData = async () => {
+		setIsAuthenticated(Boolean(localStorage.getItem('token')));
+		setAuthResolved(true);
+	}, []);
+
+	useEffect(() => {
+		const fetchDashboardData = async () => {
+			setLoading(true);
 			try {
-				const currentYear = new Date().getFullYear();
-				const [next, last, sched] = await Promise.all([
-					getNextRace(),
-					getLastRace(),
-					getSchedule(currentYear),
-				]);
+				const [next, last, sched, trackSched, drivers, constructors] =
+					await Promise.all([
+						getNextRace().catch(() => null),
+						getLastRace().catch(() => null),
+						getSchedule(currentYear).catch(() => []),
+						getYearSchedule(currentYear).catch(() => []),
+						getDriverStandings(currentYear).catch(() => []),
+						getConstructorStandings(currentYear).catch(() => []),
+					]);
+
 				setNextRace(next);
 				setLastRace(last);
-				setSchedule(sched || []);
-			} catch (error) {
-				console.error('Failed to fetch dashboard data:', error);
+				setSchedule(Array.isArray(sched) ? sched : []);
+				setTrackSchedule(Array.isArray(trackSched) ? trackSched : []);
+				setDriverStandings(Array.isArray(drivers) ? drivers : []);
+				setConstructorStandings(Array.isArray(constructors) ? constructors : []);
 			} finally {
 				setLoading(false);
 			}
 		};
-		fetchData();
-	}, []);
+
+		fetchDashboardData();
+	}, [currentYear]);
 
 	useEffect(() => {
-		if (nextRace && nextRaceRef.current && !loading) {
-			setTimeout(() => {
-				nextRaceRef.current.scrollIntoView({
-					behavior: 'smooth',
-					block: 'start',
-				});
-			}, 500); // Small delay to ensure render is complete
-		}
-	}, [nextRace, loading]);
+		if (!authResolved) return;
 
-	const formatDate = (dateString) => {
-		if (!dateString) return 'TBA';
-		const date = new Date(dateString);
-		return date.toLocaleDateString('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric',
+		const local = readLocalDashboardPreferences(validWidgetIds, DEFAULT_WIDGET_ORDER);
+		setWidgetOrder(local.widgetOrder);
+		setHiddenWidgets(local.hiddenWidgets);
+		setFavoriteDrivers(local.favoriteDrivers);
+		setFavoriteTeams(local.favoriteTeams);
+
+		if (!isAuthenticated) {
+			setPrefsHydrated(true);
+			return;
+		}
+
+		getMyPreferences()
+			.then((remote) => {
+				const normalized = normalizeDashboardPreferences(
+					remote,
+					validWidgetIds,
+					DEFAULT_WIDGET_ORDER
+				);
+				setWidgetOrder(normalized.widgetOrder);
+				setHiddenWidgets(normalized.hiddenWidgets);
+				setFavoriteDrivers(normalized.favoriteDrivers);
+				setFavoriteTeams(normalized.favoriteTeams);
+				writeLocalDashboardPreferences(normalized);
+			})
+			.catch(() => {
+				writeLocalDashboardPreferences(local);
+			})
+			.finally(() => {
+				setPrefsHydrated(true);
+			});
+	}, [authResolved, isAuthenticated, validWidgetIds]);
+
+	useEffect(() => {
+		if (!prefsHydrated) return;
+
+		const normalized = normalizeDashboardPreferences(
+			{ favoriteDrivers, favoriteTeams, widgetOrder, hiddenWidgets },
+			validWidgetIds,
+			DEFAULT_WIDGET_ORDER
+		);
+
+		writeLocalDashboardPreferences(normalized);
+		if (!isAuthenticated) return;
+
+		setSavingPrefs(true);
+		const timer = setTimeout(async () => {
+			try {
+				await Promise.all([
+					updateMyLayout({
+						widgetOrder: normalized.widgetOrder,
+						hiddenWidgets: normalized.hiddenWidgets,
+					}),
+					updateMyFavorites({
+						favoriteDrivers: normalized.favoriteDrivers,
+						favoriteTeams: normalized.favoriteTeams,
+					}),
+				]);
+			} catch {
+				// Keep local preferences even if sync fails.
+			} finally {
+				setSavingPrefs(false);
+			}
+		}, 900);
+
+		return () => clearTimeout(timer);
+	}, [
+		favoriteDrivers,
+		favoriteTeams,
+		hiddenWidgets,
+		isAuthenticated,
+		prefsHydrated,
+		validWidgetIds,
+		widgetOrder,
+	]);
+
+	const countdown = useMemo(
+		() => getCountdown(nextRace?.date, nextRace?.time),
+		[nextRace]
+	);
+	const nextRaceStart = useMemo(
+		() => formatStartTime(nextRace?.date, nextRace?.time),
+		[nextRace]
+	);
+
+	const kpis = useMemo(() => {
+		const src = trackSchedule.length > 0 ? trackSchedule : schedule;
+		const completed = src.filter((r) => r.is_past).length;
+		const totalRounds = src.length;
+		const dataReady = trackSchedule.filter((r) => r.has_data).length;
+		const upcomingRound = nextRace?.round || '—';
+
+		return [
+			{ label: 'Rounds Completed', value: completed || 0, icon: FaCalendarAlt },
+			{ label: 'Next Round', value: upcomingRound, icon: FaCalendarAlt },
+			{
+				label: 'Data Sessions Ready',
+				value: `${dataReady}/${totalRounds || 0}`,
+				icon: FaCalendarAlt,
+			},
+			{ label: 'Championship Year', value: currentYear, icon: FaCalendarAlt },
+		];
+	}, [trackSchedule, schedule, nextRace, currentYear]);
+
+	const upcomingRaces = useMemo(() => {
+		const src = trackSchedule.length > 0 ? trackSchedule : schedule;
+		return src.filter((r) => !r.is_past).slice(0, 5);
+	}, [trackSchedule, schedule]);
+
+	const handleReorder = (nextOrder) => {
+		setWidgetOrder(normalizeWidgetOrder(nextOrder, validWidgetIds));
+	};
+
+	const handleToggleWidget = (widgetId) => {
+		setHiddenWidgets((prev) =>
+			prev.includes(widgetId) ? prev.filter((id) => id !== widgetId) : [...prev, widgetId]
+		);
+	};
+
+	const handleToggleFavoriteDriver = (driverCode) => {
+		setFavoriteDrivers((prev) => {
+			if (prev.includes(driverCode)) {
+				return prev.filter((code) => code !== driverCode);
+			}
+			if (prev.length >= FAVORITE_DRIVER_LIMIT) return prev;
+			return [...prev, driverCode];
 		});
 	};
 
-	const formatTime = (timeString) => {
-		if (!timeString) return '';
-		// Ergast time is usually UTC like "14:00:00Z"
-		// We can just show it as is or convert to local
-		return timeString.replace('Z', ' UTC');
+	const handleToggleFavoriteTeam = (teamName) => {
+		setFavoriteTeams((prev) => {
+			if (prev.includes(teamName)) {
+				return prev.filter((team) => team !== teamName);
+			}
+			if (prev.length >= FAVORITE_TEAM_LIMIT) return prev;
+			return [...prev, teamName];
+		});
+	};
+
+	const handleReset = async () => {
+		const defaults = getDefaultDashboardPreferences(DEFAULT_WIDGET_ORDER);
+		setWidgetOrder(defaults.widgetOrder);
+		setHiddenWidgets(defaults.hiddenWidgets);
+		setFavoriteDrivers(defaults.favoriteDrivers);
+		setFavoriteTeams(defaults.favoriteTeams);
+		clearLocalDashboardPreferences();
+
+		if (!isAuthenticated) return;
+
+		try {
+			const serverDefaults = await resetMyPreferences();
+			const normalized = normalizeDashboardPreferences(
+				serverDefaults,
+				validWidgetIds,
+				DEFAULT_WIDGET_ORDER
+			);
+			setWidgetOrder(normalized.widgetOrder);
+			setHiddenWidgets(normalized.hiddenWidgets);
+			setFavoriteDrivers(normalized.favoriteDrivers);
+			setFavoriteTeams(normalized.favoriteTeams);
+			writeLocalDashboardPreferences(normalized);
+		} catch {
+			// Defaults are already set locally.
+		}
+	};
+
+	const renderWidget = (widgetId, dragHandleProps) => {
+		switch (widgetId) {
+			case 'kpis':
+				return <KpisWidget kpis={kpis} dragHandleProps={dragHandleProps} />;
+			case 'next-race':
+				return (
+					<NextRaceWidget
+						nextRace={nextRace}
+						nextRaceStart={nextRaceStart}
+						countdown={countdown}
+						formatDate={formatDate}
+						dragHandleProps={dragHandleProps}
+					/>
+				);
+			case 'championship-pulse':
+				return (
+					<ChampionshipPulseWidget
+						driverStandings={driverStandings}
+						constructorStandings={constructorStandings}
+						favoriteDrivers={favoriteDrivers}
+						favoriteTeams={favoriteTeams}
+						onToggleFavoriteDriver={handleToggleFavoriteDriver}
+						onToggleFavoriteTeam={handleToggleFavoriteTeam}
+						maxDrivers={FAVORITE_DRIVER_LIMIT}
+						maxTeams={FAVORITE_TEAM_LIMIT}
+						dragHandleProps={dragHandleProps}
+					/>
+				);
+			case 'upcoming-sessions':
+				return (
+					<UpcomingSessionsWidget
+						upcomingRaces={upcomingRaces}
+						currentYear={currentYear}
+						formatDate={formatDate}
+						dragHandleProps={dragHandleProps}
+					/>
+				);
+			case 'quick-actions':
+				return <QuickActionsWidget dragHandleProps={dragHandleProps} />;
+			case 'last-race':
+				return (
+					<LastRaceWidget
+						lastRace={lastRace}
+						formatDate={formatDate}
+						dragHandleProps={dragHandleProps}
+					/>
+				);
+			default:
+				return null;
+		}
 	};
 
 	if (loading) {
 		return (
-			<div className="min-h-screen bg-black flex justify-center items-center">
-				<div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+			<div className="min-h-screen bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
+				<div className="fixed inset-0 z-0 bg-black/80" />
+				<div className="relative z-10 mx-auto max-w-[1500px] space-y-4 animate-fade-in">
+					<div className="h-10 w-72 animate-pulse rounded-xl bg-white/8" />
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+						{Array.from({ length: 4 }).map((_, i) => (
+							<div
+								key={i}
+								className="h-28 animate-pulse rounded-2xl border border-white/10 bg-white/5"
+							/>
+						))}
+					</div>
+					<div className="h-80 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
-			<div className="fixed inset-0 bg-black/80 z-0" />
-
-			<div className="relative z-10 max-w-[1600px] mx-auto flex gap-8">
-				<div className="flex flex-col gap-8 mb-12 w-1/5 mt-14">
-					{/* Last Race Card */}
-					<div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 flex flex-col justify-center animate-fade-in">
-						<h2 className="text-xl text-gray-400 font-bold uppercase tracking-widest mb-4">
-							Last Race
-						</h2>
-						{lastRace ?
-							<div>
-								<h3 className="text-2xl font-bold text-white mb-2">
-									{lastRace.race_name}
-								</h3>
-								<p className="text-gray-400 mb-6">
-									{formatDate(lastRace.date)}
-								</p>
-
-								{lastRace.podium && lastRace.podium.length > 0 ?
-									<div className="space-y-3">
-										{lastRace.podium.map((driver) => (
-											<div
-												key={driver.position}
-												className="flex items-center gap-3"
-											>
-												<div
-													className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
-                                                    ${
-																											driver.position === 1 ?
-																												'bg-yellow-500 text-black'
-																											: driver.position === 2 ?
-																												'bg-gray-300 text-black'
-																											:	'bg-amber-700 text-white'
-																										}`}
-												>
-													{driver.position}
-												</div>
-												{driver.driver_code && (
-													<div className="w-16 h-16 rounded-xl overflow-hidden bg-white/10 shrink-0 border border-white/20 shadow-md relative">
-														<Image
-															src={`/images/drivers/${driver.driver_code}.png`}
-															alt={driver.driver_name}
-															fill
-															className="object-cover object-top"
-															onError={(e) => {
-																e.target.style.display = 'none';
-															}}
-														/>
-													</div>
-												)}
-												<div>
-													<div className="font-bold text-white text-lg">
-														{driver.driver_name}
-													</div>
-													<div className="text-sm text-gray-400">
-														{driver.team_name}
-													</div>
-												</div>
-											</div>
-										))}
-									</div>
-								:	<div className="flex items-center gap-3 text-yellow-500">
-										<FaTrophy className="text-2xl" />
-										<span className="text-lg font-medium">Winner: TBA</span>
-									</div>
-								}
-							</div>
-						:	<div className="text-gray-400">No completed races yet.</div>}
+		<div className="min-h-screen bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
+			<div className="fixed inset-0 z-0 bg-black/82" />
+			<div className="relative z-10 mx-auto max-w-[1500px] space-y-4 pb-12 animate-fade-in">
+				<div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+					<div>
+						<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.25em] text-red-500">
+							Operations Overview
+						</p>
+						<h1 className="text-3xl font-black tracking-wide md:text-4xl">
+							Race Command Center
+						</h1>
+						{!isAuthenticated && (
+							<p className="mt-2 text-sm text-gray-400">
+								Login to save dashboard layout and favorites across devices.
+							</p>
+						)}
 					</div>
-
-					{/* Next Race Card */}
-					<div className="lg:col-span-2 bg-linear-to-br from-red-900/20 to-black/50 backdrop-blur-xl border border-red-500/30 rounded-2xl p-8 relative overflow-hidden group animate-fade-in">
-						<div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-							<FaFlagCheckered className="text-9xl text-white" />
-						</div>
-
-						<h2 className="text-xl text-red-500 font-bold uppercase tracking-widest mb-2">
-							Next Race Session
-						</h2>
-						{nextRace ?
-							<div className="flex flex-col gap-8 items-center justify-between">
-								<div className="flex-1 ">
-									<h3 className="text-4xl md:text-5xl font-bold text-white mb-4">
-										{nextRace.race_name}
-									</h3>
-									<div className="flex flex-col gap-4 text-lg text-gray-300">
-										<div className="flex items-center gap-3">
-											<FaCalendarAlt className="text-red-500" />
-											<span>
-												{formatDate(nextRace.date)} {formatTime(nextRace.time)}
-											</span>
-										</div>
-										<div className="flex items-center gap-3">
-											<FaMapMarkerAlt className="text-red-500" />
-											<span>
-												{nextRace.circuit.circuit_name},{' '}
-												{nextRace.circuit.location}, {nextRace.circuit.country}
-											</span>
-										</div>
-									</div>
-									<div className="mt-8">
-										<div className="inline-block bg-red-600 text-white px-6 py-2 rounded-full font-bold text-sm uppercase tracking-wider shadow-lg shadow-red-600/20">
-											Round {nextRace.round}
-										</div>
-									</div>
-								</div>
-							</div>
-						:	<div className="text-gray-400 text-xl">
-								No upcoming races found.
-							</div>
-						}
-					</div>
+					<Link
+						href="/schedule"
+						className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 transition-colors hover:bg-white/10"
+					>
+						<FaCalendarAlt className="text-red-500" />
+						Open Full Schedule
+					</Link>
 				</div>
 
-				{/* Calendar */}
-				<div className="w-full animate-fade-in">
-					<h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-						<FaCalendarAlt className="text-red-600" />
-						{new Date().getFullYear()} Race Calendar
-					</h2>
-
-					<div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 h-[calc(100vh-250px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-red-600/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-red-600 [&::-webkit-scrollbar-track]:mt-[52px]">
-						<table className="w-full text-left border-collapse">
-							<thead className="sticky top-0 z-10 bg-neutral-900 text-gray-400 uppercase text-sm shadow-lg">
-								<tr>
-									<th className="px-6 py-4">Round</th>
-									<th className="px-6 py-4">Grand Prix</th>
-									<th className="px-6 py-4">Circuit</th>
-									<th className="px-6 py-4">Date</th>
-									<th className="px-6 py-4">Location</th>
-								</tr>
-							</thead>
-							<tbody className="divide-y divide-white/5 border-t border-white/10">
-								{schedule.map((race) => {
-									const isNextRace = nextRace && race.round === nextRace.round;
-
-									return (
-										<tr
-											key={race.round}
-											ref={isNextRace ? nextRaceRef : null}
-											className={`transition-all duration-300 ${
-												isNextRace ?
-													'bg-red-900/20 border-l-4 border-l-red-600 shadow-[inset_0_0_20px_rgba(220,38,38,0.1)]'
-												:	'hover:bg-white/5 border-l-4 border-l-transparent'
-											}`}
-										>
-											<td className="px-6 py-4 font-bold text-red-500">
-												{race.round}
-												{isNextRace && (
-													<span className="ml-2 inline-block px-2 py-0.5 text-[10px] bg-red-600 text-white rounded uppercase tracking-wider">
-														Next
-													</span>
-												)}
-											</td>
-											<td className="px-6 py-4 font-medium text-white">
-												{race.race_name}
-											</td>
-											<td className="px-6 py-4 text-gray-300">
-												<div>{race.circuit.circuit_name}</div>
-												<Link
-													href={`/images/circuits/${race.race_name.split(' ')[0].toLowerCase()}.png`}
-													target="_blank"
-												>
-													<div className="mt-2 w-32 h-20 bg-white/5 p-2 rounded border border-white/10 hover:bg-white/10 transition-colors relative">
-														<Image
-															src={`/images/circuits/${race.race_name.split(' ')[0].toLowerCase()}.png`}
-															alt="Track Layout"
-															fill
-															className="object-contain invert opacity-60 hover:opacity-100 transition-opacity p-1"
-															onError={(e) => {
-																e.target.parentElement.style.display = 'none';
-															}}
-														/>
-													</div>
-												</Link>
-											</td>
-											<td className="px-6 py-4 text-gray-300">
-												{formatDate(race.date)}
-											</td>
-											<td className="px-6 py-4 text-gray-300">
-												{race.circuit.location}, {race.circuit.country}
-											</td>
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
-					</div>
-				</div>
+				<DashboardShell
+					registry={WIDGET_REGISTRY}
+					widgetOrder={widgetOrder}
+					hiddenWidgets={hiddenWidgets}
+					onReorder={handleReorder}
+					onToggleWidget={handleToggleWidget}
+					onReset={handleReset}
+					renderWidget={renderWidget}
+					saving={savingPrefs}
+				/>
 			</div>
 		</div>
 	);
