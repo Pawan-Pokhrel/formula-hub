@@ -3,6 +3,7 @@
 import authApi from '@/lib/api/authApi';
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useGoogleLogin } from '@react-oauth/google';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -171,7 +172,7 @@ function VerificationStep({ email, onVerified, onBack }) {
 			const response = await authApi.verifyEmail({ email, code: codeValue });
 			if (response.success) {
 				toast.success(response.message || 'Email verified!');
-				onVerified();
+				onVerified(response.token);
 			}
 		} catch (err) {
 			const msg =
@@ -299,10 +300,11 @@ function VerificationStep({ email, onVerified, onBack }) {
 
 export default function RegisterPage() {
 	const router = useRouter();
-	const { register: registerUser } = useAuth();
+	const { register: registerUser, loginWithToken, googleAuth } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 	// Verification step state
 	const [showVerification, setShowVerification] = useState(false);
@@ -342,10 +344,35 @@ export default function RegisterPage() {
 		}
 	};
 
-	const handleVerified = () => {
-		toast.success('Account activated! Redirecting to login...');
-		setTimeout(() => router.push('/login'), 1200);
+	const handleVerified = async (token) => {
+		toast.success('Account activated! Redirecting to dashboard...');
+		if (token) {
+			await loginWithToken(token);
+		}
+		setTimeout(() => router.push('/dashboard'), 1200);
 	};
+
+	const loginWithGoogle = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			setIsGoogleLoading(true);
+			try {
+				const res = await googleAuth(tokenResponse.access_token);
+				if (res.success) {
+					toast.success(res.message || 'Google signup successful!');
+					router.push('/dashboard');
+				}
+			} catch (err) {
+				toast.error(
+					err.response?.data?.detail || err.message || 'Google signup failed.'
+				);
+			} finally {
+				setIsGoogleLoading(false);
+			}
+		},
+		onError: () => {
+			toast.error('Google signup was canceled or failed.');
+		},
+	});
 
 	const handleBackToRegister = () => {
 		setShowVerification(false);
@@ -662,9 +689,18 @@ export default function RegisterPage() {
 									{/* Google Button */}
 									<button
 										type="button"
-										className="w-full flex items-center justify-center gap-3 py-4 border border-white/30 rounded-xl text-white hover:bg-white/10 transition cursor-pointer"
+										onClick={() => loginWithGoogle()}
+										disabled={isGoogleLoading}
+										className={`w-full flex items-center justify-center gap-3 py-4 border border-white/30 rounded-xl text-white hover:bg-white/10 transition cursor-pointer ${
+											isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''
+										}`}
 									>
-										<FcGoogle size={22} /> Continue with Google
+										{isGoogleLoading ? (
+											<span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+										) : (
+											<FcGoogle size={22} />
+										)}
+										{isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
 									</button>
 
 									{/* Login Link */}

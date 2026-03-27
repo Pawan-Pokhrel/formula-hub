@@ -58,6 +58,11 @@ export const triggerGeneration = async (year, round) => {
 	return res.data?.data || { status: 'generating' };
 };
 
+export const toggleTrackFavorite = async (year, round) => {
+	const res = await api.post(`/track/session/${year}/${round}/favorite`);
+	return res.data?.data || {};
+};
+
 /**
  * Check generation status without triggering generation.
  */

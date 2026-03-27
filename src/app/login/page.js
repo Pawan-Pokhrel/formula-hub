@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useGoogleLogin } from '@react-oauth/google';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -23,9 +24,10 @@ const schema = yup.object().shape({
 export default function LoginPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { login } = useAuth();
+	const { login, googleAuth } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 	const {
 		register,
@@ -57,6 +59,29 @@ export default function LoginPage() {
 			setIsSubmitting(false);
 		}
 	};
+
+	const loginWithGoogle = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			setIsGoogleLoading(true);
+			try {
+				const res = await googleAuth(tokenResponse.access_token);
+				const nextPath = searchParams.get('next') || '/dashboard';
+				if (res.success) {
+					toast.success(res.message || 'Google sign-in successful!');
+					router.push(nextPath);
+				}
+			} catch (err) {
+				toast.error(
+					err.response?.data?.detail || err.message || 'Google sign-in failed.'
+				);
+			} finally {
+				setIsGoogleLoading(false);
+			}
+		},
+		onError: () => {
+			toast.error('Google sign-in was canceled or failed.');
+		},
+	});
 
 	return (
 		<>
@@ -216,9 +241,18 @@ export default function LoginPage() {
 							{/* Google Button */}
 							<button
 								type="button"
-								className="w-full flex items-center justify-center gap-3 py-4 border border-white/30 rounded-xl text-white hover:bg-white/10 transition cursor-pointer"
+								onClick={() => loginWithGoogle()}
+								disabled={isGoogleLoading}
+								className={`w-full flex items-center justify-center gap-3 py-4 border border-white/30 rounded-xl text-white hover:bg-white/10 transition cursor-pointer ${
+									isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''
+								}`}
 							>
-								<FcGoogle size={22} /> Continue with Google
+								{isGoogleLoading ? (
+									<span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+								) : (
+									<FcGoogle size={22} />
+								)}
+								{isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
 							</button>
 
 							{/* Register Link */}

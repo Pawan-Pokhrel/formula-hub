@@ -6,6 +6,21 @@ const authApi = {
 		return data;
 	},
 
+	verifyEmail: async (payload) => {
+		const { data } = await api.post('/auth/verify-email', payload);
+		return data;
+	},
+
+	resendCode: async (payload) => {
+		const { data } = await api.post('/auth/resend-code', payload);
+		return data;
+	},
+
+	googleAuth: async (credential) => {
+		const { data } = await api.post('/auth/google', { credential });
+		return data;
+	},
+
 	login: async (payload) => {
 		const { data } = await api.post('/auth/login', payload);
 		return data;
