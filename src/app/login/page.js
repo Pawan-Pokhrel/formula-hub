@@ -1,9 +1,9 @@
 'use client';
 
-import authApi from '@/lib/api/authApi';
+import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -22,6 +22,8 @@ const schema = yup.object().shape({
 
 export default function LoginPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const { login } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,12 +40,12 @@ export default function LoginPage() {
 	const handleLogin = async (data) => {
 		setIsSubmitting(true);
 		try {
-			const response = await authApi.login(data);
+			const response = await login(data);
+			const nextPath = searchParams.get('next') || '/dashboard';
 
 			if (response.success) {
 				toast.success(response.message || 'Welcome back!');
-				localStorage.setItem('token', response.token);
-				router.push('/dashboard');
+				router.push(nextPath);
 			}
 		} catch (err) {
 			const msg =
