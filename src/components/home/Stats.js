@@ -1,37 +1,62 @@
-import { FaBolt, FaHeadset, FaTrophy } from 'react-icons/fa';
+import { FaChartBar, FaClock, FaCogs } from 'react-icons/fa';
+
+const STATS = [
+	{
+		value: '6',
+		label: 'Integrated analytics modules',
+		help: 'Schedule, standings, track, prediction, strategy, dashboard',
+		icon: FaCogs,
+	},
+	{
+		value: '2021-2026',
+		label: 'Race data range in project',
+		help: 'Replay and model workflows backed by multi-season files',
+		icon: FaChartBar,
+	},
+	{
+		value: '< 1 min',
+		label: 'To run first scenario',
+		help: 'Open predict or strategy and start simulating immediately',
+		icon: FaClock,
+	},
+];
 
 export default function Stats() {
 	return (
-		<section className="py-24 px-6 md:px-20 bg-linear-to-r from-red-900/20 to-black text-center">
-			<h2 className="text-5xl font-extrabold uppercase mb-16 tracking-widest">
-				Performance Metrics
-			</h2>
-			<div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-				<div className="p-8 rounded-2xl bg-black/50 border border-red-500/20 shadow-xl">
-					<FaTrophy
-						size={50}
-						className="mx-auto  text-red-500 mb-4"
-					/>
-					<h3 className="text-4xl font-bold">500+</h3>
-					<p className="text-gray-400 text-lg">Races Analyzed</p>
+		<section className="px-6 py-20 md:px-10 lg:px-16">
+			<div className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-linear-to-b from-zinc-800/25 via-black/75 to-black/80 p-7 md:p-10">
+				<div className="mb-8">
+					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+						Value Snapshot
+					</p>
+					<h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+						Built To Be Fast, Practical, And Decision-Focused
+					</h2>
 				</div>
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+					{STATS.map((item) => {
+						const Icon = item.icon;
 
-				<div className="p-8 rounded-2xl bg-black/50 border border-red-500/20 shadow-xl">
-					<FaBolt
-						size={50}
-						className="mx-auto  text-red-500 mb-4"
-					/>
-					<h3 className="text-4xl font-bold">1ms</h3>
-					<p className="text-gray-400 text-lg">Data Latency</p>
-				</div>
-
-				<div className="p-8 rounded-2xl bg-black/50 border border-red-500/20 shadow-xl">
-					<FaHeadset
-						size={50}
-						className="mx-auto  text-red-500 mb-4"
-					/>
-					<h3 className="text-4xl font-bold">24/7</h3>
-					<p className="text-gray-400 text-lg">Support</p>
+						return (
+							<div
+								key={item.label}
+								className="rounded-2xl border border-white/10 bg-white/3 p-5"
+							>
+								<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-500/10 text-amber-200">
+									<Icon size={16} />
+								</div>
+								<p className="text-3xl font-extrabold tracking-tight text-white">
+									{item.value}
+								</p>
+								<p className="mt-1 text-sm font-medium text-zinc-100">
+									{item.label}
+								</p>
+								<p className="mt-2 text-sm leading-relaxed text-zinc-400">
+									{item.help}
+								</p>
+							</div>
+						);
+					})}
 				</div>
 			</div>
 		</section>
