@@ -47,8 +47,9 @@ export async function generateStaticParams() {
 	return DRIVER_CATALOG.map((driver) => ({ slug: driver.slug }));
 }
 
-export default function DriverDetailPage({ params }) {
-	const driver = getDriverBySlug(params.slug);
+export default async function DriverDetailPage({ params }) {
+	const resolvedParams = await params;
+	const driver = getDriverBySlug(resolvedParams?.slug);
 	if (!driver) notFound();
 
 	const teammate = DRIVER_CATALOG.find(
