@@ -17,7 +17,7 @@ export const getTrackSessions = async () => {
  */
 export const getYearSchedule = async (year) => {
 	const response = await api.get(`/track/schedule/${year}`);
-	if (response.data.success) {
+	if (Array.isArray(response.data?.data)) {
 		return response.data.data;
 	}
 	throw new Error(response.data.message || 'Failed to fetch schedule');
