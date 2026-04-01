@@ -1,7 +1,7 @@
 'use client';
 
-import { getLastRace, getNextRace } from '@/lib/api/scheduleApi';
 import { getYearSchedule } from '@/lib/api/trackApi';
+import { getLastRace, getNextRace } from '@/lib/api/scheduleApi';
 import { useEffect, useMemo, useState } from 'react';
 import { FaCalendarAlt } from 'react-icons/fa';
 
@@ -28,24 +28,31 @@ export default function SchedulePage() {
 	);
 
 	useEffect(() => {
-		const fetchSchedule = async () => {
+		const fetchCurrentRaceCards = async () => {
+			const [next, last] = await Promise.all([
+				getNextRace().catch(() => null),
+				getLastRace().catch(() => null),
+			]);
+
+			setNextRace(next);
+			setLastRace(last);
+		};
+
+		fetchCurrentRaceCards();
+	}, []);
+
+	useEffect(() => {
+		const fetchScheduleByYear = async () => {
 			setLoading(true);
 			try {
-				const [next, last, races] = await Promise.all([
-					getNextRace().catch(() => null),
-					getLastRace().catch(() => null),
-					getYearSchedule(year).catch(() => []),
-				]);
-
-				setNextRace(next);
-				setLastRace(last);
+				const races = await getYearSchedule(year).catch(() => []);
 				setSchedule(Array.isArray(races) ? races : []);
 			} finally {
 				setLoading(false);
 			}
 		};
 
-		fetchSchedule();
+		fetchScheduleByYear();
 	}, [year]);
 
 	return (
