@@ -3,21 +3,39 @@ import { FaArrowRight } from 'react-icons/fa';
 
 export default function CTA() {
 	return (
-		<section className="py-32 px-6 md:px-20 bg-red-700/90 text-center relative overflow-hidden">
-			<div className="absolute inset-0 bg-[radial-linear(circle_at_50%_50%,rgba(255,0,0,0.2),transparent)]" />
-			<h2 className="text-5xl md:text-7xl font-extrabold uppercase mb-10 tracking-widest relative z-10">
-				Elevate Your F1 Game
-			</h2>
-			<p className="max-w-3xl mx-auto text-2xl text-white/80 mb-12 relative z-10 font-light">
-				Join the elite circle of F1 analysts and enthusiasts who trust our
-				platform for unparalleled insights.
-			</p>
-			<Link
-				href="/signup"
-				className="inline-flex items-center gap-3 bg-black hover:bg-gray-900 transition-all px-12 py-6 rounded-full font-bold text-xl uppercase shadow-2xl shadow-black/50 relative z-10"
-			>
-				Sign Up Today <FaArrowRight size={24} />
-			</Link>
+		<section className="px-6 pb-20 md:px-10 lg:px-16">
+			<div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/15 bg-linear-to-r from-zinc-900 via-black to-zinc-950 p-8 md:p-12">
+				<div className="pointer-events-none absolute -right-24 -top-20 h-60 w-60 rounded-full bg-amber-500/20 blur-3xl" />
+				<div className="pointer-events-none absolute -bottom-20 left-1/3 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+
+				<div className="relative z-10">
+					<h2 className="max-w-3xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
+						Ready To Build Your Race Plan?
+					</h2>
+					<p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-200 sm:text-base">
+						Start with your dashboard, run predictions, and iterate strategy
+						with confidence. FormulaHub is set up to get you from raw data to
+						race decisions quickly.
+					</p>
+
+					<div className="mt-8 flex flex-wrap gap-3">
+						<Link
+							href="/register"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-amber-300"
+						>
+							Create Free Account <FaArrowRight size={13} />
+						</Link>
+						<Link
+							href="/predict"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center rounded-full border border-white/35 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+						>
+							Try Lap Predictor
+						</Link>
+					</div>
+				</div>
+			</div>
 		</section>
 	);
 }

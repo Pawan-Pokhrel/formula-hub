@@ -1,101 +1,106 @@
+import Link from 'next/link';
 import {
 	FaCarSide,
 	FaChartLine,
 	FaFlagCheckered,
-	FaGlobe,
-	FaTachometerAlt,
-	FaUsers,
+	FaRoad,
+	FaStopwatch,
+	FaTrophy,
 } from 'react-icons/fa';
+
+const FEATURE_ITEMS = [
+	{
+		title: 'Race Calendar',
+		description:
+			'Explore upcoming races and completed events with season and round detail.',
+		icon: FaFlagCheckered,
+		href: '/schedule',
+	},
+	{
+		title: 'Championship Standings',
+		description:
+			'Compare constructors and drivers through points progression and rank changes.',
+		icon: FaTrophy,
+		href: '/standings',
+	},
+	{
+		title: 'Track Intelligence',
+		description:
+			'Inspect circuit characteristics, corners, and race context in one place.',
+		icon: FaRoad,
+		href: '/track',
+	},
+	{
+		title: 'Lap Predictor',
+		description:
+			'Forecast lap performance with model-driven estimates using race conditions.',
+		icon: FaStopwatch,
+		href: '/predict',
+	},
+	{
+		title: 'Strategy Simulator',
+		description:
+			'Test pit windows and tire plans against replay race data before race day.',
+		icon: FaCarSide,
+		href: '/strategy',
+	},
+	{
+		title: 'Insights Dashboard',
+		description:
+			'Get a high-level command center view of your analytics workflow and outputs.',
+		icon: FaChartLine,
+		href: '/dashboard',
+	},
+];
 
 export default function Features() {
 	return (
-		<section
-			className="py-32 px-6 md:px-20 relative"
-			style={{
-				backgroundImage:
-					"url('https://source.unsplash.com/random/1920x1080/?formula1,circuit,track')",
-				backgroundAttachment: 'fixed',
-				backgroundSize: 'cover',
-				backgroundBlendMode: 'multiply',
-				backgroundColor: 'rgba(0, 0, 0, 0.85)',
-			}}
-		>
-			<h2 className="text-5xl md:text-7xl font-extrabold text-center mb-20 uppercase tracking-widest  text-white">
-				Unrivaled Features
-			</h2>
-			<div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaTachometerAlt
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">Precision Telemetry</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Harness live data streams for speed, G-forces, and engine metrics
-						with sub-second accuracy.
-					</p>
+		<section className="relative px-6 py-20 md:px-10 lg:px-16">
+			<div className="mx-auto max-w-6xl">
+				<div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+					<div>
+						<p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+							Core Modules
+						</p>
+						<h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
+							Everything You Need For Race Analysis
+						</h2>
+					</div>
+					<Link
+						href="/dashboard"
+						prefetch={true}
+						className="inline-flex cursor-pointer w-fit items-center rounded-full border border-white/15 bg-white/3 px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:border-amber-300/40 hover:bg-amber-500/10"
+					>
+						Go to workspace
+					</Link>
 				</div>
 
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaCarSide
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">
-						Dynamic Track Mapping
-					</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Visualize circuits in 3D with real-time driver tracking and
-						predictive trajectories.
-					</p>
-				</div>
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{FEATURE_ITEMS.map((item) => {
+						const Icon = item.icon;
 
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaChartLine
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">AI Strategy Engine</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Simulate scenarios, optimize pit stops, and gain edges with machine
-						learning insights.
-					</p>
-				</div>
-
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaFlagCheckered
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">Race Simulations</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Run hyper-realistic races with variable conditions for strategy
-						refinement.
-					</p>
-				</div>
-
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaUsers
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">Global Community</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Connect with experts, share analyses, and collaborate in real-time
-						forums.
-					</p>
-				</div>
-
-				<div className="flex flex-col items-center gap-6 p-10 bg-black/60 rounded-3xl border border-red-500/30 shadow-2xl shadow-red-900/30 hover:shadow-red-900/50 transition-all backdrop-blur-sm">
-					<FaGlobe
-						size={60}
-						className=" text-red-500"
-					/>
-					<h3 className="text-3xl font-bold uppercase">Worldwide Coverage</h3>
-					<p className="text-gray-300 text-center text-lg font-light">
-						Data from every grand prix, team, and driver across seasons and
-						continents.
-					</p>
+						return (
+							<Link
+								key={item.title}
+								href={item.href}
+								prefetch={true}
+								className="group relative cursor-pointer rounded-2xl border border-white/10 bg-linear-to-b from-white/5 to-white/2 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-amber-300/35 hover:shadow-[0_18px_36px_rgba(120,80,20,0.28)]"
+							>
+								<div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-500/10 text-amber-200 transition-colors group-hover:bg-amber-500/20">
+									<Icon size={18} />
+								</div>
+								<h3 className="text-lg font-semibold text-white">
+									{item.title}
+								</h3>
+								<p className="mt-2 text-sm leading-relaxed text-zinc-300">
+									{item.description}
+								</p>
+								<div className="mt-4 text-sm font-medium text-amber-200/90">
+									Open module
+								</div>
+							</Link>
+						);
+					})}
 				</div>
 			</div>
 		</section>

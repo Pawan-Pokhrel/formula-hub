@@ -11,18 +11,21 @@ export default function Footer() {
 					<Link
 						href="/privacy"
 						className="hover: text-white transition"
+						prefetch={true}
 					>
 						Privacy Policy
 					</Link>
 					<Link
 						href="/terms"
 						className="hover: text-white transition"
+						prefetch={true}
 					>
 						Terms of Service
 					</Link>
 					<Link
 						href="/contact"
 						className="hover: text-white transition"
+						prefetch={true}
 					>
 						Contact Us
 					</Link>
