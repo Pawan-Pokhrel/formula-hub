@@ -22,7 +22,7 @@ export default function DashboardShell({
 						{renderWidget(podiumId)}
 					</div>
 				)}
-				<div className="flex min-h-0 w-full flex-col gap-5 md:flex-row md:h-[26rem]">
+				<div className="flex min-h-0 w-full flex-col gap-5 md:flex-row md:h-104">
 					{secondRowIds.map((widgetId) => (
 						<div
 							key={widgetId}
