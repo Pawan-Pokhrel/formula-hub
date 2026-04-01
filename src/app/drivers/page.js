@@ -10,6 +10,11 @@ import {
 	DRIVER_CATALOG,
 	getAllTeams,
 } from '@/lib/data/driversCatalog';
+import {
+	ROUGH_CONSTRUCTOR_ORDER_2026,
+	readConstructorRankCache,
+	writeConstructorRankCache,
+} from '@/lib/data/constructorStandingsRough';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -114,16 +119,44 @@ function getTeamColor(teamName) {
 	return match?.teamColor || '#6B7280';
 }
 
+function darkenHexColor(hexColor, factor = 0.55) {
+	const raw = String(hexColor || '').trim().replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return '#1F2937';
+	const toHex = (value) => value.toString(16).padStart(2, '0');
+	const r = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor)));
+	const g = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor)));
+	const b = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor)));
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function hexToRgba(hexColor, alpha) {
+	const raw = String(hexColor || '').trim().replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return `rgba(31,41,55,${alpha})`;
+	const r = parseInt(raw.slice(0, 2), 16);
+	const g = parseInt(raw.slice(2, 4), 16);
+	const b = parseInt(raw.slice(4, 6), 16);
+	return `rgba(${r},${g},${b},${alpha})`;
+}
+
 const FALLBACK_TEAM_ORDER = Object.fromEntries(
 	Array.from(new Set(DRIVER_CATALOG.map((driver) => driver.teamName))).map(
 		(teamName, index) => [getTeamKey(teamName), index]
 	)
 );
 
+const ROUGH_SEED_TEAM_RANK = Object.fromEntries(
+	ROUGH_CONSTRUCTOR_ORDER_2026.map((teamName, index) => [
+		getTeamKey(teamName),
+		index,
+	])
+);
+
 export default function DriversPage() {
 	const [query, setQuery] = useState('');
 	const [team, setTeam] = useState('All Teams');
-	const [constructorRankByKey, setConstructorRankByKey] = useState({});
+	const [constructorRankByKey, setConstructorRankByKey] = useState(
+		ROUGH_SEED_TEAM_RANK
+	);
 	const [driverPointsBySlug, setDriverPointsBySlug] = useState({});
 	const [isStandingsResolved, setIsStandingsResolved] = useState(false);
 	const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
@@ -138,9 +171,41 @@ export default function DriversPage() {
 			})),
 		[teams]
 	);
+	const orderedSkeletonTeams = useMemo(
+		() =>
+			teamOptions
+				.filter((option) => option.name !== 'All Teams')
+				.sort((a, b) => {
+					const rankA =
+						constructorRankByKey[getTeamKey(a.name)] ??
+						ROUGH_SEED_TEAM_RANK[getTeamKey(a.name)] ??
+						FALLBACK_TEAM_ORDER[getTeamKey(a.name)] ??
+						Number.MAX_SAFE_INTEGER;
+					const rankB =
+						constructorRankByKey[getTeamKey(b.name)] ??
+						ROUGH_SEED_TEAM_RANK[getTeamKey(b.name)] ??
+						FALLBACK_TEAM_ORDER[getTeamKey(b.name)] ??
+						Number.MAX_SAFE_INTEGER;
+					return rankA - rankB;
+				}),
+		[teamOptions, constructorRankByKey]
+	);
+	const skeletonCards = useMemo(
+		() =>
+			orderedSkeletonTeams.flatMap((teamOption) => [
+				{ ...teamOption, slot: 1 },
+				{ ...teamOption, slot: 2 },
+			]),
+		[orderedSkeletonTeams]
+	);
 
 	useEffect(() => {
 		let mounted = true;
+
+		const cachedRank = readConstructorRankCache();
+		if (cachedRank && mounted) {
+			setConstructorRankByKey((prev) => ({ ...prev, ...cachedRank }));
+		}
 
 		async function loadStandingsOrder() {
 			try {
@@ -190,9 +255,15 @@ export default function DriversPage() {
 
 				setConstructorRankByKey(nextConstructorRankByKey);
 				setDriverPointsBySlug(nextDriverPointsBySlug);
+				writeConstructorRankCache(nextConstructorRankByKey);
 			} catch {
 				if (!mounted) return;
-				setConstructorRankByKey({});
+				const cachedOnFailure = readConstructorRankCache();
+				setConstructorRankByKey(
+					cachedOnFailure && Object.keys(cachedOnFailure).length ?
+						{ ...ROUGH_SEED_TEAM_RANK, ...cachedOnFailure }
+					: 	ROUGH_SEED_TEAM_RANK
+				);
 				setDriverPointsBySlug({});
 			} finally {
 				if (!mounted) return;
@@ -342,11 +413,18 @@ export default function DriversPage() {
 				</div>
 
 				{!isStandingsResolved ?
-					<div className="rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-gray-300 inline-flex items-center gap-2">
-						<span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
-						Loading constructor standings order...
+					<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
+						{skeletonCards.map((teamOption) => (
+							<div
+								key={`skeleton-${teamOption.name}-${teamOption.slot}`}
+								className="relative h-72 rounded-xl overflow-hidden"
+								style={{
+									background: `linear-gradient(120deg, ${hexToRgba(darkenHexColor(teamOption.color, 0.52), 0.18)} 0%, ${hexToRgba(darkenHexColor(teamOption.color, 0.44), 0.16)} 58%, rgba(8,8,10,0.62) 100%)`,
+								}}
+							/>
+						))}
 					</div>
-				:	<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
+				: 	<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
 						{filteredDrivers.map((driver) => {
 							const driverImage = getDriverCardImagePath(driver);
 							const teamLogo = getTeamLogoPath(driver.teamName);
