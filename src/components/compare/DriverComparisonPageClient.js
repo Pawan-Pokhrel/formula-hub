@@ -345,21 +345,21 @@ export default function DriverComparisonPageClient() {
 
 	const resolvedLeftKey = useMemo(() => {
 		if (validKeys.length === 0) return '';
-		if (validKeys.includes(leftKey)) return leftKey;
 		if (validKeys.includes(requestedLeft)) return requestedLeft;
+		if (validKeys.includes(leftKey)) return leftKey;
 		return validKeys[0];
 	}, [validKeys, leftKey, requestedLeft]);
 
 	const resolvedRightKey = useMemo(() => {
 		if (validKeys.length === 0) return '';
-		if (validKeys.includes(rightKey) && rightKey !== resolvedLeftKey)
-			return rightKey;
 		if (
 			validKeys.includes(requestedRight) &&
 			requestedRight !== resolvedLeftKey
 		) {
 			return requestedRight;
 		}
+		if (validKeys.includes(rightKey) && rightKey !== resolvedLeftKey)
+			return rightKey;
 		return validKeys.find((key) => key !== resolvedLeftKey) || resolvedLeftKey;
 	}, [validKeys, rightKey, requestedRight, resolvedLeftKey]);
 
