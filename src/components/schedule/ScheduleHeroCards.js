@@ -5,9 +5,43 @@ import { FaCalendarAlt, FaMapMarkerAlt, FaTrophy } from 'react-icons/fa';
 import {
 	getCountryCode,
 	getDriverImagePath,
+	getTeamLogoPath,
 	getTrackImagePath,
 	parseRaceDateTime,
 } from './scheduleHelpers';
+
+const TEAM_ACCENT_MAP = {
+	'RED BULL': '#3671C6',
+	'RED BULL RACING': '#3671C6',
+	FERRARI: '#E8002D',
+	MERCEDES: '#27F4D2',
+	MCLAREN: '#FF8000',
+	'ASTON MARTIN': '#229971',
+	ALPINE: '#FF87BC',
+	WILLIAMS: '#64C4FF',
+	'RACING BULLS': '#6692FF',
+	'KICK SAUBER': '#52E252',
+	SAUBER: '#52E252',
+	HAAS: '#B6BABD',
+	'HAAS F1 TEAM': '#B6BABD',
+};
+
+function getTeamAccentColor(driver) {
+	if (!driver) return '#EF4444';
+	const explicit = String(driver.team_color || '').trim();
+	if (/^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(explicit)) return explicit;
+
+	const teamName = String(driver.team_name || '')
+		.trim()
+		.toUpperCase();
+	if (TEAM_ACCENT_MAP[teamName]) return TEAM_ACCENT_MAP[teamName];
+
+	for (const [alias, color] of Object.entries(TEAM_ACCENT_MAP)) {
+		if (teamName.includes(alias)) return color;
+	}
+
+	return '#EF4444';
+}
 
 function formatDate(dateString) {
 	if (!dateString) return 'TBA';
@@ -41,6 +75,13 @@ export default function ScheduleHeroCards({ nextRace, lastRace }) {
 	);
 	const nextTrackImage = nextRace ? getTrackImagePath(nextRace) : null;
 	const nextStartText = formatStartTime(nextRace?.date, nextRace?.time);
+	const podiumEntries = (lastRace?.podium || []).slice(0, 3);
+	const podiumByPosition = podiumEntries.reduce((acc, driver) => {
+		const position = Number(driver?.position);
+		if (position >= 1 && position <= 3) acc[position] = driver;
+		return acc;
+	}, {});
+	const podiumOrder = [2, 1, 3];
 
 	return (
 		<div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-4 mb-6">
@@ -56,56 +97,102 @@ export default function ScheduleHeroCards({ nextRace, lastRace }) {
 						<p className="text-xs md:text-sm text-gray-400 mb-4">
 							{formatDate(lastRace.date)}
 						</p>
-						<div className="space-y-2.5">
-							{(lastRace.podium || []).slice(0, 3).map((driver) => (
-								<div
-									key={driver.position}
-									className="rounded-xl bg-linear-to-r from-white/10 to-white/5 border border-white/15 px-4 py-3 flex items-center justify-between gap-3"
-								>
-									<div className="inline-flex items-center gap-3 min-w-0">
+						<div className="grid grid-cols-3 gap-2 items-end">
+							{podiumOrder.map((position) => {
+								const driver = podiumByPosition[position];
+								if (!driver) {
+									return (
 										<div
-											className={`w-8 h-8 rounded-full text-xs font-black flex items-center justify-center border shrink-0 ${
-												driver.position === 1 ?
-													'bg-yellow-400/15 text-yellow-300 border-yellow-400/35'
-												: driver.position === 2 ?
-													'bg-zinc-300/15 text-zinc-200 border-zinc-300/30'
-												:	'bg-amber-700/20 text-amber-300 border-amber-500/35'
-											}`}
+											key={`empty-${position}`}
+											className="h-36 rounded-xl border border-white/10 bg-white/5"
+										/>
+									);
+								}
+
+								const accent = getTeamAccentColor(driver);
+								const teamLogo = getTeamLogoPath(driver.team_name);
+								const driverImage = getDriverImagePath(driver.driver_code);
+								const cardHeight = position === 1 ? 'h-44' : 'h-36';
+								const podiumHeight =
+									position === 1 ? 'h-14'
+									: position === 2 ? 'h-10'
+									: 'h-8';
+
+								return (
+									<div
+										key={position}
+										className="flex flex-col items-center gap-1"
+									>
+										<div
+											className={`relative w-full ${cardHeight} rounded-xl bg-linear-to-b from-white/14 via-white/6 to-black/35 border border-white/15 overflow-hidden`}
+											style={{
+												boxShadow: `inset 0 0 0 1px ${accent}33`,
+												borderTop: `2px solid ${accent}`,
+											}}
 										>
-											{driver.position}
-										</div>
-										{getDriverImagePath(driver.driver_code) && (
-											<div className="w-11 h-11 rounded-lg overflow-hidden border border-white/10 bg-white/5 relative shrink-0">
-												<Image
-													src={getDriverImagePath(driver.driver_code)}
-													alt={driver.driver_name}
-													fill
-													className="object-cover object-top"
-													onError={(e) => {
-														e.currentTarget.style.display = 'none';
-													}}
-												/>
+											<span
+												className="absolute top-2 right-2 z-10 inline-flex h-6 min-w-6 px-1.5 items-center justify-center rounded-full text-[10px] font-black"
+												style={{
+													backgroundColor: `${accent}22`,
+													color: accent,
+													border: `1px solid ${accent}55`,
+												}}
+											>
+												P{position}
+											</span>
+
+											{teamLogo && (
+												<div className="absolute top-2 left-2 z-10 w-7 h-7 rounded-md bg-black/35 backdrop-blur-md p-1.5">
+													<Image
+														src={teamLogo}
+														alt={driver.team_name}
+														fill
+														className="object-contain p-1"
+														onError={(e) => {
+															e.currentTarget.style.display = 'none';
+														}}
+													/>
+												</div>
+											)}
+
+											{driverImage && (
+												<div className="absolute top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-lg overflow-hidden bg-white/5">
+													<Image
+														src={driverImage}
+														alt={driver.driver_name}
+														fill
+														className="object-cover object-top"
+														onError={(e) => {
+															e.currentTarget.style.display = 'none';
+														}}
+													/>
+												</div>
+											)}
+
+											<div className="absolute bottom-2 left-1.5 right-1.5 text-center">
+												<p className="text-[11px] font-semibold text-white truncate">
+													{driver.driver_name}
+												</p>
+												<p
+													className="text-[9px] uppercase tracking-[0.14em] truncate"
+													style={{ color: accent }}
+												>
+													{driver.team_name}
+												</p>
 											</div>
-										)}
-										<div className="min-w-0">
-											<p className="font-semibold text-sm md:text-base truncate">
-												{driver.driver_name}
-											</p>
-											<p className="text-[11px] uppercase tracking-[0.12em] text-gray-500 truncate">
-												{driver.team_name}
-											</p>
+										</div>
+
+										<div
+											className={`w-[88%] ${podiumHeight} rounded-t-lg border border-white/15 border-b-0 flex items-center justify-center text-[9px] font-black uppercase tracking-[0.12em] text-white/90`}
+											style={{
+												background: `linear-gradient(180deg, ${accent}44 0%, rgba(0,0,0,0.55) 100%)`,
+											}}
+										>
+											{position === 1 ? 'Winner' : `P${position}`}
 										</div>
 									</div>
-									<div className="text-right shrink-0">
-										<p className="text-[10px] text-gray-500 uppercase tracking-[0.14em]">
-											Finish
-										</p>
-										<p className="text-sm font-bold text-red-300">
-											P{driver.position}
-										</p>
-									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 					</>
 				:	<div className="text-gray-400 inline-flex items-center gap-2">
