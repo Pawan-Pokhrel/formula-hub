@@ -10,6 +10,8 @@ export default function ScheduleTable({
 	nextRound,
 	selectedYear,
 	nextRaceYear,
+	isAuthenticated,
+	isAuthLoading,
 }) {
 	return (
 		<div className="bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/20 overflow-hidden">
@@ -29,7 +31,7 @@ export default function ScheduleTable({
 							const isNext =
 								Number(nextRound) === Number(race.round) &&
 								Number(selectedYear) === Number(nextRaceYear);
-							const isReady = Boolean(race.has_data);
+							const isReady = Boolean(isAuthenticated && race.has_data);
 							const isPast = Boolean(race.is_past);
 							const countryCode = getCountryCode(
 								race.country || race.circuit?.country
@@ -101,7 +103,18 @@ export default function ScheduleTable({
 										:	<span className="text-xs text-gray-500">N/A</span>}
 									</td>
 									<td className="px-6 py-4 text-right">
-										{isReady ?
+										{isAuthLoading ?
+											<span className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-300 border border-gray-500/25 uppercase tracking-[0.12em]">
+												Checking
+											</span>
+										: !isAuthenticated && isPast ?
+											<Link
+												href="/login"
+												className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-200 border border-gray-500/25 uppercase tracking-[0.12em] hover:bg-gray-500/25 transition-colors"
+											>
+												Login Required
+											</Link>
+										: isReady ?
 											<span className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25 uppercase tracking-[0.12em]">
 												Ready
 											</span>

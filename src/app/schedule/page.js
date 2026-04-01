@@ -1,7 +1,8 @@
 'use client';
 
-import { getYearSchedule } from '@/lib/api/trackApi';
 import { getLastRace, getNextRace } from '@/lib/api/scheduleApi';
+import { getYearSchedule } from '@/lib/api/trackApi';
+import { useAuth } from '@/providers/AuthProvider';
 import { useEffect, useMemo, useState } from 'react';
 import { FaCalendarAlt } from 'react-icons/fa';
 
@@ -9,6 +10,7 @@ import ScheduleHeroCards from '@/components/schedule/ScheduleHeroCards';
 import ScheduleTable from '@/components/schedule/ScheduleTable';
 
 export default function SchedulePage() {
+	const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 	const currentYear = new Date().getFullYear();
 	const [year, setYear] = useState(currentYear);
 	const [loading, setLoading] = useState(true);
@@ -102,6 +104,8 @@ export default function SchedulePage() {
 						nextRound={nextRace?.round}
 						selectedYear={year}
 						nextRaceYear={nextRaceYear}
+						isAuthenticated={isAuthenticated}
+						isAuthLoading={isAuthLoading}
 					/>
 				}
 			</div>
