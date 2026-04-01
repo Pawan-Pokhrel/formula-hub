@@ -6,15 +6,15 @@ import {
 	getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-	CURRENT_SEASON,
-	DRIVER_CATALOG,
-	getAllTeams,
-} from '@/lib/data/driversCatalog';
-import {
 	ROUGH_CONSTRUCTOR_ORDER_2026,
 	readConstructorRankCache,
 	writeConstructorRankCache,
 } from '@/lib/data/constructorStandingsRough';
+import {
+	CURRENT_SEASON,
+	DRIVER_CATALOG,
+	getAllTeams,
+} from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -120,17 +120,30 @@ function getTeamColor(teamName) {
 }
 
 function darkenHexColor(hexColor, factor = 0.55) {
-	const raw = String(hexColor || '').trim().replace('#', '');
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
 	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return '#1F2937';
 	const toHex = (value) => value.toString(16).padStart(2, '0');
-	const r = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor)));
-	const g = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor)));
-	const b = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor)));
+	const r = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor))
+	);
+	const g = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor))
+	);
+	const b = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor))
+	);
 	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function hexToRgba(hexColor, alpha) {
-	const raw = String(hexColor || '').trim().replace('#', '');
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
 	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return `rgba(31,41,55,${alpha})`;
 	const r = parseInt(raw.slice(0, 2), 16);
 	const g = parseInt(raw.slice(2, 4), 16);
@@ -154,9 +167,8 @@ const ROUGH_SEED_TEAM_RANK = Object.fromEntries(
 export default function DriversPage() {
 	const [query, setQuery] = useState('');
 	const [team, setTeam] = useState('All Teams');
-	const [constructorRankByKey, setConstructorRankByKey] = useState(
-		ROUGH_SEED_TEAM_RANK
-	);
+	const [constructorRankByKey, setConstructorRankByKey] =
+		useState(ROUGH_SEED_TEAM_RANK);
 	const [driverPointsBySlug, setDriverPointsBySlug] = useState({});
 	const [isStandingsResolved, setIsStandingsResolved] = useState(false);
 	const [isTeamMenuOpen, setIsTeamMenuOpen] = useState(false);
@@ -262,7 +274,7 @@ export default function DriversPage() {
 				setConstructorRankByKey(
 					cachedOnFailure && Object.keys(cachedOnFailure).length ?
 						{ ...ROUGH_SEED_TEAM_RANK, ...cachedOnFailure }
-					: 	ROUGH_SEED_TEAM_RANK
+					:	ROUGH_SEED_TEAM_RANK
 				);
 				setDriverPointsBySlug({});
 			} finally {
@@ -424,7 +436,7 @@ export default function DriversPage() {
 							/>
 						))}
 					</div>
-				: 	<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
+				:	<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
 						{filteredDrivers.map((driver) => {
 							const driverImage = getDriverCardImagePath(driver);
 							const teamLogo = getTeamLogoPath(driver.teamName);

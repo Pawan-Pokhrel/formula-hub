@@ -1,6 +1,4 @@
-import {
-	ROUGH_CONSTRUCTOR_ORDER_2026,
-} from '@/lib/data/constructorStandingsRough';
+import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
 import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 
 function getTeamColor(teamName) {
@@ -9,17 +7,30 @@ function getTeamColor(teamName) {
 }
 
 function darkenHexColor(hexColor, factor = 0.55) {
-	const raw = String(hexColor || '').trim().replace('#', '');
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
 	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return '#1F2937';
 	const toHex = (value) => value.toString(16).padStart(2, '0');
-	const r = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor)));
-	const g = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor)));
-	const b = Math.max(0, Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor)));
+	const r = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor))
+	);
+	const g = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor))
+	);
+	const b = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor))
+	);
 	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function hexToRgba(hexColor, alpha) {
-	const raw = String(hexColor || '').trim().replace('#', '');
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
 	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return `rgba(31,41,55,${alpha})`;
 	const r = parseInt(raw.slice(0, 2), 16);
 	const g = parseInt(raw.slice(2, 4), 16);
