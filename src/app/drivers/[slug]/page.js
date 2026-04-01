@@ -2,17 +2,72 @@ import {
 	getDriverImagePath,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
-import { DRIVER_CATALOG, getDriverBySlug } from '@/lib/data/driversCatalog';
+import {
+	CURRENT_SEASON,
+	DRIVER_CATALOG,
+	getDriverBySlug,
+} from '@/lib/data/driversCatalog';
+import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
 	FaArrowLeft,
-	FaBullseye,
+	FaArrowRight,
+	FaBalanceScale,
 	FaCalendarAlt,
 	FaFlag,
+	FaFlagCheckered,
 	FaTrophy,
 } from 'react-icons/fa';
+
+const NATIONALITY_FLAG_MAP = {
+	australian: 'aus',
+	argentine: 'arg',
+	brazilian: 'bra',
+	british: 'gbr',
+	canadian: 'can',
+	dutch: 'ned',
+	finnish: 'fin',
+	french: 'fra',
+	german: 'ger',
+	italian: 'ita',
+	mexican: 'mex',
+	monacan: 'mon',
+	spanish: 'esp',
+	'thai-british': 'tha',
+	'thai british': 'tha',
+	'new zealander': 'nzl',
+};
+
+const NATIONALITY_COUNTRY_MAP = {
+	australian: 'Australia',
+	argentine: 'Argentina',
+	brazilian: 'Brazil',
+	british: 'United Kingdom',
+	canadian: 'Canada',
+	dutch: 'Netherlands',
+	finnish: 'Finland',
+	french: 'France',
+	german: 'Germany',
+	italian: 'Italy',
+	mexican: 'Mexico',
+	monacan: 'Monaco',
+	spanish: 'Spain',
+	'thai-british': 'Thailand',
+	'thai british': 'Thailand',
+	'new zealander': 'New Zealand',
+};
+
+const CAREER_BENCHMARKS = DRIVER_CATALOG.reduce(
+	(acc, driver) => ({
+		wins: Math.max(acc.wins, Number(driver.careerWins || 0)),
+		podiums: Math.max(acc.podiums, Number(driver.careerPodiums || 0)),
+		poles: Math.max(acc.poles, Number(driver.careerPoles || 0)),
+		fastestLaps: Math.max(acc.fastestLaps, Number(driver.careerFastestLaps || 0)),
+	}),
+	{ wins: 1, podiums: 1, poles: 1, fastestLaps: 1 }
+);
 
 function formatBirthDate(value) {
 	if (!value) return 'Unknown';
@@ -23,6 +78,58 @@ function formatBirthDate(value) {
 		day: 'numeric',
 		year: 'numeric',
 	});
+}
+
+function getNationalityFlagCode(nationality) {
+	if (!nationality) return null;
+	const normalized = String(nationality).trim().toLowerCase();
+	return NATIONALITY_FLAG_MAP[normalized] || null;
+}
+
+function getCountryNameFromNationality(nationality) {
+	if (!nationality) return 'Unknown';
+	const normalized = String(nationality).trim().toLowerCase();
+	return NATIONALITY_COUNTRY_MAP[normalized] || nationality;
+}
+
+function splitDriverName(fullName) {
+	const parts = String(fullName || '').trim().split(/\s+/);
+	return {
+		firstName: parts[0] || fullName,
+		lastName: parts.slice(1).join(' ') || parts[0] || fullName,
+	};
+}
+
+function darkenHexColor(hexColor, factor = 0.5) {
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return '#1F2937';
+	const toHex = (value) => value.toString(16).padStart(2, '0');
+	const r = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor))
+	);
+	const g = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor))
+	);
+	const b = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor))
+	);
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function hexToRgba(hexColor, alpha) {
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return `rgba(31,41,55,${alpha})`;
+	const r = parseInt(raw.slice(0, 2), 16);
+	const g = parseInt(raw.slice(2, 4), 16);
+	const b = parseInt(raw.slice(4, 6), 16);
+	return `rgba(${r},${g},${b},${alpha})`;
 }
 
 function buildTimeline(driver) {
@@ -60,6 +167,32 @@ export default async function DriverDetailPage({ params }) {
 	const teamLogo = getTeamLogoPath(driver.teamName);
 	const timeline = buildTimeline(driver);
 	const experience = Math.max(1, 2026 - driver.debutSeason + 1);
+	const flagCode = getNationalityFlagCode(driver.nationality);
+	const countryName = getCountryNameFromNationality(driver.nationality);
+	const { firstName, lastName } = splitDriverName(driver.fullName);
+	const darkTeamTone = darkenHexColor(driver.teamColor, 0.36);
+	const midTeamTone = darkenHexColor(driver.teamColor, 0.66);
+	const compareHref = `/compare?type=drivers&a=${encodeURIComponent(driver.code)}&year=${CURRENT_SEASON}`;
+	const careerBars = [
+		{ label: 'Career Wins', value: driver.careerWins, max: CAREER_BENCHMARKS.wins },
+		{
+			label: 'Career Podiums',
+			value: driver.careerPodiums,
+			max: CAREER_BENCHMARKS.podiums,
+		},
+		{ label: 'Career Poles', value: driver.careerPoles, max: CAREER_BENCHMARKS.poles },
+		{
+			label: 'Fastest Laps',
+			value: driver.careerFastestLaps,
+			max: CAREER_BENCHMARKS.fastestLaps,
+		},
+	].map((item) => ({
+		...item,
+		percentage: Math.max(
+			3,
+			Math.min(100, Math.round((Number(item.value || 0) / Number(item.max || 1)) * 100))
+		),
+	}));
 
 	return (
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
@@ -74,139 +207,207 @@ export default async function DriverDetailPage({ params }) {
 				</Link>
 
 				<section
-					className="rounded-3xl border border-white/15 p-5 md:p-7 bg-linear-to-br from-white/14 via-white/5 to-transparent"
-					style={{ boxShadow: `inset 0 0 0 1px ${driver.teamColor}33` }}
+					className="relative overflow-hidden rounded-3xl border border-white/15"
+					style={{
+						background: `linear-gradient(115deg, ${hexToRgba(darkTeamTone, 0.97)} 0%, ${hexToRgba(driver.teamColor, 0.92)} 60%, ${hexToRgba(midTeamTone, 0.98)} 100%)`,
+						boxShadow: `inset 0 0 0 1px ${hexToRgba(driver.teamColor, 0.38)}`,
+					}}
 				>
-					<div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-						<div className="rounded-2xl border border-white/10 bg-black/45 p-3">
-							<div className="relative aspect-3/4 rounded-xl overflow-hidden bg-white/5">
+					<div
+						className="pointer-events-none absolute inset-0 opacity-55"
+						style={{
+							backgroundImage:
+								'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 15px)',
+						}}
+					/>
+
+					<div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] min-h-[420px]">
+						<div className="relative p-6 md:p-8 lg:p-10 flex flex-col justify-center">
+							<div className="pointer-events-none absolute left-[20%] top-0 hidden md:block h-full">
+								<div className="h-28 w-2 bg-white/90" />
+								<div className="mt-1 h-16 w-2 bg-white/80" />
+								<div className="mt-[190px] h-16 w-2 bg-white/80" />
+								<div className="mt-1 h-28 w-2 bg-white/90" />
+							</div>
+
+							<p className="text-xs md:text-sm uppercase tracking-[0.18em] font-semibold text-white/90">
+								{driver.teamName}
+							</p>
+							<h1 className="mt-3 leading-[0.9]">
+								<span
+									className="block text-4xl md:text-6xl lg:text-7xl text-white"
+									style={{ fontFamily: 'Brush Script MT, Segoe Script, cursive' }}
+								>
+									{firstName}
+								</span>
+								<span className="block text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white drop-shadow-[0_6px_18px_rgba(0,0,0,0.32)]">
+									{lastName}
+								</span>
+							</h1>
+
+							<div className="mt-4 inline-flex flex-wrap items-center gap-3 text-sm font-semibold text-white/95">
+								{flagCode && (
+									<span className="inline-flex h-5 overflow-hidden rounded border border-white/30 bg-black/20">
+										<Image
+											src={`/images/flags/${flagCode}.png`}
+											alt={`${countryName} flag`}
+											width={28}
+											height={20}
+											className="h-full w-auto"
+										/>
+									</span>
+								)}
+								<span>{countryName}</span>
+								<span className="text-white/70">|</span>
+								<span>{driver.teamName}</span>
+								<span className="text-white/70">|</span>
+								<span>#{driver.number}</span>
+							</div>
+
+							<p className="mt-4 max-w-xl text-sm md:text-base text-white/88">
+								{driver.bio}
+							</p>
+
+							<div className="mt-6 inline-flex flex-wrap items-center gap-3">
+								<Link
+									href={compareHref}
+									className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-black/18 px-5 py-2.5 text-sm font-bold text-white hover:bg-black/28 transition-colors"
+								>
+									<FaBalanceScale className="text-xs" />
+									Compare now
+									<FaArrowRight className="text-xs" />
+								</Link>
+							</div>
+						</div>
+
+						<div className="relative min-h-[280px] lg:min-h-full overflow-hidden">
+							<p
+								className="pointer-events-none absolute -right-2 md:right-4 top-8 text-[180px] md:text-[260px] leading-none font-black tracking-tight"
+								style={{ color: hexToRgba(darkTeamTone, 0.42) }}
+							>
+								{driver.number}
+							</p>
+							{teamLogo && (
+								<div className="absolute top-5 right-5 z-20 h-12 w-12 rounded-lg border border-white/25 bg-black/30 p-1.5">
+									<Image
+										src={teamLogo}
+										alt={driver.teamName}
+										fill
+										className="object-contain p-1"
+									/>
+								</div>
+							)}
+							<div className="absolute bottom-0 right-0 w-full h-full">
 								<Image
 									src={driverImage}
 									alt={driver.fullName}
 									fill
-									className="object-cover object-top"
+									className="object-contain object-bottom"
+									priority
 								/>
-							</div>
-							<div className="mt-3 flex items-center justify-between gap-3">
-								<p className="text-xl font-black">#{driver.number}</p>
-								{teamLogo && (
-									<div className="relative w-12 h-12 rounded-lg border border-white/12 bg-black/40 overflow-hidden">
-										<Image
-											src={teamLogo}
-											alt={driver.teamName}
-											fill
-											className="object-contain p-2"
-										/>
-									</div>
-								)}
-							</div>
-						</div>
-
-						<div>
-							<p
-								className="text-xs uppercase tracking-[0.18em] font-semibold"
-								style={{ color: driver.teamColor }}
-							>
-								{driver.teamName}
-							</p>
-							<h1 className="mt-1 text-3xl md:text-4xl font-black tracking-tight">
-								{driver.fullName}
-							</h1>
-							<p className="mt-2 text-sm text-gray-300 max-w-3xl">
-								{driver.bio}
-							</p>
-
-							<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-								<div className="rounded-xl border border-white/10 bg-black/40 p-3">
-									<p className="text-[10px] uppercase text-gray-400 tracking-wide">
-										Championships
-									</p>
-									<p className="mt-1 text-xl font-bold inline-flex items-center gap-2">
-										<FaTrophy className="text-yellow-400" />
-										{driver.worldChampionships}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-black/40 p-3">
-									<p className="text-[10px] uppercase text-gray-400 tracking-wide">
-										Career Points
-									</p>
-									<p className="mt-1 text-xl font-bold">
-										{driver.careerPoints.toLocaleString()}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-black/40 p-3">
-									<p className="text-[10px] uppercase text-gray-400 tracking-wide">
-										Career Starts
-									</p>
-									<p className="mt-1 text-xl font-bold">
-										{driver.careerStarts}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-black/40 p-3">
-									<p className="text-[10px] uppercase text-gray-400 tracking-wide">
-										Experience
-									</p>
-									<p className="mt-1 text-xl font-bold">{experience} seasons</p>
-								</div>
-							</div>
-
-							<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-								{[
-									{ label: 'Wins', value: driver.careerWins },
-									{ label: 'Podiums', value: driver.careerPodiums },
-									{ label: 'Poles', value: driver.careerPoles },
-									{ label: 'Fastest Laps', value: driver.careerFastestLaps },
-								].map((item) => (
-									<div
-										key={item.label}
-										className="rounded-xl border border-white/10 bg-black/40 p-3"
-									>
-										<p className="text-[10px] uppercase text-gray-400 tracking-wide">
-											{item.label}
-										</p>
-										<p className="mt-1 text-lg font-semibold">{item.value}</p>
-									</div>
-								))}
 							</div>
 						</div>
 					</div>
 				</section>
 
-				<section className="mt-4 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
-					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
-						<h2 className="text-lg font-bold inline-flex items-center gap-2">
-							<FaBullseye className="text-red-500" />
-							Driving Style
-						</h2>
-						<p className="mt-2 text-sm text-gray-300">{driver.style}</p>
-
-						<div className="mt-5">
-							<h3 className="text-sm uppercase tracking-[0.14em] text-gray-400">
-								Career Timeline
-							</h3>
-							<div className="mt-3 space-y-2">
-								{timeline.map((item) => (
-									<div
-										key={item.label}
-										className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 flex items-center justify-between gap-3"
-									>
-										<p className="text-xs text-gray-400 uppercase tracking-wide">
-											{item.label}
-										</p>
-										<p className="text-sm font-semibold text-white text-right">
-											{item.value}
-										</p>
-									</div>
-								))}
-							</div>
+				<section className="mt-4 rounded-3xl border border-white/14 bg-linear-to-br from-white/10 via-white/4 to-transparent p-5 md:p-6">
+					<div className="flex flex-wrap items-end justify-between gap-3">
+						<div>
+							<h2 className="text-xl md:text-2xl font-black inline-flex items-center gap-2">
+								<FaFlagCheckered className="text-red-500" />
+								This Year Stats
+							</h2>
+							<p className="mt-1 text-sm text-gray-300">
+								Live season snapshot for {CURRENT_SEASON}
+							</p>
 						</div>
 					</div>
+
+					<div className="mt-4">
+						<DriverSeasonStatsClient
+							driverCode={driver.code}
+							driverName={driver.fullName}
+							year={CURRENT_SEASON}
+							teamColor={driver.teamColor}
+						/>
+					</div>
+				</section>
+
+				<section className="mt-4 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
+					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
+						<h2 className="text-lg md:text-xl font-black inline-flex items-center gap-2">
+							<FaTrophy className="text-yellow-400" />
+							Career Stats
+						</h2>
+						<p className="mt-1 text-sm text-gray-300">
+							Long-run performance profile across the driver&apos;s F1 career.
+						</p>
+
+						<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
+							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
+								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+									Championships
+								</p>
+								<p className="mt-1 text-xl font-black">{driver.worldChampionships}</p>
+							</div>
+							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
+								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+									Career Points
+								</p>
+								<p className="mt-1 text-xl font-black">
+									{driver.careerPoints.toLocaleString()}
+								</p>
+							</div>
+							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
+								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+									Career Starts
+								</p>
+								<p className="mt-1 text-xl font-black">{driver.careerStarts}</p>
+							</div>
+							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
+								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+									Experience
+								</p>
+								<p className="mt-1 text-xl font-black">{experience} seasons</p>
+							</div>
+							</div>
+
+						<div className="mt-5 space-y-3">
+							{careerBars.map((item) => (
+								<div
+									key={item.label}
+									className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5"
+								>
+									<div className="flex items-center justify-between gap-3 text-sm">
+										<p className="text-gray-300">{item.label}</p>
+										<p className="font-bold text-white">
+											{item.value}
+											<span className="text-gray-400 text-xs ml-1">
+												/ {item.max}
+											</span>
+										</p>
+									</div>
+									<div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
+										<div
+											className="h-full rounded-full"
+											style={{
+												width: `${item.percentage}%`,
+												background: `linear-gradient(90deg, ${driver.teamColor} 0%, ${hexToRgba(driver.teamColor, 0.62)} 100%)`,
+											}}
+										/>
+									</div>
+								</div>
+							))}
+							</div>
+						</div>
 
 					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
 						<h2 className="text-lg font-bold inline-flex items-center gap-2">
 							<FaCalendarAlt className="text-red-500" />
-							Profile Details
+							Driver Profile
 						</h2>
+						<p className="mt-2 text-sm text-gray-300">{driver.style}</p>
+
 						<div className="mt-3 space-y-2 text-sm">
 							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
 								<span className="text-gray-400">Born:</span>{' '}
@@ -220,6 +421,27 @@ export default async function DriverDetailPage({ params }) {
 								<span className="text-gray-400">Nationality:</span>{' '}
 								{driver.nationality}
 							</p>
+
+							<div className="pt-2">
+								<h3 className="text-sm uppercase tracking-[0.14em] text-gray-400">
+									Career Timeline
+								</h3>
+								<div className="mt-2 space-y-2">
+									{timeline.map((item) => (
+										<div
+											key={item.label}
+											className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 flex items-center justify-between gap-3"
+										>
+											<p className="text-xs text-gray-400 uppercase tracking-wide">
+												{item.label}
+											</p>
+											<p className="text-sm font-semibold text-white text-right">
+												{item.value}
+											</p>
+										</div>
+									))}
+								</div>
+							</div>
 							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
 								<span className="text-gray-400">Current Team:</span>{' '}
 								{driver.teamName}
