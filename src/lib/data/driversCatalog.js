@@ -98,7 +98,7 @@ export const DRIVER_CATALOG = [
 		debutTeam: 'Mercedes',
 		worldChampionships: 0,
 		careerStarts: 24,
-		careerWins: 1,
+		careerWins: 2,
 		careerPodiums: 6,
 		careerPoles: 2,
 		careerFastestLaps: 2,

@@ -7,7 +7,6 @@ import {
 	DRIVER_CATALOG,
 	getDriverBySlug,
 } from '@/lib/data/driversCatalog';
-import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -20,6 +19,7 @@ import {
 	FaFlagCheckered,
 	FaTrophy,
 } from 'react-icons/fa';
+import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 
 const NATIONALITY_FLAG_MAP = {
 	australian: 'aus',
@@ -59,16 +59,6 @@ const NATIONALITY_COUNTRY_MAP = {
 	'new zealander': 'New Zealand',
 };
 
-const CAREER_BENCHMARKS = DRIVER_CATALOG.reduce(
-	(acc, driver) => ({
-		wins: Math.max(acc.wins, Number(driver.careerWins || 0)),
-		podiums: Math.max(acc.podiums, Number(driver.careerPodiums || 0)),
-		poles: Math.max(acc.poles, Number(driver.careerPoles || 0)),
-		fastestLaps: Math.max(acc.fastestLaps, Number(driver.careerFastestLaps || 0)),
-	}),
-	{ wins: 1, podiums: 1, poles: 1, fastestLaps: 1 }
-);
-
 function formatBirthDate(value) {
 	if (!value) return 'Unknown';
 	const parsed = new Date(value);
@@ -93,7 +83,9 @@ function getCountryNameFromNationality(nationality) {
 }
 
 function splitDriverName(fullName) {
-	const parts = String(fullName || '').trim().split(/\s+/);
+	const parts = String(fullName || '')
+		.trim()
+		.split(/\s+/);
 	return {
 		firstName: parts[0] || fullName,
 		lastName: parts.slice(1).join(' ') || parts[0] || fullName,
@@ -173,26 +165,16 @@ export default async function DriverDetailPage({ params }) {
 	const darkTeamTone = darkenHexColor(driver.teamColor, 0.36);
 	const midTeamTone = darkenHexColor(driver.teamColor, 0.66);
 	const compareHref = `/compare?type=drivers&a=${encodeURIComponent(driver.code)}&year=${CURRENT_SEASON}`;
-	const careerBars = [
-		{ label: 'Career Wins', value: driver.careerWins, max: CAREER_BENCHMARKS.wins },
-		{
-			label: 'Career Podiums',
-			value: driver.careerPodiums,
-			max: CAREER_BENCHMARKS.podiums,
-		},
-		{ label: 'Career Poles', value: driver.careerPoles, max: CAREER_BENCHMARKS.poles },
-		{
-			label: 'Fastest Laps',
-			value: driver.careerFastestLaps,
-			max: CAREER_BENCHMARKS.fastestLaps,
-		},
-	].map((item) => ({
-		...item,
-		percentage: Math.max(
-			3,
-			Math.min(100, Math.round((Number(item.value || 0) / Number(item.max || 1)) * 100))
-		),
-	}));
+	const careerStats = [
+		{ label: 'Championships', value: driver.worldChampionships },
+		{ label: 'Career Wins', value: driver.careerWins },
+		{ label: 'Career Podiums', value: driver.careerPodiums },
+		{ label: 'Pole Positions', value: driver.careerPoles },
+		{ label: 'Fastest Laps', value: driver.careerFastestLaps },
+		{ label: 'Career Starts', value: driver.careerStarts },
+		{ label: 'Career Points', value: driver.careerPoints.toLocaleString() },
+		{ label: 'Experience', value: `${experience} seasons` },
+	];
 
 	return (
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
@@ -220,6 +202,14 @@ export default async function DriverDetailPage({ params }) {
 								'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 15px)',
 						}}
 					/>
+					<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center">
+						<p
+							className="text-[210px] md:text-[320px] leading-none font-black tracking-tight"
+							style={{ color: hexToRgba(darkTeamTone, 0.38) }}
+						>
+							{driver.number}
+						</p>
+					</div>
 
 					<div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] min-h-[420px]">
 						<div className="relative p-6 md:p-8 lg:p-10 flex flex-col justify-center">
@@ -236,7 +226,9 @@ export default async function DriverDetailPage({ params }) {
 							<h1 className="mt-3 leading-[0.9]">
 								<span
 									className="block text-4xl md:text-6xl lg:text-7xl text-white"
-									style={{ fontFamily: 'Brush Script MT, Segoe Script, cursive' }}
+									style={{
+										fontFamily: 'Brush Script MT, Segoe Script, cursive',
+									}}
 								>
 									{firstName}
 								</span>
@@ -281,12 +273,6 @@ export default async function DriverDetailPage({ params }) {
 						</div>
 
 						<div className="relative min-h-[280px] lg:min-h-full overflow-hidden">
-							<p
-								className="pointer-events-none absolute -right-2 md:right-4 top-8 text-[180px] md:text-[260px] leading-none font-black tracking-tight"
-								style={{ color: hexToRgba(darkTeamTone, 0.42) }}
-							>
-								{driver.number}
-							</p>
 							{teamLogo && (
 								<div className="absolute top-5 right-5 z-20 h-12 w-12 rounded-lg border border-white/25 bg-black/30 p-1.5">
 									<Image
@@ -340,66 +326,24 @@ export default async function DriverDetailPage({ params }) {
 							Career Stats
 						</h2>
 						<p className="mt-1 text-sm text-gray-300">
-							Long-run performance profile across the driver&apos;s F1 career.
+							Long-run profile built from the historical career dataset.
 						</p>
 
 						<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
-								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
-									Championships
-								</p>
-								<p className="mt-1 text-xl font-black">{driver.worldChampionships}</p>
-							</div>
-							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
-								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
-									Career Points
-								</p>
-								<p className="mt-1 text-xl font-black">
-									{driver.careerPoints.toLocaleString()}
-								</p>
-							</div>
-							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
-								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
-									Career Starts
-								</p>
-								<p className="mt-1 text-xl font-black">{driver.careerStarts}</p>
-							</div>
-							<div className="rounded-xl border border-white/10 bg-black/35 p-3">
-								<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
-									Experience
-								</p>
-								<p className="mt-1 text-xl font-black">{experience} seasons</p>
-							</div>
-							</div>
-
-						<div className="mt-5 space-y-3">
-							{careerBars.map((item) => (
+							{careerStats.map((item) => (
 								<div
 									key={item.label}
-									className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5"
+									className="rounded-xl border border-white/12 bg-linear-to-br from-white/12 via-white/6 to-transparent p-3"
+									style={{ boxShadow: `inset 0 0 0 1px ${hexToRgba(driver.teamColor, 0.12)}` }}
 								>
-									<div className="flex items-center justify-between gap-3 text-sm">
-										<p className="text-gray-300">{item.label}</p>
-										<p className="font-bold text-white">
-											{item.value}
-											<span className="text-gray-400 text-xs ml-1">
-												/ {item.max}
-											</span>
-										</p>
-									</div>
-									<div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-										<div
-											className="h-full rounded-full"
-											style={{
-												width: `${item.percentage}%`,
-												background: `linear-gradient(90deg, ${driver.teamColor} 0%, ${hexToRgba(driver.teamColor, 0.62)} 100%)`,
-											}}
-										/>
-									</div>
+									<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+										{item.label}
+									</p>
+									<p className="mt-1 text-xl font-black text-white">{item.value}</p>
 								</div>
 							))}
-							</div>
 						</div>
+					</div>
 
 					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
 						<h2 className="text-lg font-bold inline-flex items-center gap-2">
