@@ -170,11 +170,11 @@ export default function ScheduleHeroCards({ nextRace, lastRace }) {
 											)}
 
 											<div className="absolute bottom-2 left-1.5 right-1.5 text-center">
-												<p className="text-[11px] font-semibold text-white truncate">
+												<p className="text-xs font-semibold text-white truncate">
 													{driver.driver_name}
 												</p>
 												<p
-													className="text-[9px] uppercase tracking-[0.14em] truncate"
+													className="text-[10px] uppercase tracking-[0.14em] truncate"
 													style={{ color: accent }}
 												>
 													{driver.team_name}
@@ -183,7 +183,7 @@ export default function ScheduleHeroCards({ nextRace, lastRace }) {
 										</div>
 
 										<div
-											className={`w-[88%] ${podiumHeight} rounded-t-lg border border-white/15 border-b-0 flex items-center justify-center text-[9px] font-black uppercase tracking-[0.12em] text-white/90`}
+											className={`w-[88%] ${podiumHeight} rounded-t-lg border border-white/15 border-b-0 flex items-center justify-center text-[10px] font-black uppercase tracking-[0.12em] text-white/90`}
 											style={{
 												background: `linear-gradient(180deg, ${accent}44 0%, rgba(0,0,0,0.55) 100%)`,
 											}}
