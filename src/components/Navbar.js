@@ -13,6 +13,7 @@ const NAV_ITEMS = [
 	{ href: '/profile', label: 'Profile', requiresAuth: true },
 	{ href: '/schedule', label: 'Schedule' },
 	{ href: '/standings', label: 'Standings' },
+	{ href: '/drivers', label: 'Drivers' },
 	{ href: '/compare', label: 'Compare' },
 	{ href: '/telemetry', label: 'Telemetry' },
 	{ href: '/track', label: 'Track', requiresAuth: true },
