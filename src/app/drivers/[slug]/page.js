@@ -202,17 +202,21 @@ export default async function DriverDetailPage({ params }) {
 								'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 15px)',
 						}}
 					/>
-					<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center">
+					<div className="pointer-events-none absolute inset-y-0 right-[2%] z-[1] flex items-center">
 						<p
-							className="text-[210px] md:text-[320px] leading-none font-black tracking-tight"
-							style={{ color: hexToRgba(darkTeamTone, 0.38) }}
+							className="text-[230px] md:text-[340px] lg:text-[400px] leading-none font-black tracking-tight"
+							style={{
+								color: hexToRgba(darkTeamTone, 0.35),
+								textShadow: '0 6px 30px rgba(0,0,0,0.26)',
+								WebkitTextStroke: `1px ${hexToRgba(driver.teamColor, 0.22)}`,
+							}}
 						>
 							{driver.number}
 						</p>
 					</div>
 
 					<div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] min-h-[420px]">
-						<div className="relative p-6 md:p-8 lg:p-10 flex flex-col justify-center">
+						<div className="relative p-6 md:p-8 lg:p-10 flex flex-col justify-center overflow-visible">
 							<div className="pointer-events-none absolute left-[20%] top-0 hidden md:block h-full">
 								<div className="h-28 w-2 bg-white/90" />
 								<div className="mt-1 h-16 w-2 bg-white/80" />
@@ -223,16 +227,23 @@ export default async function DriverDetailPage({ params }) {
 							<p className="text-xs md:text-sm uppercase tracking-[0.18em] font-semibold text-white/90">
 								{driver.teamName}
 							</p>
-							<h1 className="mt-3 leading-[0.9]">
+							<h1 className="mt-3 leading-[0.84] relative z-10 max-w-none">
 								<span
-									className="block text-4xl md:text-6xl lg:text-7xl text-white"
+									className="block text-5xl md:text-7xl lg:text-[5.6rem] text-white/95"
 									style={{
-										fontFamily: 'Brush Script MT, Segoe Script, cursive',
+										fontFamily:
+											'Lucida Handwriting, Brush Script MT, Segoe Script, cursive',
 									}}
 								>
 									{firstName}
 								</span>
-								<span className="block text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white drop-shadow-[0_6px_18px_rgba(0,0,0,0.32)]">
+								<span
+									className="block text-6xl md:text-8xl lg:text-[9rem] font-black uppercase tracking-[-0.03em] text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)]"
+									style={{
+										fontFamily:
+											'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+									}}
+								>
 									{lastName}
 								</span>
 							</h1>
@@ -272,14 +283,14 @@ export default async function DriverDetailPage({ params }) {
 							</div>
 						</div>
 
-						<div className="relative min-h-[280px] lg:min-h-full overflow-hidden">
+						<div className="relative z-20 min-h-[280px] lg:min-h-full overflow-hidden">
 							{teamLogo && (
-								<div className="absolute top-5 right-5 z-20 h-12 w-12 rounded-lg border border-white/25 bg-black/30 p-1.5">
+								<div className="absolute top-5 right-5 z-20 h-12 w-12">
 									<Image
 										src={teamLogo}
 										alt={driver.teamName}
 										fill
-										className="object-contain p-1"
+										className="object-contain drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]"
 									/>
 								</div>
 							)}
@@ -334,12 +345,16 @@ export default async function DriverDetailPage({ params }) {
 								<div
 									key={item.label}
 									className="rounded-xl border border-white/12 bg-linear-to-br from-white/12 via-white/6 to-transparent p-3"
-									style={{ boxShadow: `inset 0 0 0 1px ${hexToRgba(driver.teamColor, 0.12)}` }}
+									style={{
+										boxShadow: `inset 0 0 0 1px ${hexToRgba(driver.teamColor, 0.12)}`,
+									}}
 								>
 									<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
 										{item.label}
 									</p>
-									<p className="mt-1 text-xl font-black text-white">{item.value}</p>
+									<p className="mt-1 text-xl font-black text-white">
+										{item.value}
+									</p>
 								</div>
 							))}
 						</div>
