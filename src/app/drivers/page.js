@@ -10,11 +10,29 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { FaArrowRight, FaSearch, FaUsers } from 'react-icons/fa';
 
-function formatCompactStat(label, value) {
-	return {
-		label,
-		value: Number.isFinite(value) ? value.toLocaleString() : value,
-	};
+const NATIONALITY_FLAG_MAP = {
+	australian: 'aus',
+	argentine: 'arg',
+	brazilian: 'bra',
+	british: 'gbr',
+	canadian: 'can',
+	dutch: 'ned',
+	finnish: 'fin',
+	french: 'fra',
+	german: 'ger',
+	italian: 'ita',
+	mexican: 'mex',
+	monacan: 'mon',
+	spanish: 'esp',
+	'thai-british': 'tha',
+	'thai british': 'tha',
+	'new zealander': 'nzl',
+};
+
+function getNationalityFlagCode(nationality) {
+	if (!nationality) return null;
+	const normalized = String(nationality).trim().toLowerCase();
+	return NATIONALITY_FLAG_MAP[normalized] || null;
 }
 
 export default function DriversPage() {
@@ -33,15 +51,7 @@ export default function DriversPage() {
 				driver.teamName.toLowerCase().includes(q) ||
 				driver.nationality.toLowerCase().includes(q);
 			return matchesTeam && matchesQuery;
-		}).sort((a, b) => {
-			if (b.worldChampionships !== a.worldChampionships) {
-				return b.worldChampionships - a.worldChampionships;
-			}
-			if (b.careerWins !== a.careerWins) {
-				return b.careerWins - a.careerWins;
-			}
-			return a.fullName.localeCompare(b.fullName);
-		});
+		}).sort((a, b) => a.fullName.localeCompare(b.fullName));
 	}, [query, team]);
 
 	return (
@@ -67,7 +77,7 @@ export default function DriversPage() {
 						<input
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Search by driver, code, team, or nationality"
+							placeholder="Search by driver, team, or nationality"
 							className="w-full rounded-xl border border-white/15 bg-black/60 backdrop-blur-xl py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-red-500/60"
 						/>
 					</label>
@@ -88,23 +98,26 @@ export default function DriversPage() {
 					</select>
 				</div>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 justify-items-center">
 					{filteredDrivers.map((driver) => {
 						const driverImage = getDriverImagePath(driver.code);
 						const teamLogo = getTeamLogoPath(driver.teamName);
-						const stats = [
-							formatCompactStat('Wins', driver.careerWins),
-							formatCompactStat('Podiums', driver.careerPodiums),
-							formatCompactStat('Titles', driver.worldChampionships),
-						];
+						const flagCode = getNationalityFlagCode(driver.nationality);
 
 						return (
 							<Link
 								key={driver.slug}
 								href={`/drivers/${driver.slug}`}
-								className="group rounded-2xl border border-white/12 bg-linear-to-br from-white/12 via-white/4 to-transparent p-4 hover:border-white/25 hover:shadow-[0_14px_40px_rgba(0,0,0,0.35)] transition-all duration-300"
+								className="group relative w-full max-w-[320px] min-h-[460px] rounded-2xl border border-white/12 bg-black/60 p-4 overflow-hidden hover:border-white/25 hover:shadow-[0_16px_45px_rgba(0,0,0,0.42)] transition-all duration-300"
 							>
-								<div className="flex items-start justify-between gap-3">
+								<div
+									className="pointer-events-none absolute inset-y-0 right-0 w-[34%] opacity-85"
+									style={{
+										backgroundImage: `linear-gradient(140deg, ${driver.teamColor}66 0%, ${driver.teamColor}28 40%, transparent 100%), repeating-linear-gradient(-36deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 10px)`,
+									}}
+								/>
+
+								<div className="relative z-10 flex items-start justify-between gap-3">
 									<div>
 										<p
 											className="text-[10px] uppercase tracking-[0.18em] font-semibold"
@@ -112,15 +125,12 @@ export default function DriversPage() {
 										>
 											{driver.teamName}
 										</p>
-										<h2 className="mt-1 text-lg font-bold leading-tight text-white">
+										<h2 className="mt-1 text-xl font-bold leading-tight text-white max-w-[220px]">
 											{driver.fullName}
 										</h2>
-										<p className="text-xs text-gray-300 mt-1">
-											#{driver.number} • {driver.nationality}
-										</p>
 									</div>
 									{teamLogo && (
-										<div className="relative w-10 h-10 rounded-lg bg-black/45 border border-white/10 overflow-hidden">
+										<div className="relative w-10 h-10 rounded-lg bg-black/45 border border-white/10 overflow-hidden shrink-0">
 											<Image
 												src={teamLogo}
 												alt={driver.teamName}
@@ -131,33 +141,51 @@ export default function DriversPage() {
 									)}
 								</div>
 
-								<div className="mt-3 flex items-center gap-3">
-									<div className="relative w-20 h-20 rounded-xl bg-white/5 overflow-hidden">
-										<Image
-											src={driverImage}
-											alt={driver.fullName}
-											fill
-											className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
-										/>
+								<div className="relative z-10 mt-4 h-[280px] rounded-xl bg-white/5 overflow-hidden border border-white/10">
+									<Image
+										src={driverImage}
+										alt={driver.fullName}
+										fill
+										className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
+									/>
+								</div>
+
+								<div className="relative z-10 mt-4 space-y-2">
+									<div className="rounded-lg bg-black/45 border border-white/10 px-3 py-2">
+										<p className="text-[10px] uppercase tracking-wide text-gray-400">
+											Racing Number
+										</p>
+										<p className="text-base font-semibold text-white">
+											#{driver.number}
+										</p>
 									</div>
-									<div className="grid grid-cols-3 gap-2 flex-1">
-										{stats.map((stat) => (
-											<div
-												key={stat.label}
-												className="rounded-lg bg-black/45 border border-white/10 px-2 py-2 text-center"
-											>
-												<p className="text-[10px] text-gray-400 uppercase tracking-wide">
-													{stat.label}
-												</p>
-												<p className="text-sm font-semibold text-white mt-0.5">
-													{stat.value}
-												</p>
+									<div className="rounded-lg bg-black/45 border border-white/10 px-3 py-2 flex items-center justify-between gap-2">
+										<div>
+											<p className="text-[10px] uppercase tracking-wide text-gray-400">
+												Nationality
+											</p>
+											<p className="text-sm font-semibold text-white">
+												{driver.nationality}
+											</p>
+										</div>
+										{flagCode && (
+											<div className="h-7 overflow-hidden rounded border border-white/15 bg-black/35 shrink-0">
+												<Image
+													src={`/images/flags/${flagCode}.png`}
+													alt={`${driver.nationality} flag`}
+													width={40}
+													height={28}
+													className="h-full w-auto"
+													onError={(event) => {
+														event.currentTarget.style.display = 'none';
+													}}
+												/>
 											</div>
-										))}
+										)}
 									</div>
 								</div>
 
-								<div className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-red-200 group-hover:text-white transition-colors">
+								<div className="relative z-10 mt-3 inline-flex items-center gap-2 text-xs font-semibold text-red-200 group-hover:text-white transition-colors">
 									Open full profile <FaArrowRight className="text-[11px]" />
 								</div>
 							</Link>
