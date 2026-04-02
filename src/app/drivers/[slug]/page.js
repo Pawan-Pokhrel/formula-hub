@@ -4,6 +4,10 @@ import {
 	getTeamCode,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
+import {
+	buildDriverCareerMap,
+	getDriverCareerStats,
+} from '@/lib/api/driverCareerApi';
 import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
 import {
 	CURRENT_SEASON,
@@ -23,6 +27,8 @@ import {
 	FaTrophy,
 } from 'react-icons/fa';
 import DriverSeasonStatsClient from './DriverSeasonStatsClient';
+
+export const revalidate = 300;
 
 const NATIONALITY_FLAG_MAP = {
 	australian: 'aus',
@@ -70,6 +76,29 @@ function formatBirthDate(value) {
 		month: 'long',
 		day: 'numeric',
 		year: 'numeric',
+	});
+}
+
+function getAgeFromBirthDate(value) {
+	if (!value) return null;
+	const dob = new Date(value);
+	if (Number.isNaN(dob.getTime())) return null;
+
+	const now = new Date();
+	let age = now.getFullYear() - dob.getFullYear();
+	const hasHadBirthdayThisYear =
+		now.getMonth() > dob.getMonth() ||
+		(now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
+	if (!hasHadBirthdayThisYear) age -= 1;
+	return age >= 0 ? age : null;
+}
+
+function formatCareerPoints(value) {
+	const numeric = Number(value || 0);
+	if (!Number.isFinite(numeric)) return '0';
+	return numeric.toLocaleString(undefined, {
+		minimumFractionDigits: Number.isInteger(numeric) ? 0 : 1,
+		maximumFractionDigits: 1,
 	});
 }
 
@@ -163,8 +192,50 @@ export async function generateStaticParams() {
 
 export default async function DriverDetailPage({ params }) {
 	const resolvedParams = await params;
-	const driver = getDriverBySlug(resolvedParams?.slug);
-	if (!driver) notFound();
+	const staticDriver = getDriverBySlug(resolvedParams?.slug);
+	if (!staticDriver) notFound();
+
+	const careerRows = await getDriverCareerStats({ year: CURRENT_SEASON });
+	const careerByCode = buildDriverCareerMap(careerRows);
+	const liveCareer = careerByCode.get(
+		String(staticDriver.code || '').toUpperCase()
+	);
+	const driver =
+		liveCareer ?
+			{
+				...staticDriver,
+				worldChampionships: Math.max(
+					Number(staticDriver.worldChampionships || 0),
+					Number(liveCareer.world_championships || 0)
+				),
+				careerStarts: Math.max(
+					Number(staticDriver.careerStarts || 0),
+					Number(liveCareer.career_starts || 0)
+				),
+				careerWins: Math.max(
+					Number(staticDriver.careerWins || 0),
+					Number(liveCareer.career_wins || 0)
+				),
+				careerPodiums: Math.max(
+					Number(staticDriver.careerPodiums || 0),
+					Number(liveCareer.career_podiums || 0)
+				),
+				careerPoles: Math.max(
+					Number(staticDriver.careerPoles || 0),
+					Number(liveCareer.career_poles || 0)
+				),
+				careerFastestLaps: Math.max(
+					Number(staticDriver.careerFastestLaps || 0),
+					Number(liveCareer.career_fastest_laps || 0)
+				),
+				careerPoints: Math.max(
+					Number(staticDriver.careerPoints || 0),
+					Number(liveCareer.career_points || 0)
+				),
+				birthDate: liveCareer.date_of_birth || staticDriver.birthDate,
+				nationality: liveCareer.nationality || staticDriver.nationality,
+			}
+		:	staticDriver;
 
 	const teammate = DRIVER_CATALOG.find(
 		(candidate) =>
@@ -174,6 +245,7 @@ export default async function DriverDetailPage({ params }) {
 	const teamLogo = getTeamLogoPath(driver.teamName);
 	const timeline = buildTimeline(driver);
 	const experience = Math.max(1, 2026 - driver.debutSeason + 1);
+	const age = getAgeFromBirthDate(driver.birthDate);
 	const flagCode = getNationalityFlagCode(driver.nationality);
 	const countryName = getCountryNameFromNationality(driver.nationality);
 	const { firstName, lastName } = splitDriverName(driver.fullName);
@@ -187,7 +259,7 @@ export default async function DriverDetailPage({ params }) {
 		{ label: 'Pole Positions', value: driver.careerPoles },
 		{ label: 'Fastest Laps', value: driver.careerFastestLaps },
 		{ label: 'Career Starts', value: driver.careerStarts },
-		{ label: 'Career Points', value: driver.careerPoints.toLocaleString() },
+		{ label: 'Career Points', value: formatCareerPoints(driver.careerPoints) },
 		{ label: 'Experience', value: `${experience} seasons` },
 	];
 	const constructorOrderByKey = Object.fromEntries(
@@ -423,6 +495,10 @@ export default async function DriverDetailPage({ params }) {
 							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
 								<span className="text-gray-400">Born:</span>{' '}
 								{formatBirthDate(driver.birthDate)}
+							</p>
+							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
+								<span className="text-gray-400">Age:</span>{' '}
+								{age == null ? 'Unknown' : age}
 							</p>
 							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
 								<span className="text-gray-400">Birthplace:</span>{' '}
