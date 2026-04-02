@@ -14,7 +14,7 @@ import { CURRENT_SEASON, DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { FaArrowRight, FaFlagCheckered, FaTrophy } from 'react-icons/fa';
+import { FaTrophy } from 'react-icons/fa';
 
 function normalizeName(value) {
 	return String(value || '')
@@ -43,6 +43,21 @@ const TEAM_DISPLAY_NAME_BY_KEY = {
 	sau: 'Sauber',
 };
 
+const TEAM_SLUG_BY_KEY = {
+	mer: 'mercedes',
+	fer: 'ferrari',
+	rbr: 'redbull-racing',
+	mcl: 'mclaren',
+	haas: 'haas',
+	ast: 'aston-martin',
+	wil: 'williams',
+	rb: 'racing-bulls',
+	alp: 'alpine',
+	aud: 'audi',
+	cad: 'cadillac',
+	sau: 'sauber',
+};
+
 const TEAM_CAR_TOKEN_BY_KEY = {
 	mer: 'mercedes',
 	fer: 'ferrari',
@@ -64,6 +79,11 @@ const IMAGE_FIRST_NAME_OVERRIDES = {
 function getDisplayTeamName(teamName) {
 	const key = getTeamKey(teamName);
 	return TEAM_DISPLAY_NAME_BY_KEY[key] || String(teamName || 'Unknown Team');
+}
+
+function getTeamSlug(teamName) {
+	const key = getTeamKey(teamName);
+	return TEAM_SLUG_BY_KEY[key] || String(teamName || 'team').toLowerCase();
 }
 
 function getTeamColor(teamName) {
@@ -110,7 +130,6 @@ function getTeamCarImagePath(teamName) {
 	const teamKey = getTeamKey(teamName);
 	if (!teamKey) return [];
 
-	const keyBasedPath = `/images/cars/${CURRENT_SEASON}_${teamKey}_carright.png`;
 	const legacyToken =
 		TEAM_CAR_TOKEN_BY_KEY[teamKey] ||
 		String(teamName || '')
@@ -121,7 +140,7 @@ function getTeamCarImagePath(teamName) {
 			`/images/cars/${CURRENT_SEASON}${legacyToken}carright.png`
 		:	null;
 
-	return Array.from(new Set([keyBasedPath, legacyPath].filter(Boolean)));
+	return Array.from(new Set([legacyPath].filter(Boolean)));
 }
 
 function getDriverTeamCardImagePath(driver) {
@@ -174,6 +193,47 @@ const FALLBACK_CONSTRUCTORS = ROUGH_CONSTRUCTOR_ORDER_2026.map(
 	})
 );
 
+const TEAMS_CACHE_KEY = `formulahub.teams.page.v1.${CURRENT_SEASON}`;
+const TEAMS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function readTeamsCache() {
+	if (typeof window === 'undefined') return null;
+	try {
+		const raw = window.sessionStorage.getItem(TEAMS_CACHE_KEY);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw);
+		if (!parsed || typeof parsed !== 'object') return null;
+		if (!Array.isArray(parsed.constructors)) return null;
+		if (
+			!parsed.driverPointsByCode ||
+			typeof parsed.driverPointsByCode !== 'object'
+		)
+			return null;
+		if (!Number.isFinite(Number(parsed.updatedAt))) return null;
+		const age = Date.now() - Number(parsed.updatedAt);
+		if (age > TEAMS_CACHE_TTL_MS) return null;
+		return parsed;
+	} catch {
+		return null;
+	}
+}
+
+function writeTeamsCache(constructors, driverPointsByCode) {
+	if (typeof window === 'undefined') return;
+	try {
+		window.sessionStorage.setItem(
+			TEAMS_CACHE_KEY,
+			JSON.stringify({
+				constructors,
+				driverPointsByCode,
+				updatedAt: Date.now(),
+			})
+		);
+	} catch {
+		// Ignore cache persistence failures.
+	}
+}
+
 export default function TeamsPage() {
 	const [constructors, setConstructors] = useState([]);
 	const [driverPointsByCode, setDriverPointsByCode] = useState({});
@@ -182,6 +242,13 @@ export default function TeamsPage() {
 
 	useEffect(() => {
 		let active = true;
+		const cached = readTeamsCache();
+
+		if (cached) {
+			setConstructors(cached.constructors);
+			setDriverPointsByCode(cached.driverPointsByCode);
+			setIsLoading(false);
+		}
 
 		async function loadTeams() {
 			try {
@@ -211,10 +278,13 @@ export default function TeamsPage() {
 
 				setConstructors(constructorRows);
 				setDriverPointsByCode(pointsMap);
+				writeTeamsCache(constructorRows, pointsMap);
 			} catch {
 				if (!active) return;
-				setConstructors(FALLBACK_CONSTRUCTORS);
-				setDriverPointsByCode({});
+				if (!cached) {
+					setConstructors(FALLBACK_CONSTRUCTORS);
+					setDriverPointsByCode({});
+				}
 			} finally {
 				if (active) setIsLoading(false);
 			}
@@ -286,17 +356,16 @@ export default function TeamsPage() {
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
 			<div className="fixed inset-0 bg-black/90 z-0" />
 			<div className="relative z-10 max-w-[1800px] mx-auto pb-12 animate-fade-in">
-				<div className="mb-7 md:mb-9">
+				<div className="mb-8 md:mb-10">
 					<h1
-						className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white"
+						className="text-[2.2rem] md:text-[3.05rem] font-semibold tracking-[-0.015em] leading-[0.96] text-white"
 						style={{
-							fontFamily:
-								'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+							fontFamily: 'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
 						}}
 					>
-						F1 Teams {CURRENT_SEASON}
+						Formula 1 Teams {CURRENT_SEASON}
 					</h1>
-					<p className="mt-2 text-base text-gray-300 max-w-2xl">
+					<p className="mt-3 text-[0.97rem] md:text-base text-gray-300 max-w-2xl">
 						Find the current Formula 1 teams for the {CURRENT_SEASON} season.
 					</p>
 				</div>
@@ -330,9 +399,10 @@ export default function TeamsPage() {
 							const hasCarImage = Boolean(carImage);
 
 							return (
-								<div
+								<Link
 									key={teamKey}
-									className="group relative min-h-[290px] rounded-2xl border border-white/14 overflow-hidden p-6 pt-7"
+									href={`/teams/${getTeamSlug(rawTeamName)}`}
+									className="group relative block min-h-[290px] rounded-2xl border border-white/14 overflow-hidden p-6 pt-7 transition-transform duration-200 hover:-translate-y-0.5"
 									style={{
 										background: `linear-gradient(115deg, ${hexToRgba(darkenHexColor(teamColor, 0.52), 0.95)} 0%, ${hexToRgba(teamColor, 0.88)} 52%, ${hexToRgba(teamColor, 0.76)} 100%)`,
 										boxShadow: `inset 0 0 0 1px ${hexToRgba(teamColor, 0.35)}`,
@@ -355,9 +425,9 @@ export default function TeamsPage() {
 										}}
 									/>
 
-									<div className="relative z-10 flex items-start justify-between gap-5">
-										<div>
-											<h2 className="text-4xl md:text-[2.75rem] font-black leading-[0.9] tracking-tight text-white drop-shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
+									<div className="relative z-10 flex items-start justify-between gap-5 pb-24 md:pb-32">
+										<div className="min-w-0">
+											<h2 className="text-3xl md:text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.01em] text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.28)]">
 												{teamName}
 											</h2>
 
@@ -381,21 +451,23 @@ export default function TeamsPage() {
 																	alt={driver.fullName}
 																	fill
 																	sizes="32px"
-																	className="object-cover"
+																	className="object-cover object-top"
+																	style={{ objectPosition: 'center top' }}
 																/>
 															</div>
 															<p className="text-base md:text-lg tracking-tight">
 																<span
-																	className="font-normal normal-case text-white/95"
+																	className="font-medium normal-case text-white/95"
 																	style={{
 																		fontFamily:
-																			'Lucida Handwriting, Brush Script MT, Segoe Script, cursive',
+																			'Brush Script MT, Segoe Script, Lucida Handwriting, cursive',
+																		fontStyle: 'italic',
 																	}}
 																>
 																	{firstName}
 																</span>
 																{lastName && (
-																	<span className="ml-1 font-black uppercase text-white">
+																	<span className="ml-1 font-semibold uppercase text-white/98 tracking-wide">
 																		{lastName}
 																	</span>
 																)}
@@ -404,8 +476,21 @@ export default function TeamsPage() {
 													);
 												})}
 											</div>
+										</div>
 
-											<div className="mt-5 inline-flex flex-wrap gap-2">
+										<div className="flex shrink-0 flex-col items-end gap-3">
+											{teamLogo && (
+												<div className="relative mr-1 h-13 w-13 md:h-14 md:w-14 rounded-full border border-white/25 bg-black/25 p-3">
+													<Image
+														src={teamLogo}
+														alt={teamName}
+														fill
+														className="object-contain p-1"
+													/>
+												</div>
+											)}
+
+											<div className="inline-flex flex-wrap items-center justify-end gap-2 mt-[34px]">
 												<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95 inline-flex items-center gap-2">
 													<FaTrophy className="text-[10px] text-yellow-300" />P
 													{team?.position || '-'}
@@ -418,17 +503,6 @@ export default function TeamsPage() {
 												</span>
 											</div>
 										</div>
-
-										{teamLogo && (
-											<div className="relative h-13 w-13 md:h-14 md:w-14 rounded-full border border-white/25 bg-black/25 p-2.5 shrink-0">
-												<Image
-													src={teamLogo}
-													alt={teamName}
-													fill
-													className="object-contain p-1"
-												/>
-											</div>
-										)}
 									</div>
 
 									<div className="absolute inset-x-0 bottom-0 h-[56%] bg-linear-to-t from-black/28 via-transparent to-transparent" />
@@ -441,7 +515,7 @@ export default function TeamsPage() {
 									/>
 
 									{hasCarImage && (
-										<div className="absolute left-4 right-12 bottom-3 z-10 h-[46%]">
+										<div className="absolute left-4 right-14 bottom-2 z-10 h-[40%]">
 											<Image
 												src={carImage}
 												alt={`${teamName} car`}
@@ -458,24 +532,11 @@ export default function TeamsPage() {
 											/>
 										</div>
 									)}
-
-									<Link
-										href="/standings"
-										className="absolute right-4 bottom-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-black/28 text-white/90 hover:bg-black/38 transition-colors"
-										aria-label={`Open standings for ${teamName}`}
-									>
-										<FaArrowRight className="text-xs" />
-									</Link>
-								</div>
+								</Link>
 							);
 						})}
 					</div>
 				}
-
-				<div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs font-semibold text-gray-300">
-					<FaFlagCheckered className="text-red-500" />
-					Live constructor order synced for {CURRENT_SEASON}
-				</div>
 			</div>
 		</div>
 	);
