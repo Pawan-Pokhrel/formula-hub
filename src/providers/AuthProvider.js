@@ -43,8 +43,11 @@ export function AuthProvider({ children }) {
 			isLoading,
 			async login(credentials) {
 				const response = await authApi.login(credentials);
+				if (!response?.token) {
+					throw new Error('Login succeeded but no token was returned.');
+				}
 				setStoredToken(response.token);
-				const me = await authApi.me();
+				const me = await authApi.me(response.token);
 				setUser(me.data);
 				setIsAuthenticated(true);
 				return response;
@@ -54,15 +57,21 @@ export function AuthProvider({ children }) {
 			},
 			async loginWithToken(token) {
 				// Used after email verification or Google OAuth
+				if (!token) {
+					throw new Error('No token was provided for loginWithToken.');
+				}
 				setStoredToken(token);
-				const me = await authApi.me();
+				const me = await authApi.me(token);
 				setUser(me.data);
 				setIsAuthenticated(true);
 			},
 			async googleAuth(credential) {
 				const response = await authApi.googleAuth(credential);
+				if (!response?.token) {
+					throw new Error('Google auth succeeded but no token was returned.');
+				}
 				setStoredToken(response.token);
-				const me = await authApi.me();
+				const me = await authApi.me(response.token);
 				setUser(me.data);
 				setIsAuthenticated(true);
 				return response;

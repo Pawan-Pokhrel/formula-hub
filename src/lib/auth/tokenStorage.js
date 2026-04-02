@@ -7,6 +7,7 @@ export function getStoredToken() {
 
 export function setStoredToken(token) {
 	if (typeof window === 'undefined') return;
+	if (!token || typeof token !== 'string') return;
 	localStorage.setItem(TOKEN_STORAGE_KEY, token);
 }
 

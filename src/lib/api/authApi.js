@@ -31,8 +31,10 @@ const authApi = {
 		return data;
 	},
 
-	me: async () => {
-		const { data } = await api.get('/auth/me');
+	me: async (token = null) => {
+		const config =
+			token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+		const { data } = await api.get('/auth/me', config);
 		return data;
 	},
 };
