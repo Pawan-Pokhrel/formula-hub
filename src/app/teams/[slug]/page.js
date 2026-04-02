@@ -131,7 +131,7 @@ const TEAM_HISTORY_BY_KEY = {
 		totalPoles: 166,
 		teamPrincipal: 'Andrea Stella',
 		ceo: 'Zak Brown',
-		reserveDrivers: ['Pato O\'Ward', 'Ryo Hirakawa'],
+		reserveDrivers: ["Pato O'Ward", 'Ryo Hirakawa'],
 	},
 	haas: {
 		totalWins: 0,
@@ -436,12 +436,12 @@ export default async function TeamDetailPage({ params }) {
 	const pairCompareHref =
 		activePair.length === 2 ?
 			`/compare?type=drivers&a=${encodeURIComponent(activePair[0].code)}&b=${encodeURIComponent(activePair[1].code)}&year=${CURRENT_SEASON}`
-		: `/compare?type=drivers&a=${encodeURIComponent(activePair[0]?.code || '')}&year=${CURRENT_SEASON}`;
+		:	`/compare?type=drivers&a=${encodeURIComponent(activePair[0]?.code || '')}&year=${CURRENT_SEASON}`;
 	const foundedYear = Number.parseInt(String(founded), 10);
 	const seasonsActive =
-		Number.isFinite(foundedYear) && foundedYear > 0
-			? Math.max(1, CURRENT_SEASON - foundedYear + 1)
-			: null;
+		Number.isFinite(foundedYear) && foundedYear > 0 ?
+			Math.max(1, CURRENT_SEASON - foundedYear + 1)
+		:	null;
 	const teamHistory = TEAM_HISTORY_BY_KEY[teamKey] || {
 		totalWins: 0,
 		totalPoles: 0,
@@ -453,9 +453,12 @@ export default async function TeamDetailPage({ params }) {
 	};
 	const hasTeamWins = Number(teamHistory.totalWins || 0) > 0;
 	const reserveDriversLabel =
-		Array.isArray(teamHistory.reserveDrivers) && teamHistory.reserveDrivers.length
-			? teamHistory.reserveDrivers.join(', ')
-			: 'None listed';
+		(
+			Array.isArray(teamHistory.reserveDrivers) &&
+			teamHistory.reserveDrivers.length
+		) ?
+			teamHistory.reserveDrivers.join(', ')
+		:	'None listed';
 	const teamRollerItems = Object.entries(TEAM_META_BY_KEY).map(
 		([key, meta]) => {
 			const firstDriver = DRIVER_CATALOG.find(
@@ -546,7 +549,9 @@ export default async function TeamDetailPage({ params }) {
 							{driverNameRow.map((name) => (
 								<p key={`${name.firstName}-${name.lastName}`}>
 									{name.firstName}{' '}
-									<span className="uppercase tracking-[0.08em]">{name.lastName}</span>
+									<span className="uppercase tracking-[0.08em]">
+										{name.lastName}
+									</span>
 								</p>
 							))}
 						</div>
@@ -554,7 +559,9 @@ export default async function TeamDetailPage({ params }) {
 
 					<div className="relative z-10 px-4 md:px-8 py-5 md:py-6 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4 md:gap-5">
 						<div>
-							<p className="text-[11px] uppercase tracking-[0.2em] text-white/80">Team Brief</p>
+							<p className="text-[11px] uppercase tracking-[0.2em] text-white/80">
+								Team Brief
+							</p>
 							<p className="mt-2 text-sm md:text-base text-white/90 max-w-3xl">
 								{summary}
 							</p>
@@ -566,7 +573,9 @@ export default async function TeamDetailPage({ params }) {
 							<div className="mt-3 grid grid-cols-2 gap-2 text-xs md:text-sm">
 								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
 									<p className="text-white/65">Championships</p>
-									<p className="font-semibold text-white">{totalPairChampionships}</p>
+									<p className="font-semibold text-white">
+										{totalPairChampionships}
+									</p>
 								</div>
 								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
 									<p className="text-white/65">Wins</p>
@@ -578,7 +587,9 @@ export default async function TeamDetailPage({ params }) {
 								</div>
 								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
 									<p className="text-white/65">Career Points</p>
-									<p className="font-semibold text-white">{totalPairPoints.toLocaleString()}</p>
+									<p className="font-semibold text-white">
+										{totalPairPoints.toLocaleString()}
+									</p>
 								</div>
 							</div>
 							<div className="mt-3">
@@ -614,7 +625,7 @@ export default async function TeamDetailPage({ params }) {
 								<Link
 									key={driver.slug}
 									href={`/drivers/${driver.slug}`}
-									className="group relative h-64 rounded-2xl border border-white/14 overflow-hidden p-3.5 cursor-pointer hover:border-white/28 transition-all duration-300"
+									className="group relative h-68 rounded-2xl border border-white/14 overflow-hidden p-3.5 cursor-pointer hover:border-white/28 transition-all duration-300"
 									style={{
 										background: `linear-gradient(112deg, ${hexToRgba(teamColor, 0.9)} 0%, ${hexToRgba(midTeamTone, 0.92)} 52%, rgba(7,7,9,0.95) 100%)`,
 									}}
@@ -676,7 +687,7 @@ export default async function TeamDetailPage({ params }) {
 													alt={driver.fullName}
 													fill
 													className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-													style={{ objectPosition: '50% 14%' }}
+													style={{ objectPosition: '50% 2%' }}
 												/>
 											</div>
 										</div>
@@ -732,7 +743,9 @@ export default async function TeamDetailPage({ params }) {
 							</div>
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Current drivers</span>
-								<span className="font-semibold text-white">{teamDrivers.length}</span>
+								<span className="font-semibold text-white">
+									{teamDrivers.length}
+								</span>
 							</div>
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Current pairing</span>
@@ -745,44 +758,59 @@ export default async function TeamDetailPage({ params }) {
 							</div>
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Total team wins</span>
-								<span className="font-semibold text-white">{teamHistory.totalWins}</span>
+								<span className="font-semibold text-white">
+									{teamHistory.totalWins}
+								</span>
 							</div>
-							{hasTeamWins ? (
+							{hasTeamWins ?
 								<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 									<span className="text-gray-400">First team win</span>
-									<span className="font-semibold text-white text-right">{teamHistory.firstWin}</span>
+									<span className="font-semibold text-white text-right">
+										{teamHistory.firstWin}
+									</span>
 								</div>
-							) : (
-								<>
+							:	<>
 									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 										<span className="text-gray-400">Best finish</span>
 										<span className="font-semibold text-white">
-											{teamHistory.highestFinish ? `P${teamHistory.highestFinish}` : 'N/A'}
+											{teamHistory.highestFinish ?
+												`P${teamHistory.highestFinish}`
+											:	'N/A'}
 										</span>
 									</div>
 									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 										<span className="text-gray-400">Best-finish frequency</span>
 										<span className="font-semibold text-white">
-											{teamHistory.highestFinishCount ? `${teamHistory.highestFinishCount} times` : 'N/A'}
+											{teamHistory.highestFinishCount ?
+												`${teamHistory.highestFinishCount} times`
+											:	'N/A'}
 										</span>
 									</div>
 								</>
-							)}
+							}
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Total poles</span>
-								<span className="font-semibold text-white">{teamHistory.totalPoles}</span>
+								<span className="font-semibold text-white">
+									{teamHistory.totalPoles}
+								</span>
 							</div>
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Team principal</span>
-								<span className="font-semibold text-white text-right">{teamHistory.teamPrincipal}</span>
+								<span className="font-semibold text-white text-right">
+									{teamHistory.teamPrincipal}
+								</span>
 							</div>
 							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">CEO</span>
-								<span className="font-semibold text-white text-right">{teamHistory.ceo}</span>
+								<span className="font-semibold text-white text-right">
+									{teamHistory.ceo}
+								</span>
 							</div>
 							<div className="flex items-start justify-between gap-4 rounded-xl border border-white/12 bg-white/4 px-3 py-2">
 								<span className="text-gray-400">Reserve drivers</span>
-								<span className="font-semibold text-white text-right">{reserveDriversLabel}</span>
+								<span className="font-semibold text-white text-right">
+									{reserveDriversLabel}
+								</span>
 							</div>
 						</div>
 						<p className="mt-4 text-sm text-gray-300">{summary}</p>
