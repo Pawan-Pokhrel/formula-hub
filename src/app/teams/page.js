@@ -57,6 +57,10 @@ const TEAM_CAR_TOKEN_BY_KEY = {
 	cad: 'cadillac',
 };
 
+const IMAGE_FIRST_NAME_OVERRIDES = {
+	'kimi-antonelli': 'and',
+};
+
 function getDisplayTeamName(teamName) {
 	const key = getTeamKey(teamName);
 	return TEAM_DISPLAY_NAME_BY_KEY[key] || String(teamName || 'Unknown Team');
@@ -104,13 +108,61 @@ function hexToRgba(hexColor, alpha) {
 
 function getTeamCarImagePath(teamName) {
 	const teamKey = getTeamKey(teamName);
-	const teamToken =
+	if (!teamKey) return [];
+
+	const keyBasedPath = `/images/cars/${CURRENT_SEASON}_${teamKey}_carright.png`;
+	const legacyToken =
 		TEAM_CAR_TOKEN_BY_KEY[teamKey] ||
 		String(teamName || '')
 			.toLowerCase()
 			.replace(/[^a-z0-9]/g, '');
-	if (!teamToken) return null;
-	return `/images/cars/${CURRENT_SEASON}${teamToken}carright.png`;
+	const legacyPath =
+		legacyToken ?
+			`/images/cars/${CURRENT_SEASON}${legacyToken}carright.png`
+		:	null;
+
+	return Array.from(new Set([keyBasedPath, legacyPath].filter(Boolean)));
+}
+
+function getDriverTeamCardImagePath(driver) {
+	const teamToken = String(driver?.teamName || '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]/g, '');
+	const nameParts = String(driver?.fullName || '')
+		.trim()
+		.toLowerCase()
+		.split(/\s+/);
+	const firstToken =
+		IMAGE_FIRST_NAME_OVERRIDES[driver?.slug] ||
+		String(nameParts[0] || '').slice(0, 3);
+	const lastToken = String(nameParts[nameParts.length - 1] || '').slice(0, 3);
+
+	if (!teamToken || !firstToken || !lastToken) return null;
+	return `/images/drivers/${CURRENT_SEASON}${teamToken}${firstToken}${lastToken}01right.png`;
+}
+
+function splitDriverName(fullName) {
+	const parts = String(fullName || '')
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+	if (parts.length <= 1) {
+		return {
+			firstName: parts[0] || fullName,
+			lastName: '',
+		};
+	}
+
+	return {
+		firstName: parts.slice(0, -1).join(' '),
+		lastName: parts[parts.length - 1],
+	};
+}
+
+function formatPoints(value) {
+	const num = Number(value || 0);
+	if (!Number.isFinite(num)) return '0';
+	return Number.isInteger(num) ? String(num) : num.toFixed(1);
 }
 
 const FALLBACK_CONSTRUCTORS = ROUGH_CONSTRUCTOR_ORDER_2026.map(
@@ -272,13 +324,15 @@ export default function TeamsPage() {
 							const teamDrivers = driversByTeam[teamKey] || [];
 							const teamColor = getTeamColor(rawTeamName);
 							const teamLogo = getTeamLogoPath(rawTeamName);
-							const carImage = getTeamCarImagePath(rawTeamName);
-							const hasCarImage = Boolean(carImage) && !failedCars[teamKey];
+							const carImageCandidates = getTeamCarImagePath(rawTeamName);
+							const failedCount = Number(failedCars[teamKey] || 0);
+							const carImage = carImageCandidates[failedCount] || null;
+							const hasCarImage = Boolean(carImage);
 
 							return (
 								<div
 									key={teamKey}
-									className="group relative min-h-[290px] rounded-2xl border border-white/14 overflow-hidden p-6"
+									className="group relative min-h-[290px] rounded-2xl border border-white/14 overflow-hidden p-6 pt-7"
 									style={{
 										background: `linear-gradient(115deg, ${hexToRgba(darkenHexColor(teamColor, 0.52), 0.95)} 0%, ${hexToRgba(teamColor, 0.88)} 52%, ${hexToRgba(teamColor, 0.76)} 100%)`,
 										boxShadow: `inset 0 0 0 1px ${hexToRgba(teamColor, 0.35)}`,
@@ -288,7 +342,16 @@ export default function TeamsPage() {
 										className="pointer-events-none absolute inset-0 opacity-55"
 										style={{
 											backgroundImage:
-												'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 15px)',
+												'linear-gradient(90deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 36%, transparent 74%), linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 44%), repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 18px)',
+										}}
+									/>
+									<div
+										className="pointer-events-none absolute left-0 right-0 bottom-[16%] h-[42%] opacity-34 mix-blend-screen"
+										style={{
+											backgroundImage:
+												'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.24) 1px, transparent 1.4px), linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 30%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0.14) 68%, transparent 100%), repeating-linear-gradient(90deg, transparent 0px, transparent 32px, rgba(255,255,255,0.16) 32px, rgba(255,255,255,0.16) 38px, transparent 38px, transparent 82px)',
+											backgroundSize: '6px 6px, 100% 100%, 100% 100%',
+											filter: 'blur(0.2px)',
 										}}
 									/>
 
@@ -299,25 +362,47 @@ export default function TeamsPage() {
 											</h2>
 
 											<div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-												{teamDrivers.slice(0, 2).map((driver) => (
-													<div
-														key={driver.slug}
-														className="inline-flex items-center gap-2 text-white/95"
-													>
-														<div className="relative h-6 w-6 overflow-hidden rounded-full border border-white/35 bg-black/25">
-															<Image
-																src={getDriverImagePath(driver.code)}
-																alt={driver.fullName}
-																fill
-																sizes="24px"
-																className="object-cover"
-															/>
+												{teamDrivers.slice(0, 2).map((driver) => {
+													const { firstName, lastName } = splitDriverName(
+														driver.fullName
+													);
+
+													return (
+														<div
+															key={driver.slug}
+															className="inline-flex items-center gap-2.5 text-white/95"
+														>
+															<div className="relative h-7 w-7 md:h-8 md:w-8 overflow-hidden rounded-full border border-white/35 bg-black/25">
+																<Image
+																	src={
+																		getDriverTeamCardImagePath(driver) ||
+																		getDriverImagePath(driver.code)
+																	}
+																	alt={driver.fullName}
+																	fill
+																	sizes="32px"
+																	className="object-cover"
+																/>
+															</div>
+															<p className="text-base md:text-lg tracking-tight">
+																<span
+																	className="font-normal normal-case text-white/95"
+																	style={{
+																		fontFamily:
+																			'Lucida Handwriting, Brush Script MT, Segoe Script, cursive',
+																	}}
+																>
+																	{firstName}
+																</span>
+																{lastName && (
+																	<span className="ml-1 font-black uppercase text-white">
+																		{lastName}
+																	</span>
+																)}
+															</p>
 														</div>
-														<p className="text-base md:text-lg font-black uppercase tracking-tight">
-															{driver.fullName}
-														</p>
-													</div>
-												))}
+													);
+												})}
 											</div>
 
 											<div className="mt-5 inline-flex flex-wrap gap-2">
@@ -326,7 +411,7 @@ export default function TeamsPage() {
 													{team?.position || '-'}
 												</span>
 												<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95">
-													{Number(team?.points || 0).toFixed(1)} pts
+													{formatPoints(team?.points)} pts
 												</span>
 												<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95">
 													{Number(team?.wins || 0)} wins
@@ -347,19 +432,27 @@ export default function TeamsPage() {
 									</div>
 
 									<div className="absolute inset-x-0 bottom-0 h-[56%] bg-linear-to-t from-black/28 via-transparent to-transparent" />
+									<div
+										className="pointer-events-none absolute inset-x-0 bottom-[18%] h-10 opacity-55"
+										style={{
+											backgroundImage: `linear-gradient(90deg, transparent 0%, ${hexToRgba(teamColor, 0.5)} 35%, ${hexToRgba(teamColor, 0.66)} 50%, ${hexToRgba(teamColor, 0.5)} 65%, transparent 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 26px, rgba(255,255,255,0.22) 26px, rgba(255,255,255,0.22) 30px, rgba(255,255,255,0) 30px, rgba(255,255,255,0) 60px)`,
+											filter: 'blur(10px)',
+										}}
+									/>
 
 									{hasCarImage && (
-										<div className="absolute left-5 right-5 bottom-1 z-10 h-[48%]">
+										<div className="absolute left-4 right-12 bottom-3 z-10 h-[46%]">
 											<Image
 												src={carImage}
 												alt={`${teamName} car`}
 												fill
 												sizes="(max-width: 1024px) 95vw, 44vw"
 												className="object-contain object-bottom transition-transform duration-300 group-hover:scale-[1.02]"
+												style={{ objectPosition: 'left bottom' }}
 												onError={() => {
 													setFailedCars((prev) => ({
 														...prev,
-														[teamKey]: true,
+														[teamKey]: Number(prev[teamKey] || 0) + 1,
 													}));
 												}}
 											/>
