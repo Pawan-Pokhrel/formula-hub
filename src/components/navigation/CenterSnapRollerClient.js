@@ -40,6 +40,7 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 	const isDraggingRef = useRef(false);
 	const dragStartXRef = useRef(0);
 	const dragStartScrollLeftRef = useRef(0);
+	const pressedIndexRef = useRef(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [viewportWidth, setViewportWidth] = useState(0);
 
@@ -160,9 +161,15 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		isPointerDownRef.current = true;
 		isDraggingRef.current = false;
 		setIsDragging(false);
+		const target = event.target;
+		const itemNode =
+			target && typeof target.closest === 'function' ?
+				target.closest('[data-roller-index]')
+			:	null;
+		pressedIndexRef.current =
+			itemNode ? Number(itemNode.getAttribute('data-roller-index')) : null;
 		dragStartXRef.current = event.clientX;
 		dragStartScrollLeftRef.current = viewport.scrollLeft;
-		viewport.setPointerCapture?.(event.pointerId);
 	}
 
 	function handlePointerMove(event) {
@@ -185,9 +192,19 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		isPointerDownRef.current = false;
 		isDraggingRef.current = false;
 		setIsDragging(false);
+		const pressedIndex =
+			Number.isInteger(pressedIndexRef.current) ?
+				pressedIndexRef.current
+			:	null;
+		pressedIndexRef.current = null;
 		const viewport = viewportRef.current;
 		if (viewport) {
-			viewport.releasePointerCapture?.(event.pointerId);
+			if (!wasDragging && pressedIndex !== null) {
+				setCenteredIndex(pressedIndex);
+				centerIndex(pressedIndex, 'smooth');
+				navigateToIndex(pressedIndex);
+				return;
+			}
 			const nearestIndex = getNearestIndex(viewport, itemRefs.current);
 			setCenteredIndex(nearestIndex);
 			centerIndex(nearestIndex, 'smooth');
@@ -239,6 +256,7 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 							<button
 								key={item.id}
 								type="button"
+								data-roller-index={index}
 								ref={(node) => {
 									itemRefs.current[index] = node;
 								}}
