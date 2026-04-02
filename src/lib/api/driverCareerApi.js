@@ -5,7 +5,9 @@ function normalizeCareerRow(row) {
 		.trim()
 		.toUpperCase();
 	return {
-		driver_id: String(row?.driver_id || '').trim().toLowerCase(),
+		driver_id: String(row?.driver_id || '')
+			.trim()
+			.toLowerCase(),
 		driver_code: code || null,
 		driver_name: row?.driver_name || 'Unknown Driver',
 		date_of_birth: row?.date_of_birth || null,

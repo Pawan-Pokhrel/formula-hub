@@ -3,11 +3,17 @@ import {
 	getTeamCode,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
+import {
+	buildDriverCareerMap,
+	getDriverCareerStats,
+} from '@/lib/api/driverCareerApi';
 import { CURRENT_SEASON, DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import TeamSeasonStatsClient from './TeamSeasonStatsClient';
+
+export const revalidate = 300;
 
 const TEAM_META_BY_KEY = {
 	mer: {
@@ -400,11 +406,52 @@ export default async function TeamDetailPage({ params }) {
 	if (!selectedTeam) notFound();
 
 	const { teamKey, displayName, base, founded, summary } = selectedTeam;
-	const teamDrivers = DRIVER_CATALOG.filter(
+	const baseTeamDrivers = DRIVER_CATALOG.filter(
 		(driver) => getTeamKey(driver.teamName) === teamKey
 	).sort((a, b) => Number(a.number || 999) - Number(b.number || 999));
 
-	if (!teamDrivers.length) notFound();
+	if (!baseTeamDrivers.length) notFound();
+
+	const careerRows = await getDriverCareerStats({ year: CURRENT_SEASON });
+	const careerByCode = buildDriverCareerMap(careerRows);
+	const teamDrivers = baseTeamDrivers.map((driver) => {
+		const liveCareer = careerByCode.get(
+			String(driver.code || '').toUpperCase()
+		);
+		if (!liveCareer) return driver;
+
+		return {
+			...driver,
+			worldChampionships: Math.max(
+				Number(driver.worldChampionships || 0),
+				Number(liveCareer.world_championships || 0)
+			),
+			careerStarts: Math.max(
+				Number(driver.careerStarts || 0),
+				Number(liveCareer.career_starts || 0)
+			),
+			careerWins: Math.max(
+				Number(driver.careerWins || 0),
+				Number(liveCareer.career_wins || 0)
+			),
+			careerPodiums: Math.max(
+				Number(driver.careerPodiums || 0),
+				Number(liveCareer.career_podiums || 0)
+			),
+			careerPoles: Math.max(
+				Number(driver.careerPoles || 0),
+				Number(liveCareer.career_poles || 0)
+			),
+			careerFastestLaps: Math.max(
+				Number(driver.careerFastestLaps || 0),
+				Number(liveCareer.career_fastest_laps || 0)
+			),
+			careerPoints: Math.max(
+				Number(driver.careerPoints || 0),
+				Number(liveCareer.career_points || 0)
+			),
+		};
+	});
 
 	const sourceTeamName = teamDrivers[0].teamName;
 	const teamColor = teamDrivers[0].teamColor || '#6B7280';
@@ -511,12 +558,12 @@ export default async function TeamDetailPage({ params }) {
 
 					<div className="relative z-10 border-b border-white/18 px-4 md:px-8 pt-4 md:pt-5 pb-3">
 						{teamLogo && (
-							<div className="absolute right-4 md:right-7 top-4 z-20 h-11 w-11 rounded-full border border-white/35 bg-black/20 p-2">
+							<div className="absolute right-4 md:right-7 top-4 z-20 h-12 w-12 rounded-full border border-white/35 bg-black/20 ">
 								<Image
 									src={teamLogo}
 									alt={displayName}
 									fill
-									className="object-contain"
+									className="object-contain p-2"
 								/>
 							</div>
 						)}
