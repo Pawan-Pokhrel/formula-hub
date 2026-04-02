@@ -202,7 +202,7 @@ export default async function DriverDetailPage({ params }) {
 								'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 15px)',
 						}}
 					/>
-					<div className="pointer-events-none absolute inset-y-0 right-[2%] z-[1] flex items-center">
+					<div className="pointer-events-none absolute inset-y-0 right-[2%] z-1 flex items-center">
 						<p
 							className="text-[230px] md:text-[340px] lg:text-[400px] leading-none font-black tracking-tight"
 							style={{
