@@ -63,6 +63,10 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		const target = itemRefs.current[index];
 		if (!viewport || !target) return;
 
+		if (navTimerRef.current) {
+			clearTimeout(navTimerRef.current);
+			navTimerRef.current = null;
+		}
 		isProgrammaticScrollRef.current = true;
 		viewport.scrollTo({
 			left: target.offsetLeft - (viewport.clientWidth - target.offsetWidth) / 2,
@@ -119,6 +123,30 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (!safeItems.length || typeof router.prefetch !== 'function') return;
+
+		const prefetchAll = () => {
+			safeItems.forEach((item) => {
+				if (!item?.href || item.href === pathname) return;
+				router.prefetch(item.href);
+			});
+		};
+
+		if (typeof window === 'undefined') {
+			prefetchAll();
+			return;
+		}
+
+		if (typeof window.requestIdleCallback === 'function') {
+			const idleId = window.requestIdleCallback(() => prefetchAll());
+			return () => window.cancelIdleCallback?.(idleId);
+		}
+
+		const timer = window.setTimeout(prefetchAll, 120);
+		return () => window.clearTimeout(timer);
+	}, [safeItems, pathname, router]);
+
 	if (!safeItems.length) return null;
 
 	function navigateToIndex(index) {
@@ -144,6 +172,10 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		const nearestIndex = getNearestIndex(viewport, itemRefs.current);
 		setCenteredIndex(nearestIndex);
 
+		if (navTimerRef.current) {
+			clearTimeout(navTimerRef.current);
+			navTimerRef.current = null;
+		}
 		if (isProgrammaticScrollRef.current) return;
 		if (isPointerDownRef.current) return;
 		if (navTimerRef.current) clearTimeout(navTimerRef.current);
