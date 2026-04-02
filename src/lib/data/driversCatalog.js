@@ -180,7 +180,7 @@ export const DRIVER_CATALOG = [
 		debutTeam: 'McLaren',
 		worldChampionships: 0,
 		careerStarts: 150,
-		careerWins: 5,
+		careerWins: 11,
 		careerPodiums: 27,
 		careerPoles: 8,
 		careerFastestLaps: 9,
