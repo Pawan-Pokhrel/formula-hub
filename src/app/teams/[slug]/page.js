@@ -7,13 +7,6 @@ import { CURRENT_SEASON, DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-	FaArrowLeft,
-	FaArrowRight,
-	FaCalendarAlt,
-	FaFlagCheckered,
-	FaTrophy,
-} from 'react-icons/fa';
 import TeamSeasonStatsClient from './TeamSeasonStatsClient';
 
 const TEAM_META_BY_KEY = {
@@ -105,13 +98,100 @@ const TEAM_META_BY_KEY = {
 		summary:
 			'Cadillac brings a new factory-backed identity, targeting rapid growth in race management and pace.',
 	},
-	sau: {
-		displayName: 'Sauber',
-		slug: 'sauber',
-		base: 'Hinwil, Switzerland',
-		founded: '1993',
-		summary:
-			'Sauber emphasizes disciplined execution and development continuity while preparing for future evolution.',
+};
+
+const TEAM_HISTORY_BY_KEY = {
+	mer: {
+		totalWins: 129,
+		firstWin: '1954 French Grand Prix',
+		totalPoles: 140,
+		teamPrincipal: 'Toto Wolff',
+		ceo: 'Toto Wolff',
+		reserveDrivers: ['Valtteri Bottas', 'Frederik Vesti'],
+	},
+	fer: {
+		totalWins: 248,
+		firstWin: '1951 British Grand Prix',
+		totalPoles: 253,
+		teamPrincipal: 'Frederic Vasseur',
+		ceo: 'Benedetto Vigna',
+		reserveDrivers: ['Antonio Giovinazzi', 'Zhou Guanyu'],
+	},
+	rbr: {
+		totalWins: 122,
+		firstWin: '2009 Chinese Grand Prix',
+		totalPoles: 104,
+		teamPrincipal: 'Christian Horner',
+		ceo: 'Oliver Mintzlaff',
+		reserveDrivers: ['Liam Lawson', 'Ayumu Iwasa'],
+	},
+	mcl: {
+		totalWins: 190,
+		firstWin: '1968 Belgian Grand Prix',
+		totalPoles: 166,
+		teamPrincipal: 'Andrea Stella',
+		ceo: 'Zak Brown',
+		reserveDrivers: ['Pato O\'Ward', 'Ryo Hirakawa'],
+	},
+	haas: {
+		totalWins: 0,
+		totalPoles: 0,
+		highestFinish: 4,
+		highestFinishCount: 5,
+		teamPrincipal: 'Ayao Komatsu',
+		ceo: 'Gene Haas',
+		reserveDrivers: ['Pietro Fittipaldi'],
+	},
+	ast: {
+		totalWins: 0,
+		totalPoles: 1,
+		highestFinish: 2,
+		highestFinishCount: 8,
+		teamPrincipal: 'Mike Krack',
+		ceo: 'Martin Whitmarsh',
+		reserveDrivers: ['Felipe Drugovich', 'Stoffel Vandoorne'],
+	},
+	wil: {
+		totalWins: 114,
+		firstWin: '1979 British Grand Prix',
+		totalPoles: 128,
+		teamPrincipal: 'James Vowles',
+		ceo: 'James Vowles',
+		reserveDrivers: ['Franco Colapinto'],
+	},
+	rb: {
+		totalWins: 2,
+		firstWin: '2008 Italian Grand Prix',
+		totalPoles: 1,
+		teamPrincipal: 'Laurent Mekies',
+		ceo: 'Peter Bayer',
+		reserveDrivers: ['Ayumu Iwasa'],
+	},
+	alp: {
+		totalWins: 1,
+		firstWin: '2021 Hungarian Grand Prix',
+		totalPoles: 1,
+		teamPrincipal: 'Oliver Oakes',
+		ceo: 'Luca de Meo',
+		reserveDrivers: ['Jack Doohan', 'Paul Aron'],
+	},
+	aud: {
+		totalWins: 0,
+		totalPoles: 0,
+		highestFinish: null,
+		highestFinishCount: null,
+		teamPrincipal: 'Mattia Binotto',
+		ceo: 'Gernot Dollner',
+		reserveDrivers: ['TBD'],
+	},
+	cad: {
+		totalWins: 0,
+		totalPoles: 0,
+		highestFinish: null,
+		highestFinishCount: null,
+		teamPrincipal: 'Graeme Lowdon',
+		ceo: 'Dan Towriss',
+		reserveDrivers: ['TBD'],
 	},
 };
 
@@ -220,6 +300,50 @@ function getTeamKey(teamName) {
 	return getTeamCode(teamName) || normalizeName(teamName);
 }
 
+function darkenHexColor(hexColor, factor = 0.52) {
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return '#1f2937';
+	const toHex = (value) => value.toString(16).padStart(2, '0');
+	const r = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(0, 2), 16) * factor))
+	);
+	const g = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(2, 4), 16) * factor))
+	);
+	const b = Math.max(
+		0,
+		Math.min(255, Math.round(parseInt(raw.slice(4, 6), 16) * factor))
+	);
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function hexToRgba(hexColor, alpha) {
+	const raw = String(hexColor || '')
+		.trim()
+		.replace('#', '');
+	if (!/^[0-9a-fA-F]{6}$/.test(raw)) return `rgba(31,41,55,${alpha})`;
+	const r = parseInt(raw.slice(0, 2), 16);
+	const g = parseInt(raw.slice(2, 4), 16);
+	const b = parseInt(raw.slice(4, 6), 16);
+	return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function splitDriverName(fullName) {
+	const parts = String(fullName || '')
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+	if (parts.length <= 1) return { firstName: parts[0] || '', lastName: '' };
+	return {
+		firstName: parts.slice(0, -1).join(' '),
+		lastName: parts[parts.length - 1],
+	};
+}
+
 function getDriverTeamCardImagePath(driver) {
 	const teamKey = getTeamKey(driver?.teamName);
 	const teamToken =
@@ -284,9 +408,54 @@ export default async function TeamDetailPage({ params }) {
 
 	const sourceTeamName = teamDrivers[0].teamName;
 	const teamColor = teamDrivers[0].teamColor || '#6B7280';
+	const darkTeamTone = darkenHexColor(teamColor, 0.34);
+	const midTeamTone = darkenHexColor(teamColor, 0.66);
 	const teamLogo = getTeamLogoPath(sourceTeamName);
 	const carToken = TEAM_CAR_TOKEN_BY_KEY[teamKey] || teamKey;
 	const teamCarImage = `/images/cars/${CURRENT_SEASON}${carToken}carright.png`;
+	const driverNameRow = teamDrivers
+		.slice(0, 2)
+		.map((driver) => splitDriverName(driver.fullName));
+	const activePair = teamDrivers.slice(0, 2);
+	const totalPairChampionships = activePair.reduce(
+		(sum, driver) => sum + Number(driver.worldChampionships || 0),
+		0
+	);
+	const totalPairWins = activePair.reduce(
+		(sum, driver) => sum + Number(driver.careerWins || 0),
+		0
+	);
+	const totalPairPodiums = activePair.reduce(
+		(sum, driver) => sum + Number(driver.careerPodiums || 0),
+		0
+	);
+	const totalPairPoints = activePair.reduce(
+		(sum, driver) => sum + Number(driver.careerPoints || 0),
+		0
+	);
+	const pairCompareHref =
+		activePair.length === 2 ?
+			`/compare?type=drivers&a=${encodeURIComponent(activePair[0].code)}&b=${encodeURIComponent(activePair[1].code)}&year=${CURRENT_SEASON}`
+		: `/compare?type=drivers&a=${encodeURIComponent(activePair[0]?.code || '')}&year=${CURRENT_SEASON}`;
+	const foundedYear = Number.parseInt(String(founded), 10);
+	const seasonsActive =
+		Number.isFinite(foundedYear) && foundedYear > 0
+			? Math.max(1, CURRENT_SEASON - foundedYear + 1)
+			: null;
+	const teamHistory = TEAM_HISTORY_BY_KEY[teamKey] || {
+		totalWins: 0,
+		totalPoles: 0,
+		highestFinish: null,
+		highestFinishCount: null,
+		teamPrincipal: 'Not listed',
+		ceo: 'Not listed',
+		reserveDrivers: [],
+	};
+	const hasTeamWins = Number(teamHistory.totalWins || 0) > 0;
+	const reserveDriversLabel =
+		Array.isArray(teamHistory.reserveDrivers) && teamHistory.reserveDrivers.length
+			? teamHistory.reserveDrivers.join(', ')
+			: 'None listed';
 	const teamRollerItems = Object.entries(TEAM_META_BY_KEY).map(
 		([key, meta]) => {
 			const firstDriver = DRIVER_CATALOG.find(
@@ -311,7 +480,6 @@ export default async function TeamDetailPage({ params }) {
 					href="/teams"
 					className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors mb-5"
 				>
-					<FaArrowLeft className="text-red-500" />
 					Back to Teams
 				</Link>
 
@@ -324,97 +492,110 @@ export default async function TeamDetailPage({ params }) {
 				</div>
 
 				<section
-					className="relative overflow-hidden rounded-3xl border border-white/15 p-6 md:p-8"
+					className="relative overflow-hidden rounded-[28px] border border-white/15"
 					style={{
-						background: `linear-gradient(112deg, ${teamColor}D6 0%, ${teamColor}BB 54%, rgba(8,8,10,0.88) 100%)`,
-						boxShadow: `inset 0 0 0 1px ${teamColor}66`,
+						background: `linear-gradient(140deg, ${hexToRgba(darkTeamTone, 0.98)} 0%, ${hexToRgba(teamColor, 0.86)} 58%, ${hexToRgba(midTeamTone, 0.96)} 100%)`,
+						boxShadow: `inset 0 0 0 1px ${hexToRgba(teamColor, 0.35)}`,
 					}}
 				>
 					<div
-						className="pointer-events-none absolute inset-0 opacity-50"
+						className="pointer-events-none absolute inset-0 opacity-55"
 						style={{
 							backgroundImage:
-								'linear-gradient(90deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 34%, transparent 72%), repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 1px, transparent 1px, transparent 16px), repeating-linear-gradient(0deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 1px, transparent 1px, transparent 14px)',
+								'repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 18px), linear-gradient(90deg, rgba(255,255,255,0.08) 0%, transparent 46%, rgba(0,0,0,0.2) 100%)',
 						}}
 					/>
 
-					<div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_0.95fr] gap-6 min-h-[360px]">
-						<div className="flex flex-col justify-between">
-							<div>
-								<h1
-									className="text-5xl md:text-6xl font-semibold tracking-[-0.015em] leading-[0.96] text-white"
-									style={{
-										fontFamily:
-											'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-									}}
-								>
-									{displayName}
-								</h1>
-								<p className="mt-3 max-w-2xl text-white/90 text-sm md:text-base">
-									{summary}
-								</p>
-							</div>
-
-							<div className="mt-5 inline-flex flex-wrap gap-2">
-								<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95 inline-flex items-center gap-2">
-									<FaCalendarAlt className="text-[10px]" />
-									Founded {founded}
-								</span>
-								<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95">
-									Base: {base}
-								</span>
-								<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95">
-									{teamDrivers.length} drivers
-								</span>
-							</div>
-						</div>
-
-						<div className="relative">
-							{teamLogo && (
-								<div className="absolute top-1 right-1 z-20 h-14 w-14 rounded-full border border-white/30 bg-black/20 p-2.5">
-									<Image
-										src={teamLogo}
-										alt={displayName}
-										fill
-										className="object-contain p-1"
-									/>
-								</div>
-							)}
-
-							<div className="absolute left-0 right-0 bottom-0 h-[70%]">
+					<div className="relative z-10 border-b border-white/18 px-4 md:px-8 pt-4 md:pt-5 pb-3">
+						{teamLogo && (
+							<div className="absolute right-4 md:right-7 top-4 z-20 h-11 w-11 rounded-full border border-white/35 bg-black/20 p-2">
 								<Image
-									src={teamCarImage}
-									alt={`${displayName} car`}
+									src={teamLogo}
+									alt={displayName}
 									fill
-									sizes="(max-width: 1024px) 90vw, 42vw"
-									className="object-contain object-bottom"
+									className="object-contain"
 								/>
 							</div>
+						)}
+						<div className="relative h-[120px] md:h-[150px]">
+							<Image
+								src={teamCarImage}
+								alt={`${displayName} car`}
+								fill
+								sizes="(max-width: 1024px) 95vw, 76vw"
+								className="object-contain object-center"
+							/>
 						</div>
 					</div>
-				</section>
 
-				<section className="mt-4 rounded-3xl border border-white/14 bg-linear-to-br from-white/10 via-white/4 to-transparent p-5 md:p-6">
-					<h2 className="text-xl md:text-2xl font-black inline-flex items-center gap-2">
-						<FaFlagCheckered className="text-red-500" />
-						This Season Team Stats
-					</h2>
-					<p className="mt-1 text-sm text-gray-300">
-						Live constructor metrics for {CURRENT_SEASON}.
-					</p>
-					<div className="mt-4">
-						<TeamSeasonStatsClient
-							teamName={sourceTeamName}
-							teamColor={teamColor}
-							year={CURRENT_SEASON}
-						/>
+					<div className="relative z-10 border-b border-white/18 px-4 md:px-8 py-4">
+						<div className="mx-auto max-w-[760px] flex items-center justify-center gap-3 md:gap-5">
+							<div className="h-2.5 flex-1 max-w-[230px] bg-white/88 [clip-path:polygon(0_0,92%_0,100%_50%,92%_100%,0_100%,6%_50%)]" />
+							<h1
+								className="text-3xl md:text-5xl font-semibold tracking-[-0.02em] text-white whitespace-nowrap"
+								style={{
+									fontFamily:
+										'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+								}}
+							>
+								{displayName}
+							</h1>
+							<div className="h-2.5 flex-1 max-w-[230px] bg-white/88 [clip-path:polygon(8%_0,100%_0,94%_50%,100%_100%,8%_100%,0_50%)]" />
+						</div>
+						<div className="mt-3 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[11px] md:text-xs font-semibold text-white/92 tracking-wide">
+							{driverNameRow.map((name) => (
+								<p key={`${name.firstName}-${name.lastName}`}>
+									{name.firstName}{' '}
+									<span className="uppercase tracking-[0.08em]">{name.lastName}</span>
+								</p>
+							))}
+						</div>
+					</div>
+
+					<div className="relative z-10 px-4 md:px-8 py-5 md:py-6 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4 md:gap-5">
+						<div>
+							<p className="text-[11px] uppercase tracking-[0.2em] text-white/80">Team Brief</p>
+							<p className="mt-2 text-sm md:text-base text-white/90 max-w-3xl">
+								{summary}
+							</p>
+						</div>
+						<div className="rounded-2xl border border-white/18 bg-black/22 p-3 md:p-4">
+							<p className="text-[11px] uppercase tracking-[0.2em] text-white/80">
+								Driver Pairings Stats
+							</p>
+							<div className="mt-3 grid grid-cols-2 gap-2 text-xs md:text-sm">
+								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
+									<p className="text-white/65">Championships</p>
+									<p className="font-semibold text-white">{totalPairChampionships}</p>
+								</div>
+								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
+									<p className="text-white/65">Wins</p>
+									<p className="font-semibold text-white">{totalPairWins}</p>
+								</div>
+								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
+									<p className="text-white/65">Podiums</p>
+									<p className="font-semibold text-white">{totalPairPodiums}</p>
+								</div>
+								<div className="rounded-lg border border-white/12 bg-white/4 px-2.5 py-2">
+									<p className="text-white/65">Career Points</p>
+									<p className="font-semibold text-white">{totalPairPoints.toLocaleString()}</p>
+								</div>
+							</div>
+							<div className="mt-3">
+								<Link
+									href={pairCompareHref}
+									className="inline-flex items-center justify-center rounded-full border border-white/80 bg-black/22 px-4 py-2 text-xs font-semibold text-white hover:bg-black/32 transition-colors"
+								>
+									Compare Team Drivers
+								</Link>
+							</div>
+						</div>
 					</div>
 				</section>
 
 				<section className="mt-4 rounded-2xl border border-white/12 bg-black/50 p-5">
-					<h2 className="text-lg md:text-xl font-black inline-flex items-center gap-2">
-						<FaTrophy className="text-yellow-400" />
-						Team Drivers
+					<h2 className="text-lg md:text-xl font-semibold tracking-wide text-white">
+						Driver Lineup
 					</h2>
 					<p className="mt-1 text-sm text-gray-300">
 						Current lineup with profile highlights.
@@ -433,9 +614,9 @@ export default async function TeamDetailPage({ params }) {
 								<Link
 									key={driver.slug}
 									href={`/drivers/${driver.slug}`}
-									className="group relative h-80 rounded-xl border border-white/15 overflow-hidden p-3.5 cursor-pointer hover:border-white/30 transition-all duration-300"
+									className="group relative h-64 rounded-2xl border border-white/14 overflow-hidden p-3.5 cursor-pointer hover:border-white/28 transition-all duration-300"
 									style={{
-										background: `linear-gradient(120deg, ${teamColor}CC 0%, ${teamColor}B8 58%, rgba(8,8,10,0.92) 100%)`,
+										background: `linear-gradient(112deg, ${hexToRgba(teamColor, 0.9)} 0%, ${hexToRgba(midTeamTone, 0.92)} 52%, rgba(7,7,9,0.95) 100%)`,
 									}}
 								>
 									<div
@@ -447,16 +628,17 @@ export default async function TeamDetailPage({ params }) {
 									/>
 
 									<div className="relative z-10 flex h-full">
-										<div className="w-[60%] flex flex-col">
-											<h3 className="text-[35px] leading-[0.95] font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-												{driver.fullName.split(' ')[0]}
-												<br />
-												{driver.fullName.split(' ').slice(1).join(' ')}
+										<div className="w-[58%] flex flex-col">
+											<h3 className="text-[1.65rem] md:text-[1.8rem] leading-[0.94] font-semibold tracking-[-0.02em] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.34)]">
+												{driver.fullName.split(' ')[0]}{' '}
+												<span className="font-black uppercase">
+													{driver.fullName.split(' ').slice(1).join(' ')}
+												</span>
 											</h3>
-											<p className="text-sm font-semibold text-white/90 mt-1">
+											<p className="text-xs md:text-sm font-semibold text-white/85 mt-1">
 												{driver.teamName}
 											</p>
-											<p className="mt-4 text-[46px] leading-none font-black italic text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.35)]">
+											<p className="mt-3 text-[2.2rem] leading-none font-black italic text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.35)]">
 												{displayNumber}
 											</p>
 											<div className="mt-auto inline-flex items-center gap-2">
@@ -477,7 +659,7 @@ export default async function TeamDetailPage({ params }) {
 											</div>
 										</div>
 
-										<div className="w-[40%] relative">
+										<div className="w-[42%] relative">
 											{teamLogo && (
 												<div className="absolute top-0 right-0 z-20 h-11 w-11 rounded-lg bg-black/30 border border-white/20 p-1">
 													<Image
@@ -488,27 +670,122 @@ export default async function TeamDetailPage({ params }) {
 													/>
 												</div>
 											)}
-											<div className="absolute left-[-36%] bottom-[-14%] h-[292px] w-[160%]">
+											<div className="absolute left-[-16%] top-[5%] h-[228px] w-[124%]">
 												<Image
 													src={driverImage}
 													alt={driver.fullName}
 													fill
 													className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-													style={{ objectPosition: '50% top' }}
+													style={{ objectPosition: '50% 14%' }}
 												/>
 											</div>
 										</div>
 									</div>
-
-									<div
-										className="pointer-events-none absolute right-3 bottom-3 inline-flex items-center justify-center h-7 w-7 rounded-full border border-white/20 bg-black/30 opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
-										style={{ color: teamColor }}
-									>
-										<FaArrowRight className="text-xs" />
-									</div>
 								</Link>
 							);
 						})}
+					</div>
+				</section>
+
+				<section className="mt-4 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
+					<div className="rounded-3xl border border-white/14 bg-linear-to-br from-white/10 via-white/4 to-transparent p-5 md:p-6">
+						<h2 className="text-xl md:text-2xl font-semibold tracking-wide text-white">
+							Season Team Stats
+						</h2>
+						<p className="mt-1 text-sm text-gray-300">
+							Live constructor metrics for {CURRENT_SEASON}.
+						</p>
+						<div className="mt-4">
+							<TeamSeasonStatsClient
+								teamName={sourceTeamName}
+								teamColor={teamColor}
+								year={CURRENT_SEASON}
+							/>
+						</div>
+					</div>
+
+					<div className="rounded-3xl border border-white/14 bg-black/45 p-5 md:p-6">
+						<h2 className="text-xl md:text-2xl font-semibold tracking-wide text-white">
+							Team Career Snapshot
+						</h2>
+						<p className="mt-2 text-sm text-gray-300">
+							Long-run identity and timeline context for {displayName}.
+						</p>
+						<div className="mt-4 space-y-2 text-sm">
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Team</span>
+								<span className="font-semibold text-white">{displayName}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">First season</span>
+								<span className="font-semibold text-white">{founded}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Seasons active</span>
+								<span className="font-semibold text-white">
+									{seasonsActive ? seasonsActive : 'New entry'}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Home base</span>
+								<span className="font-semibold text-white">{base}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Current drivers</span>
+								<span className="font-semibold text-white">{teamDrivers.length}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Current pairing</span>
+								<span className="font-semibold text-white text-right">
+									{teamDrivers
+										.slice(0, 2)
+										.map((driver) => driver.fullName)
+										.join(' / ')}
+								</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Total team wins</span>
+								<span className="font-semibold text-white">{teamHistory.totalWins}</span>
+							</div>
+							{hasTeamWins ? (
+								<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+									<span className="text-gray-400">First team win</span>
+									<span className="font-semibold text-white text-right">{teamHistory.firstWin}</span>
+								</div>
+							) : (
+								<>
+									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+										<span className="text-gray-400">Best finish</span>
+										<span className="font-semibold text-white">
+											{teamHistory.highestFinish ? `P${teamHistory.highestFinish}` : 'N/A'}
+										</span>
+									</div>
+									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+										<span className="text-gray-400">Best-finish frequency</span>
+										<span className="font-semibold text-white">
+											{teamHistory.highestFinishCount ? `${teamHistory.highestFinishCount} times` : 'N/A'}
+										</span>
+									</div>
+								</>
+							)}
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Total poles</span>
+								<span className="font-semibold text-white">{teamHistory.totalPoles}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Team principal</span>
+								<span className="font-semibold text-white text-right">{teamHistory.teamPrincipal}</span>
+							</div>
+							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">CEO</span>
+								<span className="font-semibold text-white text-right">{teamHistory.ceo}</span>
+							</div>
+							<div className="flex items-start justify-between gap-4 rounded-xl border border-white/12 bg-white/4 px-3 py-2">
+								<span className="text-gray-400">Reserve drivers</span>
+								<span className="font-semibold text-white text-right">{reserveDriversLabel}</span>
+							</div>
+						</div>
+						<p className="mt-4 text-sm text-gray-300">{summary}</p>
 					</div>
 				</section>
 			</div>
