@@ -1,5 +1,5 @@
+import CenterSnapRollerClient from '@/components/navigation/CenterSnapRollerClient';
 import {
-	getDriverImagePath,
 	getTeamCode,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
 	FaArrowLeft,
+	FaArrowRight,
 	FaCalendarAlt,
 	FaFlagCheckered,
 	FaTrophy,
@@ -133,6 +134,80 @@ const IMAGE_FIRST_NAME_OVERRIDES = {
 	'kimi-antonelli': 'and',
 };
 
+const TEAM_DRIVER_IMAGE_TOKEN_BY_KEY = {
+	mer: 'mercedes',
+	fer: 'ferrari',
+	rbr: 'redbullracing',
+	mcl: 'mclaren',
+	haas: 'haasf1team',
+	ast: 'astonmartin',
+	wil: 'williams',
+	rb: 'racingbulls',
+	alp: 'alpine',
+	aud: 'audi',
+	cad: 'cadillac',
+	sau: 'sauber',
+};
+
+const NATIONALITY_FLAG_MAP = {
+	australian: 'aus',
+	argentine: 'arg',
+	brazilian: 'bra',
+	british: 'gbr',
+	canadian: 'can',
+	dutch: 'ned',
+	finnish: 'fin',
+	french: 'fra',
+	german: 'ger',
+	italian: 'ita',
+	mexican: 'mex',
+	monacan: 'mon',
+	spanish: 'esp',
+	'thai-british': 'tha',
+	'thai british': 'tha',
+	'new zealander': 'nzl',
+};
+
+const NATIONALITY_COUNTRY_MAP = {
+	australian: 'Australia',
+	argentine: 'Argentina',
+	brazilian: 'Brazil',
+	british: 'United Kingdom',
+	canadian: 'Canada',
+	dutch: 'Netherlands',
+	finnish: 'Finland',
+	french: 'France',
+	german: 'Germany',
+	italian: 'Italy',
+	mexican: 'Mexico',
+	monacan: 'Monaco',
+	spanish: 'Spain',
+	'thai-british': 'Thailand',
+	'thai british': 'Thailand',
+	'new zealander': 'New Zealand',
+};
+
+const DISPLAY_NUMBER_OVERRIDES = {
+	'max-verstappen': 3,
+	'lando-norris': 1,
+};
+
+function getNationalityFlagCode(nationality) {
+	if (!nationality) return null;
+	const normalized = String(nationality).trim().toLowerCase();
+	return NATIONALITY_FLAG_MAP[normalized] || null;
+}
+
+function getCountryNameFromNationality(nationality) {
+	if (!nationality) return 'Unknown';
+	const normalized = String(nationality).trim().toLowerCase();
+	return NATIONALITY_COUNTRY_MAP[normalized] || nationality;
+}
+
+function getDisplayNumber(driver) {
+	return DISPLAY_NUMBER_OVERRIDES[driver.slug] ?? driver.number;
+}
+
 function normalizeName(value) {
 	return String(value || '')
 		.trim()
@@ -145,28 +220,13 @@ function getTeamKey(teamName) {
 	return getTeamCode(teamName) || normalizeName(teamName);
 }
 
-function splitDriverName(fullName) {
-	const parts = String(fullName || '')
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean);
-	if (parts.length <= 1) {
-		return {
-			firstName: parts[0] || fullName,
-			lastName: '',
-		};
-	}
-
-	return {
-		firstName: parts.slice(0, -1).join(' '),
-		lastName: parts[parts.length - 1],
-	};
-}
-
 function getDriverTeamCardImagePath(driver) {
-	const teamToken = String(driver?.teamName || '')
-		.toLowerCase()
-		.replace(/[^a-z0-9]/g, '');
+	const teamKey = getTeamKey(driver?.teamName);
+	const teamToken =
+		TEAM_DRIVER_IMAGE_TOKEN_BY_KEY[teamKey] ||
+		String(driver?.teamName || '')
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, '');
 	const nameParts = String(driver?.fullName || '')
 		.trim()
 		.toLowerCase()
@@ -176,8 +236,17 @@ function getDriverTeamCardImagePath(driver) {
 		String(nameParts[0] || '').slice(0, 3);
 	const lastToken = String(nameParts[nameParts.length - 1] || '').slice(0, 3);
 
-	if (!teamToken || !firstToken || !lastToken) return null;
-	return `/images/drivers/${CURRENT_SEASON}${teamToken}${firstToken}${lastToken}01right.png`;
+	const safeFirst =
+		firstToken ||
+		String(driver?.code || 'drv')
+			.slice(0, 3)
+			.toLowerCase();
+	const safeLast =
+		lastToken ||
+		String(driver?.code || 'img')
+			.slice(-3)
+			.toLowerCase();
+	return `/images/drivers/${CURRENT_SEASON}${teamToken}${safeFirst}${safeLast}01right.png`;
 }
 
 function getTeamFromSlug(slug) {
@@ -218,6 +287,21 @@ export default async function TeamDetailPage({ params }) {
 	const teamLogo = getTeamLogoPath(sourceTeamName);
 	const carToken = TEAM_CAR_TOKEN_BY_KEY[teamKey] || teamKey;
 	const teamCarImage = `/images/cars/${CURRENT_SEASON}${carToken}carright.png`;
+	const teamRollerItems = Object.entries(TEAM_META_BY_KEY).map(
+		([key, meta]) => {
+			const firstDriver = DRIVER_CATALOG.find(
+				(candidate) => getTeamKey(candidate.teamName) === key
+			);
+			const sourceName = firstDriver?.teamName || meta.displayName;
+			return {
+				id: key,
+				href: `/teams/${meta.slug}`,
+				label: meta.displayName,
+				color: firstDriver?.teamColor || '#6B7280',
+				logo: getTeamLogoPath(sourceName),
+			};
+		}
+	);
 
 	return (
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
@@ -230,6 +314,14 @@ export default async function TeamDetailPage({ params }) {
 					<FaArrowLeft className="text-red-500" />
 					Back to Teams
 				</Link>
+
+				<div className="mb-4">
+					<CenterSnapRollerClient
+						items={teamRollerItems}
+						activeId={teamKey}
+						ariaLabel="Team page roller"
+					/>
+				</div>
 
 				<section
 					className="relative overflow-hidden rounded-3xl border border-white/15 p-6 md:p-8"
@@ -250,10 +342,10 @@ export default async function TeamDetailPage({ params }) {
 						<div className="flex flex-col justify-between">
 							<div>
 								<h1
-									className="text-5xl md:text-6xl font-black tracking-tight text-white"
+									className="text-5xl md:text-6xl font-semibold tracking-[-0.015em] leading-[0.96] text-white"
 									style={{
 										fontFamily:
-											'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+											'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
 									}}
 								>
 									{displayName}
@@ -330,74 +422,91 @@ export default async function TeamDetailPage({ params }) {
 
 					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 						{teamDrivers.map((driver) => {
-							const { firstName, lastName } = splitDriverName(driver.fullName);
-							const driverImage =
-								getDriverTeamCardImagePath(driver) ||
-								getDriverImagePath(driver.code);
+							const driverImage = getDriverTeamCardImagePath(driver);
+							const flagCode = getNationalityFlagCode(driver.nationality);
+							const countryName = getCountryNameFromNationality(
+								driver.nationality
+							);
+							const displayNumber = getDisplayNumber(driver);
 
 							return (
-								<div
+								<Link
 									key={driver.slug}
-									className="rounded-2xl border border-white/12 bg-linear-to-br from-white/12 via-white/6 to-transparent p-4"
-									style={{ boxShadow: `inset 0 0 0 1px ${teamColor}22` }}
+									href={`/drivers/${driver.slug}`}
+									className="group relative h-80 rounded-xl border border-white/15 overflow-hidden p-3.5 cursor-pointer hover:border-white/30 transition-all duration-300"
+									style={{
+										background: `linear-gradient(120deg, ${teamColor}CC 0%, ${teamColor}B8 58%, rgba(8,8,10,0.92) 100%)`,
+									}}
 								>
-									<div className="flex items-start gap-3">
-										<div className="relative h-20 w-16 shrink-0 rounded-xl border border-white/12 bg-black/25 overflow-hidden">
-											<Image
-												src={driverImage}
-												alt={driver.fullName}
-												fill
-												sizes="64px"
-												className="object-contain object-top"
-											/>
-										</div>
-										<div className="min-w-0">
-											<h3 className="leading-none">
-												<span
-													className="text-lg text-white/95"
-													style={{
-														fontFamily:
-															'Lucida Handwriting, Brush Script MT, Segoe Script, cursive',
-													}}
-												>
-													{firstName}
-												</span>
-												{lastName && (
-													<span
-														className="ml-1 text-xl font-black uppercase text-white"
-														style={{
-															fontFamily:
-																'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
-														}}
-													>
-														{lastName}
-													</span>
-												)}
+									<div
+										className="pointer-events-none absolute inset-0 opacity-60"
+										style={{
+											backgroundImage:
+												'repeating-linear-gradient(0deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, transparent 2px, transparent 14px), repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 2px, transparent 2px, transparent 16px)',
+										}}
+									/>
+
+									<div className="relative z-10 flex h-full">
+										<div className="w-[60%] flex flex-col">
+											<h3 className="text-[35px] leading-[0.95] font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+												{driver.fullName.split(' ')[0]}
+												<br />
+												{driver.fullName.split(' ').slice(1).join(' ')}
 											</h3>
-											<p className="mt-2 text-xs text-gray-300">
-												#{driver.number}
+											<p className="text-sm font-semibold text-white/90 mt-1">
+												{driver.teamName}
 											</p>
-											<div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-												<p className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-gray-200">
-													<span className="text-gray-400">Nationality:</span>{' '}
-													{driver.nationality}
-												</p>
-												<p className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-gray-200">
-													<span className="text-gray-400">Debut:</span>{' '}
-													{driver.debutSeason}
-												</p>
-												<p className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-gray-200">
-													<span className="text-gray-400">Wins:</span>{' '}
-													{driver.careerWins}
-												</p>
-												<p className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-gray-200">
-													<span className="text-gray-400">Podiums:</span>{' '}
-													{driver.careerPodiums}
-												</p>
+											<p className="mt-4 text-[46px] leading-none font-black italic text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.35)]">
+												{displayNumber}
+											</p>
+											<div className="mt-auto inline-flex items-center gap-2">
+												{flagCode && (
+													<div className="h-5 overflow-hidden rounded border border-white/25 bg-black/25">
+														<Image
+															src={`/images/flags/${flagCode}.png`}
+															alt={`${countryName} flag`}
+															width={28}
+															height={20}
+															className="h-full w-auto"
+														/>
+													</div>
+												)}
+												<span className="text-xs font-semibold text-white/95 tracking-wide">
+													{countryName}
+												</span>
+											</div>
+										</div>
+
+										<div className="w-[40%] relative">
+											{teamLogo && (
+												<div className="absolute top-0 right-0 z-20 h-11 w-11 rounded-lg bg-black/30 border border-white/20 p-1">
+													<Image
+														src={teamLogo}
+														alt={driver.teamName}
+														fill
+														className="object-contain p-1"
+													/>
+												</div>
+											)}
+											<div className="absolute left-[-36%] bottom-[-14%] h-[292px] w-[160%]">
+												<Image
+													src={driverImage}
+													alt={driver.fullName}
+													fill
+													className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
+													style={{ objectPosition: '50% top' }}
+												/>
 											</div>
 										</div>
 									</div>
-								</div>
+
+									<div
+										className="pointer-events-none absolute right-3 bottom-3 inline-flex items-center justify-center h-7 w-7 rounded-full border border-white/20 bg-black/30 opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
+										style={{ color: teamColor }}
+									>
+										<FaArrowRight className="text-xs" />
+									</div>
+								</Link>
 							);
 						})}
 					</div>

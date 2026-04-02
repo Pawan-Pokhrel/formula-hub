@@ -1,0 +1,133 @@
+.shell {
+	position: relative;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 16px;
+	background: rgba(0, 0, 0, 0.45);
+	padding: 10px 0;
+	overflow: hidden;
+}
+
+.viewport {
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x mandatory;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	cursor: grab;
+	touch-action: pan-x;
+	user-select: none;
+}
+
+.viewport.dragging {
+	cursor: grabbing;
+}
+
+.viewport::-webkit-scrollbar {
+	display: none;
+}
+
+.track {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+.spacer {
+	flex: 0 0 auto;
+	height: 1px;
+}
+
+.item {
+	scroll-snap-align: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 7px 12px;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 999px;
+	color: rgba(255, 255, 255, 0.92);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+	transition:
+		transform 120ms ease,
+		opacity 120ms ease,
+		border-color 120ms ease,
+		background 120ms ease;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	flex-shrink: 0;
+}
+
+.logoWrap {
+	position: relative;
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+
+.logo {
+	object-fit: contain;
+}
+
+.label {
+	max-width: 120px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.meta {
+	font-size: 10px;
+	font-weight: 600;
+	opacity: 0.8;
+	padding-left: 2px;
+}
+
+.centerMarker {
+	position: absolute;
+	top: 7px;
+	bottom: 7px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 1px;
+	background: rgba(255, 255, 255, 0.24);
+	pointer-events: none;
+}
+
+.edgeLeft,
+.edgeRight {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 44px;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.edgeLeft {
+	left: 0;
+	background: linear-gradient(
+		90deg,
+		rgba(0, 0, 0, 0.65) 0%,
+		rgba(0, 0, 0, 0) 100%
+	);
+}
+
+.edgeRight {
+	right: 0;
+	background: linear-gradient(
+		270deg,
+		rgba(0, 0, 0, 0.65) 0%,
+		rgba(0, 0, 0, 0) 100%
+	);
+}

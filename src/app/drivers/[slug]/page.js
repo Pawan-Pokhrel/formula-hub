@@ -1,7 +1,10 @@
+import CenterSnapRollerClient from '@/components/navigation/CenterSnapRollerClient';
 import {
 	getDriverImagePath,
+	getTeamCode,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
+import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
 import {
 	CURRENT_SEASON,
 	DRIVER_CATALOG,
@@ -92,6 +95,18 @@ function splitDriverName(fullName) {
 	};
 }
 
+function normalizeName(value) {
+	return String(value || '')
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9\s]/g, ' ')
+		.replace(/\s+/g, ' ');
+}
+
+function getTeamKey(teamName) {
+	return getTeamCode(teamName) || normalizeName(teamName);
+}
+
 function darkenHexColor(hexColor, factor = 0.5) {
 	const raw = String(hexColor || '')
 		.trim()
@@ -175,6 +190,35 @@ export default async function DriverDetailPage({ params }) {
 		{ label: 'Career Points', value: driver.careerPoints.toLocaleString() },
 		{ label: 'Experience', value: `${experience} seasons` },
 	];
+	const constructorOrderByKey = Object.fromEntries(
+		ROUGH_CONSTRUCTOR_ORDER_2026.map((teamName, index) => [
+			getTeamKey(teamName),
+			index,
+		])
+	);
+	const driverRollerItems = [...DRIVER_CATALOG]
+		.sort((a, b) => {
+			const rankA =
+				constructorOrderByKey[getTeamKey(a.teamName)] ??
+				Number.MAX_SAFE_INTEGER;
+			const rankB =
+				constructorOrderByKey[getTeamKey(b.teamName)] ??
+				Number.MAX_SAFE_INTEGER;
+			if (rankA !== rankB) return rankA - rankB;
+
+			const numA = Number(a.number || 999);
+			const numB = Number(b.number || 999);
+			if (numA !== numB) return numA - numB;
+
+			return a.fullName.localeCompare(b.fullName);
+		})
+		.map((item) => ({
+			id: item.slug,
+			label: item.fullName,
+			meta: item.code,
+			color: item.teamColor || '#6B7280',
+			href: `/drivers/${item.slug}`,
+		}));
 
 	return (
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
@@ -187,6 +231,14 @@ export default async function DriverDetailPage({ params }) {
 					<FaArrowLeft className="text-red-500" />
 					Back to Drivers
 				</Link>
+
+				<div className="mb-4">
+					<CenterSnapRollerClient
+						items={driverRollerItems}
+						activeId={driver.slug}
+						ariaLabel="Driver page roller"
+					/>
+				</div>
 
 				<section
 					className="relative overflow-hidden rounded-3xl border border-white/15"
@@ -241,7 +293,7 @@ export default async function DriverDetailPage({ params }) {
 									className="block text-6xl md:text-8xl lg:text-[9rem] font-black uppercase tracking-[-0.03em] text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.34)]"
 									style={{
 										fontFamily:
-											'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+											'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
 									}}
 								>
 									{lastName}
