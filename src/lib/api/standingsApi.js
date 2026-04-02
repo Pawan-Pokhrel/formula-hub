@@ -1,8 +1,7 @@
 import api from './api';
 
-export const getDriverStandings = async (year) => {
-	const currentYear = new Date().getFullYear();
-	const refresh = Number(year) === currentYear ? '?refresh=true' : '';
+export const getDriverStandings = async (year, options = {}) => {
+	const refresh = options.refresh ? '?refresh=true' : '';
 	const response = await api.get(`/standings/drivers/${year}${refresh}`);
 	if (response.data.success) {
 		return response.data.data;
@@ -10,9 +9,8 @@ export const getDriverStandings = async (year) => {
 	throw new Error(response.data.message || 'Failed to fetch driver standings');
 };
 
-export const getConstructorStandings = async (year) => {
-	const currentYear = new Date().getFullYear();
-	const refresh = Number(year) === currentYear ? '?refresh=true' : '';
+export const getConstructorStandings = async (year, options = {}) => {
+	const refresh = options.refresh ? '?refresh=true' : '';
 	const response = await api.get(`/standings/constructors/${year}${refresh}`);
 	if (response.data.success) {
 		return response.data.data;
@@ -22,9 +20,8 @@ export const getConstructorStandings = async (year) => {
 	);
 };
 
-export const getComparisonDataset = async (year) => {
-	const currentYear = new Date().getFullYear();
-	const refresh = Number(year) === currentYear ? '?refresh=true' : '';
+export const getComparisonDataset = async (year, options = {}) => {
+	const refresh = options.refresh ? '?refresh=true' : '';
 
 	const normalizeDriverRows = (rows) =>
 		(Array.isArray(rows) ? rows : []).map((row) => ({

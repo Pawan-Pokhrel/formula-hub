@@ -42,7 +42,7 @@ import {
 } from '@/lib/dashboard/widgetRegistry';
 import { useAuth } from '@/providers/AuthProvider';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	FaBroadcastTower,
 	FaCalendarAlt,
@@ -202,9 +202,13 @@ export default function DashboardPage() {
 	);
 	const [activeAspect, setActiveAspect] = useState('overview');
 	const [prefsHydrated, setPrefsHydrated] = useState(false);
+	const hasFetchedDashboardDataRef = useRef(false);
 	const { isAuthenticated, user } = useAuth();
 
 	useEffect(() => {
+		if (hasFetchedDashboardDataRef.current) return;
+		hasFetchedDashboardDataRef.current = true;
+
 		const fetchDashboardData = async () => {
 			setLoading(true);
 			try {
