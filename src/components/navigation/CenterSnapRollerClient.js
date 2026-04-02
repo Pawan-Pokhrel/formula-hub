@@ -178,7 +178,6 @@ export default function CenterSnapRollerClient({ items, activeId, ariaLabel }) {
 		}
 		if (isProgrammaticScrollRef.current) return;
 		if (isPointerDownRef.current) return;
-		if (navTimerRef.current) clearTimeout(navTimerRef.current);
 
 		navTimerRef.current = setTimeout(
 			() => navigateToIndex(nearestIndex),
