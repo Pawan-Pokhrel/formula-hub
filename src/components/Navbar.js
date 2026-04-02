@@ -14,6 +14,7 @@ const NAV_ITEMS = [
 	{ href: '/schedule', label: 'Schedule' },
 	{ href: '/standings', label: 'Standings' },
 	{ href: '/drivers', label: 'Drivers' },
+	{ href: '/teams', label: 'Teams' },
 	{ href: '/compare', label: 'Compare' },
 	{ href: '/telemetry', label: 'Telemetry' },
 	{ href: '/track', label: 'Track', requiresAuth: true },
