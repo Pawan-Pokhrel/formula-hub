@@ -40,7 +40,8 @@ export default function TeamSeasonStatsClient({ teamName, teamColor, year }) {
 		getComparisonDataset(year)
 			.then((data) => {
 				if (!active) return;
-				const constructors = Array.isArray(data?.constructors) ? data.constructors : [];
+				const constructors =
+					Array.isArray(data?.constructors) ? data.constructors : [];
 				const match = constructors.find(
 					(row) => getTeamKey(row?.team_name) === expectedKey
 				);
@@ -62,13 +63,29 @@ export default function TeamSeasonStatsClient({ teamName, teamColor, year }) {
 	const metricCards = useMemo(() => {
 		if (!stats) return [];
 		return [
-			{ label: 'Position', value: `P${stats.position || '-'}`, note: 'Constructor rank' },
-			{ label: 'Points', value: toPoints(stats.points), note: 'Championship total' },
+			{
+				label: 'Position',
+				value: `P${stats.position || '-'}`,
+				note: 'Constructor rank',
+			},
+			{
+				label: 'Points',
+				value: toPoints(stats.points),
+				note: 'Championship total',
+			},
 			{ label: 'Wins', value: stats.wins || 0, note: 'Grand Prix wins' },
 			{ label: 'Podiums', value: stats.podiums || 0, note: 'Top-3 finishes' },
 			{ label: 'Poles', value: stats.poles || 0, note: 'Qualifying P1s' },
-			{ label: 'Top 10', value: stats.top10_finishes || 0, note: 'Points finishes' },
-			{ label: 'Avg Finish', value: toAvgFinish(stats.avg_finish), note: 'Race pace trend' },
+			{
+				label: 'Top 10',
+				value: stats.top10_finishes || 0,
+				note: 'Points finishes',
+			},
+			{
+				label: 'Avg Finish',
+				value: toAvgFinish(stats.avg_finish),
+				note: 'Race pace trend',
+			},
 			{ label: 'DNFs', value: stats.dnf_count || 0, note: 'Retirements' },
 		];
 	}, [stats]);

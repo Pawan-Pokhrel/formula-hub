@@ -7,7 +7,12 @@ import { CURRENT_SEASON, DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { FaArrowLeft, FaCalendarAlt, FaFlagCheckered, FaTrophy } from 'react-icons/fa';
+import {
+	FaArrowLeft,
+	FaCalendarAlt,
+	FaFlagCheckered,
+	FaTrophy,
+} from 'react-icons/fa';
 import TeamSeasonStatsClient from './TeamSeasonStatsClient';
 
 const TEAM_META_BY_KEY = {
@@ -176,10 +181,14 @@ function getDriverTeamCardImagePath(driver) {
 }
 
 function getTeamFromSlug(slug) {
-	const entry = Object.entries(TEAM_META_BY_KEY).find(([, meta]) => meta.slug === slug);
+	const entry = Object.entries(TEAM_META_BY_KEY).find(
+		([, meta]) => meta.slug === slug
+	);
 	if (entry) return { teamKey: entry[0], ...entry[1] };
 
-	const inferred = DRIVER_CATALOG.find((driver) => normalizeName(driver.teamName).replace(/\s+/g, '-') === slug);
+	const inferred = DRIVER_CATALOG.find(
+		(driver) => normalizeName(driver.teamName).replace(/\s+/g, '-') === slug
+	);
 	if (!inferred) return null;
 
 	const teamKey = getTeamKey(inferred.teamName);
@@ -323,7 +332,8 @@ export default async function TeamDetailPage({ params }) {
 						{teamDrivers.map((driver) => {
 							const { firstName, lastName } = splitDriverName(driver.fullName);
 							const driverImage =
-								getDriverTeamCardImagePath(driver) || getDriverImagePath(driver.code);
+								getDriverTeamCardImagePath(driver) ||
+								getDriverImagePath(driver.code);
 
 							return (
 								<div
@@ -364,7 +374,9 @@ export default async function TeamDetailPage({ params }) {
 													</span>
 												)}
 											</h3>
-											<p className="mt-2 text-xs text-gray-300">#{driver.number}</p>
+											<p className="mt-2 text-xs text-gray-300">
+												#{driver.number}
+											</p>
 											<div className="mt-2 grid grid-cols-2 gap-2 text-xs">
 												<p className="rounded-lg border border-white/10 bg-black/30 px-2 py-1 text-gray-200">
 													<span className="text-gray-400">Nationality:</span>{' '}
