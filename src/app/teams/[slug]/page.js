@@ -745,14 +745,11 @@ export default async function TeamDetailPage({ params }) {
 					</div>
 				</section>
 
-				<section className="mt-4 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
-					<div className="rounded-3xl border border-white/14 bg-linear-to-br from-white/10 via-white/4 to-transparent p-5 md:p-6">
-						<h2 className="text-xl md:text-2xl font-semibold tracking-wide text-white">
-							Season Team Stats
+				<section className="mt-6 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
+					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-6">
+							Season {CURRENT_SEASON} Stats
 						</h2>
-						<p className="mt-1 text-sm text-gray-300">
-							Live constructor metrics for {CURRENT_SEASON}.
-						</p>
 						<div className="mt-4">
 							<TeamSeasonStatsClient
 								teamName={sourceTeamName}
@@ -762,72 +759,50 @@ export default async function TeamDetailPage({ params }) {
 						</div>
 					</div>
 
-					<div className="rounded-3xl border border-white/14 bg-black/45 p-5 md:p-6">
-						<h2 className="text-xl md:text-2xl font-semibold tracking-wide text-white">
-							Team Career Snapshot
+					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-6">
+							Team Profile
 						</h2>
-						<p className="mt-2 text-sm text-gray-300">
-							Long-run identity and timeline context for {displayName}.
-						</p>
-						<div className="mt-4 space-y-2 text-sm">
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Team</span>
-								<span className="font-semibold text-white">{displayName}</span>
+						<div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 text-sm">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">First Season</span>
+								<span className="text-sm text-white/90 font-medium">{founded}</span>
 							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">First season</span>
-								<span className="font-semibold text-white">{founded}</span>
-							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Seasons active</span>
-								<span className="font-semibold text-white">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Seasons Active</span>
+								<span className="text-sm text-white/90 font-medium">
 									{seasonsActive ? seasonsActive : 'New entry'}
 								</span>
 							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Home base</span>
-								<span className="font-semibold text-white">{base}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Home Base</span>
+								<span className="text-sm text-white/90 font-medium">{base}</span>
 							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Current drivers</span>
-								<span className="font-semibold text-white">
-									{teamDrivers.length}
-								</span>
-							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Current pairing</span>
-								<span className="font-semibold text-white text-right">
-									{teamDrivers
-										.slice(0, 2)
-										.map((driver) => driver.fullName)
-										.join(' / ')}
-								</span>
-							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Total team wins</span>
-								<span className="font-semibold text-white">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Total Team Wins</span>
+								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.totalWins}
 								</span>
 							</div>
 							{hasTeamWins ?
-								<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-									<span className="text-gray-400">First team win</span>
-									<span className="font-semibold text-white text-right">
+								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">First Team Win</span>
+									<span className="text-sm text-white/90 font-medium">
 										{teamHistory.firstWin}
 									</span>
 								</div>
 							:	<>
-									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-										<span className="text-gray-400">Best finish</span>
-										<span className="font-semibold text-white">
+									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Best Finish</span>
+										<span className="text-sm text-white/90 font-medium">
 											{teamHistory.highestFinish ?
 												`P${teamHistory.highestFinish}`
 											:	'N/A'}
 										</span>
 									</div>
-									<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-										<span className="text-gray-400">Best-finish frequency</span>
-										<span className="font-semibold text-white">
+									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Max Finish Freq</span>
+										<span className="text-sm text-white/90 font-medium">
 											{teamHistory.highestFinishCount ?
 												`${teamHistory.highestFinishCount} times`
 											:	'N/A'}
@@ -835,32 +810,32 @@ export default async function TeamDetailPage({ params }) {
 									</div>
 								</>
 							}
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Total poles</span>
-								<span className="font-semibold text-white">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Total Poles</span>
+								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.totalPoles}
 								</span>
 							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Team principal</span>
-								<span className="font-semibold text-white text-right">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Team Principal</span>
+								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.teamPrincipal}
 								</span>
 							</div>
-							<div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">CEO</span>
-								<span className="font-semibold text-white text-right">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">CEO</span>
+								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.ceo}
 								</span>
 							</div>
-							<div className="flex items-start justify-between gap-4 rounded-xl border border-white/12 bg-white/4 px-3 py-2">
-								<span className="text-gray-400">Reserve drivers</span>
-								<span className="font-semibold text-white text-right">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5 sm:col-span-2">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Reserve Drivers</span>
+								<span className="text-sm text-white/90 font-medium">
 									{reserveDriversLabel}
 								</span>
 							</div>
 						</div>
-						<p className="mt-4 text-sm text-gray-300">{summary}</p>
+						<p className="mt-6 text-sm text-white/50">{summary}</p>
 					</div>
 				</section>
 			</div>
