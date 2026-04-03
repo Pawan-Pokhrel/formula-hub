@@ -2,7 +2,6 @@
 
 import { getComparisonDataset } from '@/lib/api/standingsApi';
 import { useEffect, useMemo, useState } from 'react';
-import { FaChartLine } from 'react-icons/fa';
 
 function toFixedPoints(value) {
 	const num = Number(value || 0);
@@ -92,54 +91,44 @@ export default function DriverSeasonStatsClient({
 
 	if (loading) {
 		return (
-			<div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 animate-pulse">
-					{Array.from({ length: 8 }).map((_, index) => (
-						<div
-							key={`season-skeleton-${index}`}
-							className="rounded-xl p-3 border border-white/8"
-							style={{ backgroundColor: `${teamColor}22` }}
-						>
-							<div className="h-2.5 w-16 rounded bg-white/20" />
-							<div className="mt-2 h-6 w-10 rounded bg-white/25" />
-							<div className="mt-2 h-2.5 w-24 rounded bg-white/20" />
-						</div>
-					))}
-				</div>
+			<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 animate-pulse">
+				{Array.from({ length: 8 }).map((_, index) => (
+					<div key={`season-skeleton-${index}`} className="relative flex flex-col p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] overflow-hidden">
+						<div className="h-2 w-16 rounded bg-white/10 mb-3" />
+						<div className="h-8 w-12 rounded bg-white/20 mb-2" />
+						<div className="h-2 w-20 rounded bg-white/5" />
+					</div>
+				))}
 			</div>
 		);
 	}
 
 	if (!stats) {
 		return (
-			<div className="rounded-2xl border border-white/10 bg-black/35 p-5 text-sm text-gray-300 inline-flex items-center gap-2">
-				<FaChartLine className="text-red-400" />
-				This season stats are not available yet.
+			<div className="p-4 mt-4 rounded-2xl bg-white/[0.02] border border-white/5 text-sm text-white/50">
+				This season's stats are not available yet.
 			</div>
 		);
 	}
 
 	return (
-		<div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-			{metricCards.map((item) => {
-				return (
-					<div
-						key={item.label}
-						className="rounded-xl border border-white/10 bg-black/38 p-3 overflow-hidden"
-						style={{
-							background: `linear-gradient(145deg, ${teamColor}14 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.48) 100%)`,
-						}}
-					>
-						<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+		<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+			{metricCards.map((item) => (
+				<div key={item.label} className="flex flex-col p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+					<div className="flex items-center gap-2 mb-1">
+						<div className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: teamColor }} />
+						<p className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-none mt-[1px]">
 							{item.label}
 						</p>
-						<p className="mt-1 text-lg font-black text-white">{item.value}</p>
-						<p className="mt-1 text-[10px] text-gray-500 uppercase tracking-[0.12em]">
-							{item.note}
-						</p>
 					</div>
-				);
-			})}
+					<p className="text-2xl md:text-3xl font-medium tracking-tight text-white mt-1">
+						{item.value}
+					</p>
+					<p className="mt-1.5 text-[9px] text-white/30 uppercase tracking-[0.1em]">
+						{item.note}
+					</p>
+				</div>
+			))}
 		</div>
 	);
 }
