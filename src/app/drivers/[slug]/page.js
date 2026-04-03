@@ -21,10 +21,6 @@ import {
 	FaArrowLeft,
 	FaArrowRight,
 	FaBalanceScale,
-	FaCalendarAlt,
-	FaFlag,
-	FaFlagCheckered,
-	FaTrophy,
 } from 'react-icons/fa';
 import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 
@@ -431,20 +427,14 @@ export default async function DriverDetailPage({ params }) {
 					</div>
 				</section>
 
-				<section className="mt-4 rounded-3xl border border-white/14 bg-linear-to-br from-white/10 via-white/4 to-transparent p-5 md:p-6">
-					<div className="flex flex-wrap items-end justify-between gap-3">
-						<div>
-							<h2 className="text-xl md:text-2xl font-black inline-flex items-center gap-2">
-								<FaFlagCheckered className="text-red-500" />
-								This Year Stats
-							</h2>
-							<p className="mt-1 text-sm text-gray-300">
-								Live season snapshot for {CURRENT_SEASON}
-							</p>
-						</div>
+				<section className="mt-8">
+					<div className="mb-5 px-1">
+						<h2 className="text-xl md:text-2xl font-semibold tracking-[-0.02em] text-white">
+							Season {CURRENT_SEASON} Snapshot
+						</h2>
 					</div>
 
-					<div className="mt-4">
+					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 md:p-6 backdrop-blur-sm">
 						<DriverSeasonStatsClient
 							driverCode={driver.code}
 							driverName={driver.fullName}
@@ -454,29 +444,22 @@ export default async function DriverDetailPage({ params }) {
 					</div>
 				</section>
 
-				<section className="mt-4 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
-					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
-						<h2 className="text-lg md:text-xl font-black inline-flex items-center gap-2">
-							<FaTrophy className="text-yellow-400" />
-							Career Stats
+				<section className="mt-6 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
+					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-8">
+							Career Overview
 						</h2>
-						<p className="mt-1 text-sm text-gray-300">
-							Long-run profile built from the historical career dataset.
-						</p>
 
-						<div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2.5">
+						<div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
 							{careerStats.map((item) => (
-								<div
-									key={item.label}
-									className="rounded-xl border border-white/12 bg-linear-to-br from-white/12 via-white/6 to-transparent p-3"
-									style={{
-										boxShadow: `inset 0 0 0 1px ${hexToRgba(driver.teamColor, 0.12)}`,
-									}}
-								>
-									<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">
-										{item.label}
-									</p>
-									<p className="mt-1 text-xl font-black text-white">
+								<div key={item.label} className="flex flex-col p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+									<div className="flex items-center gap-2 mb-1">
+										<div className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: driver.teamColor }} />
+										<p className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-none mt-[1px]">
+											{item.label}
+										</p>
+									</div>
+									<p className="text-2xl md:text-3xl font-medium tracking-tight text-white mt-1">
 										{item.value}
 									</p>
 								</div>
@@ -484,62 +467,59 @@ export default async function DriverDetailPage({ params }) {
 						</div>
 					</div>
 
-					<div className="rounded-2xl border border-white/12 bg-black/50 p-5">
-						<h2 className="text-lg font-bold inline-flex items-center gap-2">
-							<FaCalendarAlt className="text-red-500" />
+					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-2">
 							Driver Profile
 						</h2>
-						<p className="mt-2 text-sm text-gray-300">{driver.style}</p>
+						{driver.style && (
+							<p className="text-sm text-white/50 mb-6">{driver.style}</p>
+						)}
 
-						<div className="mt-3 space-y-2 text-sm">
-							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
-								<span className="text-gray-400">Born:</span>{' '}
-								{formatBirthDate(driver.birthDate)}
-							</p>
-							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
-								<span className="text-gray-400">Age:</span>{' '}
-								{age == null ? 'Unknown' : age}
-							</p>
-							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
-								<span className="text-gray-400">Birthplace:</span>{' '}
-								{driver.placeOfBirth}
-							</p>
-							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
-								<span className="text-gray-400">Nationality:</span>{' '}
-								{driver.nationality}
-							</p>
-
-							<div className="pt-2">
-								<h3 className="text-sm uppercase tracking-[0.14em] text-gray-400">
-									Career Timeline
-								</h3>
-								<div className="mt-2 space-y-2">
-									{timeline.map((item) => (
-										<div
-											key={item.label}
-											className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 flex items-center justify-between gap-3"
-										>
-											<p className="text-xs text-gray-400 uppercase tracking-wide">
-												{item.label}
-											</p>
-											<p className="text-sm font-semibold text-white text-right">
-												{item.value}
-											</p>
-										</div>
-									))}
-								</div>
+						<div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 text-sm">
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Born</span>
+								<span className="text-sm text-white/90 font-medium">{formatBirthDate(driver.birthDate)}</span>
 							</div>
-							<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200">
-								<span className="text-gray-400">Current Team:</span>{' '}
-								{driver.teamName}
-							</p>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Age</span>
+								<span className="text-sm text-white/90 font-medium">{age == null ? 'Unknown' : age}</span>
+							</div>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Birthplace</span>
+								<span className="text-sm text-white/90 font-medium">{driver.placeOfBirth}</span>
+							</div>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Nationality</span>
+								<span className="text-sm text-white/90 font-medium">{driver.nationality}</span>
+							</div>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Current Team</span>
+								<span className="text-sm text-white/90 font-medium">{driver.teamName}</span>
+							</div>
 							{teammate && (
-								<p className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5 text-gray-200 inline-flex items-center gap-2">
-									<FaFlag className="text-red-400" />
-									<span className="text-gray-400">Teammate:</span>{' '}
-									{teammate.fullName}
-								</p>
+								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
+									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Teammate</span>
+									<span className="text-sm text-white/90 font-medium">{teammate.fullName}</span>
+								</div>
 							)}
+						</div>
+
+						<div className="mt-8">
+							<h3 className="text-[10px] uppercase tracking-widest text-amber-500/80 mb-4 font-semibold">
+								Timeline
+							</h3>
+							<div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+								{timeline.map((item) => (
+									<div key={item.label} className="flex flex-col p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+										<p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+											{item.label}
+										</p>
+										<p className="text-sm text-white/90 font-medium">
+											{item.value}
+										</p>
+									</div>
+								))}
+							</div>
 						</div>
 					</div>
 				</section>
