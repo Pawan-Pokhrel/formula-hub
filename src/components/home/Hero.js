@@ -3,53 +3,70 @@ import { FaArrowRight } from 'react-icons/fa';
 
 export default function Hero() {
 	return (
-		<section className="relative isolate px-6 pb-20 pt-32 md:px-10 md:pt-36 lg:px-16">
-			<div className="mx-auto max-w-6xl">
-				<div className="mb-7 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold tracking-[0.2em] text-amber-200 uppercase animate-fade-in">
-					Race Intelligence Platform
-				</div>
+		<section className="relative flex min-h-[90vh] w-full items-center justify-center overflow-hidden">
+			{/* Massive Background Image Placeholder */}
+			<div className="absolute inset-0 z-0">
+				{/* 
+					TODO: User will provide the actual image asset.
+					For now, using a highly aesthetic F1-themed placeholder overlay or a placeholder image URL.
+				*/}
+				<img 
+					src="/images/FormulaHub-BG.png" 
+					alt="F1 Background Placeholder" 
+					className="h-full w-full object-cover object-center opacity-40 brightness-75 mix-blend-lighten"
+				/>
+				{/* Gradient Overlays for Readability and Blending */}
+				<div className="absolute inset-0 bg-linear-to-b from-[#050507]/20 via-[#050507]/60 to-[#050507]" />
+				<div className="absolute inset-0 bg-linear-to-r from-[#050507] via-[#050507]/40 to-transparent" />
+			</div>
 
-				<h1 className="max-w-5xl text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-7xl lg:text-8xl animate-fade-in [animation-delay:120ms]">
-					Predict Smarter Races With
-					<span className="bg-linear-to-r from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent">
-						{' '}
-						FormulaHub
-					</span>
-				</h1>
-
-				<p className="mt-7 max-w-3xl text-pretty text-base leading-relaxed text-zinc-300 sm:text-lg md:text-xl animate-fade-in [animation-delay:220ms]">
-					Analyze race pace, compare driver outcomes, and simulate strategy
-					scenarios in one focused workspace built for students, fans, and
-					analytics teams.
-				</p>
-
-				<div className="mt-10 flex flex-wrap items-center gap-4 animate-fade-in [animation-delay:320ms]">
-					<Link
-						href="/dashboard"
-						prefetch={true}
-						className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-linear-to-r from-amber-500 to-yellow-500 px-7 py-3.5 text-sm font-semibold tracking-wide text-black shadow-[0_14px_38px_rgba(245,158,11,0.35)] transition-all duration-300 hover:-translate-y-0.5 hover:from-amber-400 hover:to-yellow-400"
-					>
-						Open Dashboard <FaArrowRight size={14} />
-					</Link>
-
-					<Link
-						href="/register"
-						prefetch={true}
-						className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/4 px-7 py-3.5 text-sm font-semibold tracking-wide text-zinc-100 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300/50 hover:bg-amber-500/10"
-					>
-						Create Account
-					</Link>
-				</div>
-
-				<div className="mt-12 grid max-w-4xl grid-cols-1 gap-3 text-sm text-zinc-300 sm:grid-cols-3 animate-fade-in [animation-delay:420ms]">
-					<div className="rounded-xl border border-white/10 bg-white/3 px-4 py-3">
-						Multi-season race data
+			<div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16 pt-20">
+				<div className="max-w-3xl">
+					<div className="mb-7 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-red-400 uppercase animate-fade-in backdrop-blur-md">
+						Race Intelligence Platform
 					</div>
-					<div className="rounded-xl border border-white/10 bg-white/3 px-4 py-3">
-						Lap prediction + strategy simulation
+
+					<h1 className="text-balance text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl animate-fade-in [animation-delay:120ms] uppercase filter drop-shadow-xl">
+						Predict Smarter Races With
+						<span className="bg-linear-to-r from-red-400 via-red-600 to-red-800 bg-clip-text text-transparent block mt-2">
+							FormulaHub
+						</span>
+					</h1>
+
+					<p className="mt-8 text-pretty text-lg leading-relaxed text-zinc-300 md:text-xl font-medium animate-fade-in [animation-delay:220ms] drop-shadow-md">
+						Analyze race pace, compare driver outcomes, and simulate strategy
+						scenarios in one focused workspace built for students, fans, and
+						analytics teams.
+					</p>
+
+					<div className="mt-12 flex flex-wrap items-center gap-4 animate-fade-in [animation-delay:320ms]">
+						<Link
+							href="/dashboard"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-linear-to-r from-red-600 to-red-700 px-8 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-[0_0_40px_rgba(220,38,38,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_60px_rgba(220,38,38,0.6)]"
+						>
+							Open Dashboard <FaArrowRight size={14} />
+						</Link>
+
+						<Link
+							href="/register"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-md px-8 py-4 text-sm font-bold uppercase tracking-widest text-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:border-red-500/50 hover:bg-red-600/20"
+						>
+							Create Account
+						</Link>
 					</div>
-					<div className="rounded-xl border border-white/10 bg-white/3 px-4 py-3">
-						Track analytics and standings insights
+
+					<div className="mt-16 grid grid-cols-1 gap-3 text-xs font-bold uppercase tracking-wider text-zinc-300 sm:grid-cols-3 animate-fade-in [animation-delay:420ms]">
+						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+							Multi-season race data
+						</div>
+						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+							Lap prediction + strategy simulation
+						</div>
+						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+							Track analytics and standings insights
+						</div>
 					</div>
 				</div>
 			</div>

@@ -24,9 +24,9 @@ const STATS = [
 export default function Stats() {
 	return (
 		<section className="px-6 py-20 md:px-10 lg:px-16">
-			<div className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-linear-to-b from-zinc-800/25 via-black/75 to-black/80 p-7 md:p-10">
+			<div className="mx-auto max-w-7xl rounded-3xl border border-white/10 bg-linear-to-b from-zinc-800/25 via-black/75 to-black/80 p-7 md:p-10">
 				<div className="mb-8">
-					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+					<p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">
 						Value Snapshot
 					</p>
 					<h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -42,7 +42,7 @@ export default function Stats() {
 								key={item.label}
 								className="rounded-2xl border border-white/10 bg-white/3 p-5"
 							>
-								<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-500/10 text-amber-200">
+								<div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/30 bg-red-600/10 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
 									<Icon size={16} />
 								</div>
 								<p className="text-3xl font-extrabold tracking-tight text-white">
