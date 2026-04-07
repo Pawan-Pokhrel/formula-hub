@@ -8,6 +8,7 @@ import {
 	KpisWidget,
 	LastRaceWidget,
 	NextRaceWidget,
+	SavedRacesWidget,
 	SessionResultsWidget,
 	StartingGridWidget,
 	TitleFightWidget,
@@ -49,6 +50,8 @@ import {
 	FaChartLine,
 	FaExchangeAlt,
 	FaProjectDiagram,
+	FaStar,
+	FaTrophy,
 } from 'react-icons/fa';
 import {
 	Area,
@@ -81,6 +84,11 @@ const DASHBOARD_ASPECTS = [
 		label: 'Championship',
 		widgets: ['title-fight', 'constructor-battle'],
 	},
+	{
+		id: 'saved',
+		label: 'Saved Races',
+		widgets: ['saved-races'],
+	},
 ];
 
 const ASPECT_WIDGET_SPANS = {
@@ -101,6 +109,9 @@ const ASPECT_WIDGET_SPANS = {
 	championship: {
 		'title-fight': 'md:col-span-1 md:min-h-[calc(100vh-275px)]',
 		'constructor-battle': 'md:col-span-1 md:min-h-[calc(100vh-275px)]',
+	},
+	saved: {
+		'saved-races': 'md:col-span-2',
 	},
 };
 
@@ -193,6 +204,12 @@ export default function DashboardPage() {
 	const [constructorStandings, setConstructorStandings] = useState([]);
 	const [weekendBrief, setWeekendBrief] = useState(null);
 	const [f1News, setF1News] = useState([]);
+
+	// Derived: saved/favorited races from the track schedule
+	const savedRaces = useMemo(
+		() => trackSchedule.filter((r) => r.is_favorite === true),
+		[trackSchedule]
+	);
 
 	const [favoriteDrivers, setFavoriteDrivers] = useState(
 		defaultPreferences.favoriteDrivers
@@ -590,6 +607,9 @@ export default function DashboardPage() {
 		if (activeAspect === 'operations' && !isLiveRaceWeekend) {
 			return ['last-race', 'next-race', 'upcoming-sessions', 'f1-news'];
 		}
+		if (activeAspect === 'saved') {
+			return ['saved-races'];
+		}
 		return Array.from(new Set(aspectConfig.widgets)).slice(0, 4);
 	}, [aspectConfig, activeAspect, isLiveRaceWeekend]);
 
@@ -601,6 +621,9 @@ export default function DashboardPage() {
 				'upcoming-sessions': 'md:col-span-1',
 				'f1-news': 'md:col-span-2 md:min-h-[360px]',
 			};
+		}
+		if (activeAspect === 'saved') {
+			return { 'saved-races': 'md:col-span-2' };
 		}
 		return ASPECT_WIDGET_SPANS[activeAspect] || {};
 	}, [activeAspect, isLiveRaceWeekend]);
@@ -688,6 +711,13 @@ export default function DashboardPage() {
 				return <StartingGridWidget weekendBrief={weekendBrief} />;
 			case 'f1-news':
 				return <F1NewsWidget newsItems={f1News} />;
+			case 'saved-races':
+				return (
+					<SavedRacesWidget
+						savedRaces={savedRaces}
+						currentYear={currentYear}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -695,20 +725,16 @@ export default function DashboardPage() {
 
 	if (loading) {
 		return (
-			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
-				<div className="fixed inset-0 z-0 bg-black/86" />
-				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_16%,rgba(245,158,11,0.14),transparent_34%),radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.08),transparent_28%)]" />
-				<div className="relative z-10 mx-auto w-full max-w-[1760px] space-y-4 animate-fade-in">
-					<div className="h-10 w-72 animate-pulse rounded-xl bg-white/10" />
+			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
+				<div className="fixed inset-0 z-0 bg-black/90" />
+				<div className="relative z-10 mx-auto w-full max-w-[1760px] space-y-4 animate-fade-in pt-8">
+					<div className="h-12 w-80 animate-pulse rounded-2xl bg-white/8" />
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 						{Array.from({ length: 4 }).map((_, i) => (
-							<div
-								key={i}
-								className="h-32 animate-pulse rounded-2xl border border-white/15 bg-white/7"
-							/>
+							<div key={i} className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
 						))}
 					</div>
-					<div className="h-96 animate-pulse rounded-2xl border border-white/15 bg-white/7" />
+					<div className="h-96 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
 				</div>
 			</div>
 		);
@@ -722,59 +748,73 @@ export default function DashboardPage() {
 		const dataReady = seasonOverview.dataReady;
 
 		return (
-			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
-				<div className="fixed inset-0 z-0 bg-black/86" />
-				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_16%,rgba(245,158,11,0.14),transparent_34%),radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.08),transparent_28%)]" />
-				<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 pb-10 animate-fade-in">
-					<div className="rounded-3xl border border-white/10 bg-black/35 p-6 backdrop-blur-xl md:p-8">
-						<p className="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-200/80">
-							Public Dashboard Preview
-						</p>
-						<h1 className="mt-3 max-w-3xl text-3xl font-black tracking-wide md:text-5xl">
-							See the FormulaHub race center before you sign in.
-						</h1>
-						<p className="mt-3 max-w-2xl text-sm leading-7 text-gray-300 md:text-base">
-							Track the season at a glance, preview upcoming rounds, and then
-							log in to unlock personalized widgets, saved track data,
-							simulation tools, and your full command center.
-						</p>
-						<div className="mt-6 flex flex-wrap gap-3">
-							<Link
-								href="/login?next=/dashboard"
-								className="inline-flex items-center rounded-full bg-linear-to-r from-red-600 to-red-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:from-red-500 hover:to-red-600"
-							>
-								Log In For Full Access
-							</Link>
-							<Link
-								href="/register"
-								className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-							>
-								Create Account
-							</Link>
-							<Link
-								href={compareHref}
-								className="inline-flex items-center rounded-full border border-fuchsia-300/30 bg-fuchsia-500/12 px-5 py-3 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/22"
-							>
-								Try Driver Comparison
-							</Link>
+			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
+				<div className="fixed inset-0 z-0 bg-black/90" />
+				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
+				<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 pb-12 animate-fade-in">
+
+					{/* Hero Banner */}
+					<div className="relative overflow-hidden rounded-2xl border border-white/12 bg-black/60 p-7 backdrop-blur-xl md:p-10">
+						<div
+							className="pointer-events-none absolute inset-0 opacity-30"
+							style={{
+								backgroundImage:
+									'repeating-linear-gradient(0deg,rgba(255,255,255,0.06) 0px,rgba(255,255,255,0.06) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 20px)',
+							}}
+						/>
+						<div className="relative z-10">
+							<p className="text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
+								FormulaHub · Season Dashboard
+							</p>
+							<h1 className="mt-2 max-w-3xl text-3xl font-black uppercase tracking-wide leading-none md:text-5xl">
+								Your F1 Command
+								<br />
+								<span className="text-red-500">Center Awaits</span>
+							</h1>
+							<p className="mt-4 max-w-2xl text-sm leading-7 text-gray-300 md:text-base">
+								Live championship standings, upcoming race countdowns, and personalized
+								driver favorites — all in one place. Sign in to unlock saved track
+								replays, strategy tools, and telemetry insights.
+							</p>
+							<div className="mt-7 flex flex-wrap gap-3">
+								<Link
+									href="/login?next=/dashboard"
+									className="inline-flex items-center rounded-2xl bg-red-600 px-6 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/25 transition hover:bg-red-500 hover:-translate-y-px"
+								>
+									Sign In for Full Access
+								</Link>
+								<Link
+									href="/register"
+									className="inline-flex items-center rounded-2xl border border-white/15 bg-white/8 px-6 py-3 text-sm font-semibold text-white backdrop-blur-xl transition hover:bg-white/14 hover:-translate-y-px"
+								>
+									Create Account
+								</Link>
+								<Link
+									href={compareHref}
+									className="inline-flex items-center rounded-2xl border border-white/12 bg-black/40 px-6 py-3 text-sm font-semibold text-gray-200 backdrop-blur-xl transition hover:border-white/25 hover:text-white hover:-translate-y-px"
+								>
+									Try Driver Comparison
+								</Link>
+							</div>
 						</div>
 					</div>
 
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-						{kpis.map((item) => (
+					{/* KPI Cards */}
+					<div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+						{kpis.slice(0, 6).map((item) => (
 							<div
 								key={item.label}
-								className="rounded-2xl border border-white/10 bg-black/30 p-5 backdrop-blur-xl"
+								className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/55 p-4 backdrop-blur-xl transition-all hover:border-white/20"
 							>
-								<p className="text-[11px] uppercase tracking-[0.18em] text-gray-500">
+								<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
 									{item.label}
 								</p>
-								<p className="mt-3 text-3xl font-black text-white">
+								<p className="mt-2 text-2xl font-black text-white leading-none tabular-nums">
 									{item.value}
 								</p>
-								<div className="mt-4 h-2 rounded-full bg-white/10">
+								<div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
 									<div
-										className="h-full rounded-full bg-linear-to-r from-cyan-400 to-red-500"
+										className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
 										style={{ width: `${item.progress}%` }}
 									/>
 								</div>
@@ -782,92 +822,116 @@ export default function DashboardPage() {
 						))}
 					</div>
 
-					<div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-						<div className="rounded-2xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-							<p className="text-[11px] font-bold uppercase tracking-[0.2em] text-red-300">
-								Weekend Snapshot
+					{/* Championship Preview + Next Race */}
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+						{/* Championship leaders */}
+						<div className="rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-xl">
+							<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">
+								Championship Leaders
 							</p>
-							<h2 className="mt-3 text-2xl font-bold text-white">
-								{nextRace?.race_name ||
-									nextRace?.event ||
-									'Next race coming soon'}
-							</h2>
-							<p className="mt-2 text-sm text-gray-300">
-								{nextRace?.circuit?.circuit_name ||
-									nextRace?.circuit_name ||
-									nextRace?.circuit ||
-									'Circuit to be confirmed'}
-								{' · '}
-								{nextRace?.country || nextRace?.circuit?.country || 'TBA'}
+							<p className="mb-5 text-xs text-gray-500">
+								Live standings preview — sign in to set favorites
 							</p>
-							<p className="mt-3 text-sm text-gray-400">
-								{countdown ?
-									`${countdown.days}d ${countdown.hours}h ${countdown.minutes}m until lights out.`
-								:	'The next session timing will appear here as soon as it is available.'
-								}
-							</p>
-							<div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-								<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-										Season Progress
-									</p>
-									<p className="mt-2 text-xl font-bold text-white">
-										{completedRounds}/{totalRounds || 0}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-										Track Data Ready
-									</p>
-									<p className="mt-2 text-xl font-bold text-white">
-										{dataReady}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-										Last Race
-									</p>
-									<p className="mt-2 text-sm font-semibold text-white">
-										{lastRace?.race_name || lastRace?.event || 'No result yet'}
-									</p>
-								</div>
+							<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+								{headlineDriver && (
+									<div
+										className="relative overflow-hidden rounded-xl border border-white/14 p-4 transition-all hover:border-white/25"
+										style={{
+											background: `linear-gradient(120deg,${getTeamColorHex(headlineDriver?.team_name)}CC 0%,${getTeamColorHex(headlineDriver?.team_name)}66 55%,rgba(8,8,10,0.90) 100%)`,
+										}}
+									>
+										<div
+											className="pointer-events-none absolute inset-0 opacity-35"
+											style={{
+												backgroundImage:
+													'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0px,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 14px),repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 16px)',
+											}}
+										/>
+										<div className="relative z-10">
+											<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">P1 · Drivers</p>
+											<p className="mt-1 text-xl font-black text-white">{headlineDriver?.driver_name || '—'}</p>
+											<p className="text-xs text-white/70">{headlineDriver?.team_name}</p>
+											<p className="mt-3 text-3xl font-black tabular-nums text-white">
+												{headlineDriver?.points || 0}
+												<span className="ml-1 text-sm font-semibold text-white/55">pts</span>
+											</p>
+										</div>
+									</div>
+								)}
+								{headlineTeam && (
+									<div
+										className="relative overflow-hidden rounded-xl border border-white/14 p-4 transition-all hover:border-white/25"
+										style={{
+											background: `linear-gradient(120deg,${getTeamColorHex(headlineTeam?.team_name)}CC 0%,${getTeamColorHex(headlineTeam?.team_name)}66 55%,rgba(8,8,10,0.90) 100%)`,
+										}}
+									>
+										<div
+											className="pointer-events-none absolute inset-0 opacity-35"
+											style={{
+												backgroundImage:
+													'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0px,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 14px),repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 16px)',
+											}}
+										/>
+										<div className="relative z-10">
+											<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">P1 · Constructors</p>
+											<p className="mt-1 text-xl font-black text-white">{headlineTeam?.team_name || '—'}</p>
+											<p className="text-xs text-white/70">Wins: {headlineTeam?.wins || 0}</p>
+											<p className="mt-3 text-3xl font-black tabular-nums text-white">
+												{headlineTeam?.points || 0}
+												<span className="ml-1 text-sm font-semibold text-white/55">pts</span>
+											</p>
+										</div>
+									</div>
+								)}
+							</div>
+							<div className="mt-4 grid grid-cols-3 gap-3">
+								{[
+									{ label: 'Season Progress', value: `${completedRounds}/${totalRounds || 0}` },
+									{ label: 'Track Data Ready', value: dataReady },
+									{ label: 'Last Race', value: lastRace?.race_name || lastRace?.event || 'TBA' },
+								].map((stat) => (
+									<div key={stat.label} className="rounded-xl border border-white/10 bg-black/40 p-3">
+										<p className="text-[10px] uppercase tracking-[0.16em] text-gray-500">{stat.label}</p>
+										<p className="mt-1.5 text-sm font-bold text-white line-clamp-1">{stat.value}</p>
+									</div>
+								))}
 							</div>
 						</div>
 
-						<div className="rounded-2xl border border-white/10 bg-black/30 p-6 backdrop-blur-xl">
-							<p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-200/80">
-								Championship Leaders
-							</p>
-							<div className="mt-4 space-y-4">
-								<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-										Drivers
-									</p>
-									<p className="mt-2 text-lg font-bold text-white">
-										{headlineDriver?.driver_name || 'Leaderboard loading'}
-									</p>
-									<p className="text-sm text-gray-400">
-										{headlineDriver?.team_name || 'Season standings preview'}
-									</p>
-								</div>
-								<div className="rounded-xl border border-white/10 bg-white/5 p-4">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-gray-500">
-										Constructors
-									</p>
-									<p className="mt-2 text-lg font-bold text-white">
-										{headlineTeam?.team_name || 'Constructor standings preview'}
-									</p>
-									<p className="text-sm text-gray-400">
-										Log in to personalize favorites and dashboard widgets.
-									</p>
-								</div>
-								<Link
-									href="/login?next=/track"
-									className="inline-flex w-full items-center justify-center rounded-xl border border-amber-300/25 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20"
-								>
-									Log In To Open Track Data, Predictions, and Strategy Tools
-								</Link>
+						{/* Next Race + CTA */}
+						<div className="flex flex-col gap-4">
+							<div className="flex-1 rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-xl">
+								<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">Next Race</p>
+								<h2 className="mt-2 text-lg font-black text-white">
+									{nextRace?.race_name || nextRace?.event || 'Coming soon'}
+								</h2>
+								<p className="mt-1 text-xs text-gray-400">
+									{nextRace?.circuit?.circuit_name || nextRace?.circuit || '—'}
+									{' · '}
+									{nextRace?.country || nextRace?.circuit?.country || 'TBA'}
+								</p>
+								{countdown && (
+									<div className="mt-4 grid grid-cols-3 gap-2 text-center">
+										{[
+											{ label: 'Days', value: countdown.days },
+											{ label: 'Hrs', value: countdown.hours },
+											{ label: 'Min', value: countdown.minutes },
+										].map((cell) => (
+											<div key={cell.label} className="rounded-xl border border-white/12 bg-black/50 py-3">
+												<p className="text-2xl font-black tabular-nums">{cell.value}</p>
+												<p className="text-[10px] uppercase tracking-[0.14em] text-gray-400">{cell.label}</p>
+											</div>
+										))}
+									</div>
+								)}
 							</div>
+							<Link
+								href="/login?next=/dashboard"
+								className="flex items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/15 px-5 py-4 text-sm font-bold text-red-100 backdrop-blur-xl transition-all hover:bg-red-500/25 hover:-translate-y-px"
+							>
+								<FaTrophy className="text-red-400" />
+								Sign In to Unlock All Features
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -876,57 +940,71 @@ export default function DashboardPage() {
 	}
 
 	return (
-		<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
-			<div className="fixed inset-0 z-0 bg-black/86" />
-			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_16%,rgba(245,158,11,0.14),transparent_34%),radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.08),transparent_28%)]" />
-			<div className="relative z-10 mx-auto w-full max-w-[1700px] space-y-4 pb-8 animate-fade-in">
-				<div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-lg">
+		<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
+			<div className="fixed inset-0 z-0 bg-black/90" />
+			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
+			<div className="relative z-10 mx-auto w-full max-w-[1700px] space-y-4 pb-12 animate-fade-in">
+
+				{/* ── Premium Header ── */}
+				<div className="flex flex-col gap-2 pt-6 md:flex-row md:items-end md:justify-between">
 					<div>
-						<p className="text-[10px] font-bold uppercase tracking-[0.24em] text-amber-200/80">
-							{activeAspectLabel}
+						<p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-400/80">
+							FormulaHub · Command Center
 						</p>
-						<p className="text-sm font-semibold text-white/95">
-							{user?.fullName ?
-								`${user.fullName}'s Command Center`
-							:	'Race Command Center'}
-						</p>
+						<h1 className="mt-1 text-3xl font-black uppercase tracking-wide md:text-4xl">
+							{user?.fullName ? `${user.fullName}'s Dashboard` : 'Race Dashboard'}
+						</h1>
 					</div>
-					<div className="inline-flex items-center gap-2">
-						<span className="hidden rounded-full border border-amber-300/25 bg-amber-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-amber-100 md:inline-flex">
-							Personalized
-						</span>
+					<div className="flex flex-wrap items-center gap-2">
 						<Link
 							href={compareHref}
-							className="inline-flex items-center gap-2 rounded-lg border border-fuchsia-300/30 bg-fuchsia-500/12 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition-all hover:bg-fuchsia-500/24"
+							className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-black/60 px-4 py-2 text-xs font-semibold text-white backdrop-blur-xl transition-all hover:border-white/30 hover:bg-white/10"
 						>
-							Compare
+							Compare Drivers
 						</Link>
 						<Link
 							href="/schedule"
-							className="inline-flex items-center gap-2 rounded-lg border border-amber-300/30 bg-amber-500/12 px-3 py-1.5 text-xs font-semibold text-amber-100 transition-all hover:bg-amber-500/24"
+							className="inline-flex items-center gap-2 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-2 text-xs font-semibold text-red-100 backdrop-blur-xl transition-all hover:bg-red-500/20"
 						>
-							Schedule
+							Full Schedule
 						</Link>
 					</div>
-					<div className="flex w-full flex-wrap gap-2">
-						{DASHBOARD_ASPECTS.map((aspect) => {
-							const active = activeAspect === aspect.id;
-							return (
-								<button
-									key={aspect.id}
-									type="button"
-									onClick={() => setActiveAspect(aspect.id)}
-									className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
-										active ?
-											'border-amber-300/35 bg-amber-500/20 text-amber-100'
-										:	'border-white/15 bg-black/35 text-gray-200 hover:border-white/30'
-									}`}
-								>
-									{aspect.label}
-								</button>
-							);
-						})}
-					</div>
+				</div>
+
+				{/* ── Aspect Tabs ── */}
+				<div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-xl">
+					{DASHBOARD_ASPECTS.filter(
+						(aspect) => aspect.id !== 'saved' || isAuthenticated
+					).map((aspect) => {
+						const active = activeAspect === aspect.id;
+						const isSaved = aspect.id === 'saved';
+						return (
+							<button
+								key={aspect.id}
+								type="button"
+								onClick={() => setActiveAspect(aspect.id)}
+								className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-200 ${
+									active ?
+										isSaved ?
+											'border-yellow-400/45 bg-yellow-500/20 text-yellow-100 shadow-[0_0_14px_rgba(234,179,8,0.18)]'
+										:	'border-red-400/45 bg-red-500/20 text-red-100 shadow-[0_0_14px_rgba(239,68,68,0.18)]'
+									: isSaved ?
+										'border-yellow-400/20 bg-black/35 text-gray-400 hover:border-yellow-400/35 hover:text-yellow-200'
+									:	'border-white/10 bg-transparent text-gray-400 hover:border-white/25 hover:text-white'
+								}`}
+							>
+								{isSaved && (
+									<FaStar className={`text-[9px] ${active ? 'text-yellow-300' : 'text-yellow-600'}`} />
+								)}
+								{aspect.label}
+								{isSaved && savedRaces.length > 0 && (
+									<span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${active ? 'bg-yellow-400/30 text-yellow-100' : 'bg-white/10 text-gray-500'}`}>
+										{savedRaces.length}
+									</span>
+								)}
+							</button>
+						);
+					})}
 				</div>
 
 				{activeAspect === 'overview' && (
@@ -940,9 +1018,7 @@ export default function DashboardPage() {
 									<p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-zinc-300">
 										{signal.label}
 									</p>
-									<p className="mt-2 text-2xl font-black text-white">
-										{signal.value}
-									</p>
+									<p className="mt-2 text-2xl font-black text-white">{signal.value}</p>
 									<p className="mt-1 text-xs text-zinc-300">{signal.detail}</p>
 								</div>
 							))}
@@ -958,14 +1034,10 @@ export default function DashboardPage() {
 										className={`rounded-xl border p-4 transition-all hover:-translate-y-px hover:bg-white/10 ${action.tone}`}
 									>
 										<div className="flex items-center justify-between gap-3">
-											<p className="text-sm font-bold tracking-wide">
-												{action.label}
-											</p>
+											<p className="text-sm font-bold tracking-wide">{action.label}</p>
 											<Icon className="text-lg" />
 										</div>
-										<p className="mt-2 text-xs text-zinc-200/90">
-											{action.detail}
-										</p>
+										<p className="mt-2 text-xs text-zinc-200/90">{action.detail}</p>
 									</Link>
 								);
 							})}
@@ -973,170 +1045,70 @@ export default function DashboardPage() {
 
 						<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 							<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-								<div className="mb-3 flex items-center justify-between gap-3">
-									<div>
-										<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-											Driver Performance Matrix
-										</p>
-										<p className="text-sm font-semibold text-white">
-											Points and wins (top 8)
-										</p>
-									</div>
+								<div className="mb-3">
+									<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Driver Performance Matrix</p>
+									<p className="text-sm font-semibold text-white">Points and wins (top 8)</p>
 								</div>
 								<div className="h-72">
 									<ResponsiveContainer>
-										<BarChart
-											data={driverPointsChartData}
-											layout="vertical"
-											margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
-										>
-											<CartesianGrid
-												stroke="rgba(255,255,255,0.09)"
-												horizontal={false}
-											/>
-											<XAxis
-												type="number"
-												stroke="#a1a1aa"
-											/>
-											<YAxis
-												type="category"
-												dataKey="name"
-												stroke="#d4d4d8"
-												width={46}
-											/>
+										<BarChart data={driverPointsChartData} layout="vertical" margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+											<CartesianGrid stroke="rgba(255,255,255,0.09)" horizontal={false} />
+											<XAxis type="number" stroke="#a1a1aa" />
+											<YAxis type="category" dataKey="name" stroke="#d4d4d8" width={46} />
 											<Tooltip contentStyle={chartTooltipStyle} />
 											<Legend wrapperStyle={{ fontSize: 11 }} />
-											<Bar
-												dataKey="points"
-												name="Points"
-												radius={[4, 4, 4, 4]}
-											>
+											<Bar dataKey="points" name="Points" radius={[4, 4, 4, 4]}>
 												{driverPointsChartData.map((entry, index) => (
-													<Cell
-														key={`driver-cell-${entry.name}-${index}`}
-														fill={entry.teamColor}
-													/>
+													<Cell key={`driver-cell-${entry.name}-${index}`} fill={entry.teamColor} />
 												))}
-												<LabelList
-													dataKey="points"
-													position="right"
-													fill="#f4f4f5"
-													fontSize={11}
-												/>
+												<LabelList dataKey="points" position="right" fill="#f4f4f5" fontSize={11} />
 											</Bar>
 										</BarChart>
 									</ResponsiveContainer>
 								</div>
-								<p className="mt-2 text-[11px] text-zinc-400">
-									Team-colored bars with direct point labels for quick reading.
-								</p>
 							</div>
 
 							<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-								<div className="mb-3 flex items-center justify-between gap-3">
-									<div>
-										<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-											Constructor Scorecard
-										</p>
-										<p className="text-sm font-semibold text-white">
-											Team points vs wins
-										</p>
-									</div>
+								<div className="mb-3">
+									<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Constructor Scorecard</p>
+									<p className="text-sm font-semibold text-white">Team points vs wins</p>
 								</div>
 								<div className="h-72">
 									<ResponsiveContainer>
-										<BarChart
-											data={constructorPointsChartData}
-											margin={{ top: 8, right: 8, left: 8, bottom: 12 }}
-										>
-											<CartesianGrid
-												stroke="rgba(255,255,255,0.09)"
-												vertical={false}
-											/>
-											<XAxis
-												dataKey="shortTeam"
-												stroke="#d4d4d8"
-											/>
+										<BarChart data={constructorPointsChartData} margin={{ top: 8, right: 8, left: 8, bottom: 12 }}>
+											<CartesianGrid stroke="rgba(255,255,255,0.09)" vertical={false} />
+											<XAxis dataKey="shortTeam" stroke="#d4d4d8" />
 											<YAxis stroke="#a1a1aa" />
 											<Tooltip contentStyle={chartTooltipStyle} />
 											<Legend wrapperStyle={{ fontSize: 11 }} />
-											<Bar
-												dataKey="points"
-												name="Points"
-												radius={[6, 6, 0, 0]}
-											>
+											<Bar dataKey="points" name="Points" radius={[6, 6, 0, 0]}>
 												{constructorPointsChartData.map((entry, index) => (
-													<Cell
-														key={`constructor-cell-${entry.shortTeam}-${index}`}
-														fill={entry.teamColor}
-													/>
+													<Cell key={`constructor-cell-${entry.shortTeam}-${index}`} fill={entry.teamColor} />
 												))}
-												<LabelList
-													dataKey="points"
-													position="top"
-													fill="#f4f4f5"
-													fontSize={11}
-												/>
+												<LabelList dataKey="points" position="top" fill="#f4f4f5" fontSize={11} />
 											</Bar>
 										</BarChart>
 									</ResponsiveContainer>
 								</div>
-								<p className="mt-2 text-[11px] text-zinc-400">
-									Each constructor uses its team color, with values shown above
-									bars.
-								</p>
 							</div>
 						</div>
 
 						<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-							<div className="mb-3 flex items-center justify-between gap-3">
-								<div>
-									<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-										Operational Readiness Trend
-									</p>
-									<p className="text-sm font-semibold text-white">
-										Completed rounds vs track data readiness
-									</p>
-								</div>
+							<div className="mb-3">
+								<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Operational Readiness Trend</p>
+								<p className="text-sm font-semibold text-white">Completed rounds vs track data readiness</p>
 							</div>
 							<div className="h-72">
 								<ResponsiveContainer>
-									<AreaChart
-										data={readinessByRoundChartData}
-										margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-									>
+									<AreaChart data={readinessByRoundChartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
 										<CartesianGrid stroke="rgba(255,255,255,0.09)" />
-										<XAxis
-											dataKey="round"
-											stroke="#d4d4d8"
-										/>
+										<XAxis dataKey="round" stroke="#d4d4d8" />
 										<YAxis stroke="#a1a1aa" />
 										<Tooltip contentStyle={chartTooltipStyle} />
 										<Legend wrapperStyle={{ fontSize: 11 }} />
-										<Area
-											type="monotone"
-											dataKey="completed"
-											name="Completed Rounds"
-											stroke="#f59e0b"
-											fill="#f59e0b"
-											fillOpacity={0.18}
-										/>
-										<Area
-											type="monotone"
-											dataKey="dataReady"
-											name="Data Ready"
-											stroke="#22d3ee"
-											fill="#22d3ee"
-											fillOpacity={0.16}
-										/>
-										<Area
-											type="monotone"
-											dataKey="backlog"
-											name="Data Gap"
-											stroke="#ef4444"
-											fill="#ef4444"
-											fillOpacity={0.13}
-										/>
+										<Area type="monotone" dataKey="completed" name="Completed Rounds" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.18} />
+										<Area type="monotone" dataKey="dataReady" name="Data Ready" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.16} />
+										<Area type="monotone" dataKey="backlog" name="Data Gap" stroke="#ef4444" fill="#ef4444" fillOpacity={0.13} />
 									</AreaChart>
 								</ResponsiveContainer>
 							</div>
@@ -1148,15 +1120,14 @@ export default function DashboardPage() {
 					className={`min-h-[580px] rounded-2xl border border-white/10 bg-black/25 p-3 backdrop-blur-sm md:p-4 ${
 						activeAspect === 'operations' && !isLiveRaceWeekend ?
 							'overflow-y-auto lg:min-h-[calc(100vh-205px)]'
+						:	activeAspect === 'overview' ? 'hidden'
 						:	'lg:h-[calc(100vh-205px)] lg:min-h-0'
 					}`}
 				>
 					<DashboardShell
 						widgetIds={activeWidgetIds}
 						spanMap={activeSpanMap}
-						layoutMode={
-							activeAspect === 'overview' ? 'overview-manual' : 'grid'
-						}
+						layoutMode={activeAspect === 'overview' ? 'overview-manual' : 'grid'}
 						renderWidget={renderWidget}
 					/>
 				</div>
