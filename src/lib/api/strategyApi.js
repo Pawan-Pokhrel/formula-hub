@@ -24,7 +24,7 @@ export async function runSimulation({
 	if (compounds && compounds.length > 0) {
 		params.append('compounds', compounds.join(','));
 	}
-	const { data } = await api.post(`/strategy/simulate?${params.toString()}`);
+	const { data } = await api.post(`/strategy/simulate?${params.toString()}`, null, { timeout: 120000 });
 	return data;
 }
 
@@ -34,7 +34,7 @@ export async function runSimulation({
  */
 export async function loadRaceData({ year, roundNum }) {
 	const params = new URLSearchParams({ year, round_num: roundNum });
-	const { data } = await api.post(`/strategy/race-data?${params.toString()}`);
+	const { data } = await api.post(`/strategy/race-data?${params.toString()}`, null, { timeout: 120000 });
 	return data;
 }
 
@@ -55,7 +55,7 @@ export async function getRecommendation({
 		lap,
 		max_stops: maxStops,
 	});
-	const { data } = await api.post(`/strategy/recommend?${params.toString()}`);
+	const { data } = await api.post(`/strategy/recommend?${params.toString()}`, null, { timeout: 120000 });
 	return data;
 }
 
@@ -70,7 +70,7 @@ export async function getMLPrediction({ year, roundNum, driver, lap }) {
 		driver,
 		lap,
 	});
-	const { data } = await api.post(`/strategy/ml-predict?${params.toString()}`);
+	const { data } = await api.post(`/strategy/ml-predict?${params.toString()}`, null, { timeout: 120000 });
 	return data;
 }
 
