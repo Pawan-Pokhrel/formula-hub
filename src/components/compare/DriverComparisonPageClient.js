@@ -560,7 +560,7 @@ export default function DriverComparisonPageClient() {
 
 	return (
 		<div className="min-h-screen bg-[#050507] px-4 pb-16 pt-24 text-white md:px-10 lg:px-16">
-			<div className="mx-auto max-w-6xl space-y-5">
+			<div className="mx-auto max-w-7xl space-y-5">
 
 				{/* ── Header ──────────────────────────────────────── */}
 				<div className="mb-4">
