@@ -45,7 +45,7 @@ export const simulateRacePredictions = async ({
 	if (drivers?.length) payload.drivers = drivers;
 	if (circuit) payload.circuit = circuit;
 
-	const response = await api.post('/prediction/simulate-race', payload);
+	const response = await api.post('/prediction/simulate-race', payload, { timeout: 120000 });
 	if (response.data.success) {
 		return response.data.data;
 	}
