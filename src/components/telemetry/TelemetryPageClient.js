@@ -224,7 +224,7 @@ export default function TelemetryPageClient() {
 
 	return (
 		<div className="min-h-screen bg-[#060607] px-4 pb-14 pt-28 text-white md:px-10">
-			<div className="mx-auto max-w-6xl space-y-6">
+			<div className="mx-auto max-w-7xl space-y-6">
 				<header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(245,158,11,0.16),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.07),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-6 md:p-8">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
 						Telemetry Center

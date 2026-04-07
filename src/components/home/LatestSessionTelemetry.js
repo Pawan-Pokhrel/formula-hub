@@ -92,17 +92,17 @@ export default function LatestSessionTelemetry() {
 
 	return (
 		<section className="relative px-6 py-20 md:px-10 lg:px-16">
-			<div className="mx-auto max-w-6xl rounded-4xl border border-white/10 bg-[radial-gradient(circle_at_15%_0%,rgba(245,158,11,0.18),transparent_36%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(165deg,rgba(10,10,12,0.96),rgba(5,6,8,0.98))] p-6 md:p-8 lg:p-10">
+			<div className="mx-auto max-w-7xl rounded-4xl border border-white/10 bg-[radial-gradient(circle_at_15%_0%,rgba(220,38,38,0.18),transparent_36%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(165deg,rgba(10,10,12,0.96),rgba(5,6,8,0.98))] p-6 md:p-8 lg:p-10 shadow-[0_0_50px_rgba(220,38,38,0.05)] backdrop-blur-xl">
 				<div className="mb-7 flex flex-wrap items-center justify-between gap-4">
 					<div>
-						<p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+						<p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">
 							Live Telemetry Flow
 						</p>
 						<h2 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
 							Latest Session Command View
 						</h2>
 					</div>
-					<span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-500/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-200">
+					<span className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-red-400">
 						<FaBroadcastTower />
 						{snapshot?.source_label}
 					</span>
@@ -145,7 +145,7 @@ export default function LatestSessionTelemetry() {
 								{event.country}
 							</span>
 							<span className="text-zinc-500">|</span>
-							<span className="font-semibold text-amber-200">
+							<span className="font-bold text-red-400">
 								{session?.name}
 							</span>
 						</div>
