@@ -64,6 +64,15 @@ export const toggleTrackFavorite = async (year, round) => {
 };
 
 /**
+ * Get all saved (favorited) races for a given year.
+ * Reuses the year schedule endpoint and filters for is_favorite items.
+ */
+export const getSavedRaces = async (year) => {
+	const schedule = await getYearSchedule(year);
+	return schedule.filter((race) => race.is_favorite === true);
+};
+
+/**
  * Check generation status without triggering generation.
  */
 export const getGenerationStatus = async (year, round) => {
