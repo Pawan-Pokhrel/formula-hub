@@ -4,15 +4,17 @@
 import { useAuth } from '@/providers/AuthProvider';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FaFlagCheckered } from 'react-icons/fa';
+import {
+	FaCog,
+	FaFlagCheckered,
+	FaSignOutAlt,
+	FaUserCircle,
+} from 'react-icons/fa';
 
 const NAV_ITEMS = [
 	{ href: '/dashboard', label: 'Dashboard' },
-	{ href: '/profile', label: 'Profile', requiresAuth: true },
-	{ href: '/schedule', label: 'Schedule' },
-	{ href: '/standings', label: 'Standings' },
 	{ href: '/drivers', label: 'Drivers' },
 	{ href: '/teams', label: 'Teams' },
 	{ href: '/compare', label: 'Compare' },
@@ -30,9 +32,27 @@ function isRouteActive(pathname, href) {
 
 export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
+	const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 	const pathname = usePathname();
 	const router = useRouter();
 	const { isAuthenticated, user, logout } = useAuth();
+	const profileMenuRef = useRef(null);
+
+	useEffect(() => {
+		if (!profileMenuOpen) return undefined;
+		const onMouseDown = (event) => {
+			if (!profileMenuRef.current?.contains(event.target)) {
+				setProfileMenuOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', onMouseDown);
+		return () => document.removeEventListener('mousedown', onMouseDown);
+	}, [profileMenuOpen]);
+
+	const userInitial = (user?.fullName || user?.username || user?.email || 'U')
+		.trim()
+		.charAt(0)
+		.toUpperCase();
 
 	const handleProtectedNavigation = (event, item) => {
 		if (isAuthenticated || !item.requiresAuth) return;
@@ -88,23 +108,48 @@ export default function Navbar() {
 
 				<div className="hidden md:flex items-center gap-3">
 					{isAuthenticated ?
-						<>
-							<div className="hidden lg:block text-right">
-								<p className="text-xs text-white font-semibold">
-									{user?.fullName || 'Driver'}
-								</p>
-								<p className="text-[10px] text-gray-400">
-									{user?.username || user?.email}
-								</p>
-							</div>
+						<div
+							ref={profileMenuRef}
+							className="relative"
+						>
 							<button
 								type="button"
-								onClick={logout}
-								className="px-4 py-2 rounded-full border border-white/15 text-sm font-semibold text-white hover:bg-white/10 transition-all duration-300 cursor-pointer"
+								onClick={() => setProfileMenuOpen((open) => !open)}
+								className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/12"
+								aria-label="Open profile menu"
 							>
-								Logout
+								{user?.fullName || user?.username ?
+									<span className="text-sm font-bold">{userInitial}</span>
+								:	<FaUserCircle className="text-lg" />}
 							</button>
-						</>
+							{profileMenuOpen && (
+								<div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-white/12 bg-black/92 shadow-[0_20px_40px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+									<button
+										type="button"
+										onClick={() => {
+											setProfileMenuOpen(false);
+											router.push('/profile');
+										}}
+										className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-white/10"
+									>
+										<FaCog className="text-red-300" />
+										Profile Settings
+									</button>
+									<div className="h-px bg-white/10" />
+									<button
+										type="button"
+										onClick={() => {
+											setProfileMenuOpen(false);
+											logout();
+										}}
+										className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-white transition hover:bg-white/10"
+									>
+										<FaSignOutAlt className="text-red-300" />
+										Logout
+									</button>
+								</div>
+							)}
+						</div>
 					:	<>
 							<Link
 								href="/login"
@@ -187,16 +232,28 @@ export default function Navbar() {
 						<div className="my-1 h-px bg-white/10" />
 
 						{isAuthenticated ?
-							<button
-								type="button"
-								onClick={() => {
-									setIsOpen(false);
-									logout();
-								}}
-								className="mt-1 bg-white/10 px-4 py-2.5 rounded-xl font-bold text-white hover:bg-white/15 transition-all duration-300 text-center cursor-pointer"
-							>
-								Logout
-							</button>
+							<>
+								<button
+									type="button"
+									onClick={() => {
+										setIsOpen(false);
+										router.push('/profile');
+									}}
+									className="mt-1 bg-white/10 px-4 py-2.5 rounded-xl font-bold text-white hover:bg-white/15 transition-all duration-300 text-center cursor-pointer"
+								>
+									Profile Settings
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setIsOpen(false);
+										logout();
+									}}
+									className="mt-1 bg-white/10 px-4 py-2.5 rounded-xl font-bold text-white hover:bg-white/15 transition-all duration-300 text-center cursor-pointer"
+								>
+									Logout
+								</button>
+							</>
 						:	<>
 								<Link
 									href="/login"

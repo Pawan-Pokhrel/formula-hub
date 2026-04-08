@@ -308,6 +308,7 @@ function IdentityCard({ entity, comparisonType, accentColor, statsLabel, viewMod
 
 	const tc = accentColor || teamColor(entity.team_name) || '#6b7280';
 	const tl = getTeamLogoPath(entity.team_name);
+	const isDriverCard = comparisonType === 'drivers';
 	const heroImg = comparisonType === 'drivers'
 		? (get2026Image(entity.driver_code) || getDriverImagePath(entity.driver_code))
 		: getCarImage(entity.team_name);
@@ -330,7 +331,9 @@ function IdentityCard({ entity, comparisonType, accentColor, statsLabel, viewMod
 	return (
 		<div className="relative overflow-hidden rounded-3xl border border-white/[0.06]">
 			<div className="relative h-52 overflow-hidden"
-				style={{ background: `linear-gradient(135deg, ${tc}30 0%, ${tc}08 60%, #050507 100%)` }}>
+				style={{
+					background: `linear-gradient(135deg, ${isDriverCard ? `${tc}52` : `${tc}30`} 0%, ${isDriverCard ? `${tc}1f` : `${tc}08`} 58%, #050507 100%)`,
+				}}>
 				<div className="pointer-events-none absolute inset-0 opacity-20"
 					style={{ backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 20px),repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 20px)' }} />
 				{tl && <div className="absolute top-4 left-4 z-10 h-9 w-9"><Image src={tl} alt="" fill className="object-contain" /></div>}
@@ -342,7 +345,7 @@ function IdentityCard({ entity, comparisonType, accentColor, statsLabel, viewMod
 					comparisonType === 'drivers' ? (
 						<div className="absolute inset-0 flex justify-center overflow-hidden">
 							<div className="relative w-4/5" style={{ height: '167%', top: 0 }}>
-								<Image src={heroImg} alt={dn} fill sizes="(max-width:768px)100vw,50vw" className="object-contain object-top" priority />
+								<Image src={heroImg} alt={dn} fill sizes="(max-width:768px)100vw,50vw" className="object-contain object-top saturate-[1.2] brightness-110 contrast-110" priority />
 							</div>
 						</div>
 					) : (
@@ -370,7 +373,10 @@ function IdentityCard({ entity, comparisonType, accentColor, statsLabel, viewMod
 				<div className="grid grid-cols-3 gap-2">
 					{statTiles.map((s) => (
 						<div key={s.label} className="flex flex-col py-2.5 px-3 rounded-xl"
-							style={{ background: `${tc}0d`, border: `1px solid ${tc}20` }}>
+							style={{
+								background: isDriverCard ? `${tc}1a` : `${tc}0d`,
+								border: `1px solid ${isDriverCard ? `${tc}48` : `${tc}20`}`,
+							}}>
 							<span className="text-[9px] uppercase tracking-[0.16em] text-white/25 mb-1">{s.label}</span>
 							<span className="text-lg font-semibold text-white">{s.value}</span>
 						</div>
@@ -559,8 +565,9 @@ export default function DriverComparisonPageClient() {
 	const careerAvailable = comparisonType === 'drivers' && leftCat && rightCat;
 
 	return (
-		<div className="min-h-screen bg-[#050507] px-4 pb-16 pt-24 text-white md:px-10 lg:px-16">
-			<div className="mx-auto max-w-7xl space-y-5">
+		<div className="relative min-h-screen bg-black bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-16 pt-24 text-white md:px-10 lg:px-16">
+			<div className="fixed inset-0 z-0 bg-black/88" />
+			<div className="relative z-10 mx-auto max-w-7xl space-y-5">
 
 				{/* ── Header ──────────────────────────────────────── */}
 				<div className="mb-4">

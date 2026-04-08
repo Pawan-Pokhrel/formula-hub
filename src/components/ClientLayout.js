@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/providers/AuthProvider';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import Navbar from './Navbar';
@@ -16,10 +16,25 @@ function isProtectedPath(pathname) {
 	);
 }
 
+function getSafeNextPath(nextPath) {
+	if (!nextPath || typeof nextPath !== 'string') return '';
+	if (!nextPath.startsWith('/') || nextPath.startsWith('//')) return '';
+	const lower = nextPath.toLowerCase();
+	if (
+		AUTH_PAGES.some((page) => lower === page || lower.startsWith(`${page}?`))
+	) {
+		return '';
+	}
+	return nextPath;
+}
+
 export default function ClientLayout({ children }) {
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const router = useRouter();
 	const { isAuthenticated, isLoading } = useAuth();
+	const queryString = searchParams.toString();
+	const nextParam = searchParams.get('next') || '';
 	const isAuthPage = AUTH_PAGES.includes(pathname);
 	const requiresAuth = isProtectedPath(pathname);
 	const redirectedPathRef = useRef('');
@@ -29,6 +44,7 @@ export default function ClientLayout({ children }) {
 		if (isLoading) return;
 
 		if (requiresAuth && !isAuthenticated) {
+			const requestedPath = pathname + (queryString ? `?${queryString}` : '');
 			// Start the redirect sequence with a delay
 			setRedirectingToLogin(true);
 
@@ -37,7 +53,7 @@ export default function ClientLayout({ children }) {
 					toast('Please log in to continue to this area.');
 					redirectedPathRef.current = pathname;
 				}
-				router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+				router.replace(`/login?next=${encodeURIComponent(requestedPath)}`);
 			}, REDIRECT_DELAY_MS);
 
 			return () => clearTimeout(timer);
@@ -47,9 +63,19 @@ export default function ClientLayout({ children }) {
 		redirectedPathRef.current = '';
 
 		if (isAuthPage && isAuthenticated) {
-			router.replace('/dashboard');
+			const safeNext = getSafeNextPath(nextParam) || '/dashboard';
+			router.replace(safeNext);
 		}
-	}, [isAuthenticated, isAuthPage, isLoading, pathname, requiresAuth, router]);
+	}, [
+		isAuthenticated,
+		isAuthPage,
+		isLoading,
+		nextParam,
+		pathname,
+		queryString,
+		requiresAuth,
+		router,
+	]);
 
 	// Show a full-screen loading overlay while auth session is being checked
 	if (isLoading && (requiresAuth || isAuthPage)) {
@@ -65,7 +91,9 @@ export default function ClientLayout({ children }) {
 		return (
 			<>
 				<Navbar />
-				<div style={{ filter: 'blur(6px)', pointerEvents: 'none', opacity: 0.4 }}>
+				<div
+					style={{ filter: 'blur(6px)', pointerEvents: 'none', opacity: 0.4 }}
+				>
 					{children}
 				</div>
 				{/* <Footer /> */}
@@ -181,7 +209,14 @@ function RedirectOverlay({ visible }) {
 						strokeLinecap="round"
 						strokeLinejoin="round"
 					>
-						<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+						<rect
+							x="3"
+							y="11"
+							width="18"
+							height="11"
+							rx="2"
+							ry="2"
+						/>
 						<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 					</svg>
 				</div>
@@ -224,9 +259,10 @@ function RedirectOverlay({ visible }) {
 							height: '100%',
 							borderRadius: 3,
 							background: 'linear-gradient(90deg, #e11d48, #fb7185)',
-							animation: visible
-								? `rlProgress ${REDIRECT_DELAY_MS}ms linear forwards`
-								: 'none',
+							animation:
+								visible ?
+									`rlProgress ${REDIRECT_DELAY_MS}ms linear forwards`
+								:	'none',
 						}}
 					/>
 				</div>
