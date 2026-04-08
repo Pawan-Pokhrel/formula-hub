@@ -663,7 +663,7 @@ function IdentityCard({
 					background:
 						isDriverCard ?
 							`linear-gradient(120deg, ${tc}DE 0%, ${tc}B8 58%, rgba(8,8,10,0.92) 100%)`
-						: 	`linear-gradient(135deg, ${tc}30 0%, ${tc}08 58%, #050507 100%)`,
+						:	`linear-gradient(135deg, ${tc}30 0%, ${tc}08 58%, #050507 100%)`,
 				}}
 			>
 				<div
@@ -727,7 +727,7 @@ function IdentityCard({
 					background:
 						isDriverCard ?
 							`linear-gradient(180deg, rgba(5,5,7,0.98) 0%, ${tc}12 120%)`
-						: 	'#050507',
+						:	'#050507',
 				}}
 			>
 				<div className="flex items-end justify-between mb-3">

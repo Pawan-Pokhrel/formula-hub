@@ -95,7 +95,8 @@ function normalizeTeamToken(value) {
 
 function getTeamSlug(teamName) {
 	const teamCode = getTeamCode(teamName);
-	if (teamCode && TEAM_SLUG_BY_CODE[teamCode]) return TEAM_SLUG_BY_CODE[teamCode];
+	if (teamCode && TEAM_SLUG_BY_CODE[teamCode])
+		return TEAM_SLUG_BY_CODE[teamCode];
 
 	return String(teamName || 'team')
 		.toLowerCase()
@@ -107,7 +108,8 @@ function getTeamSlug(teamName) {
 function getTeamCarImagePath(teamName) {
 	const teamCode = getTeamCode(teamName);
 	const token =
-		(teamCode && TEAM_CAR_TOKEN_BY_CODE[teamCode]) || normalizeTeamToken(teamName);
+		(teamCode && TEAM_CAR_TOKEN_BY_CODE[teamCode]) ||
+		normalizeTeamToken(teamName);
 	return token ? `/images/cars/2026${token}carright.png` : null;
 }
 
@@ -189,7 +191,8 @@ export default function Navbar() {
 		const byCode = new Map();
 
 		for (const driver of DRIVER_CATALOG) {
-			const teamCode = getTeamCode(driver.teamName) || normalizeTeamToken(driver.teamName);
+			const teamCode =
+				getTeamCode(driver.teamName) || normalizeTeamToken(driver.teamName);
 			if (!byCode.has(teamCode)) {
 				byCode.set(teamCode, {
 					teamCode,
@@ -285,7 +288,7 @@ export default function Navbar() {
 		`relative rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${
 			active ?
 				'bg-red-500/12 text-red-100'
-			: 	'text-gray-200 hover:bg-white/10 hover:text-white'
+			:	'text-gray-200 hover:bg-white/10 hover:text-white'
 		}`;
 
 	return (
@@ -313,7 +316,9 @@ export default function Navbar() {
 						<Link
 							href="/dashboard"
 							prefetch={true}
-							className={desktopLinkClass(isRouteActive(pathname, '/dashboard'))}
+							className={desktopLinkClass(
+								isRouteActive(pathname, '/dashboard')
+							)}
 						>
 							Dashboard
 						</Link>
@@ -405,15 +410,15 @@ export default function Navbar() {
 						{CENTER_LINK_ITEMS.map((item) => {
 							const active = isRouteActive(pathname, item.href);
 							return (
-							<Link
-								key={item.href}
-								href={item.href}
-								prefetch={true}
-								onClick={(event) => handleProtectedNavigation(event, item)}
-								className={desktopLinkClass(active)}
-							>
-								{item.label}
-							</Link>
+								<Link
+									key={item.href}
+									href={item.href}
+									prefetch={true}
+									onClick={(event) => handleProtectedNavigation(event, item)}
+									className={desktopLinkClass(active)}
+								>
+									{item.label}
+								</Link>
 							);
 						})}
 					</div>
@@ -432,9 +437,11 @@ export default function Navbar() {
 												const firstName =
 													nameParts.length > 1 ?
 														nameParts.slice(0, -1).join(' ')
-													: 	nameParts[0] || driver.shortName;
+													:	nameParts[0] || driver.shortName;
 												const lastName =
-													nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+													nameParts.length > 1 ?
+														nameParts[nameParts.length - 1]
+													:	'';
 
 												return (
 													<Link
