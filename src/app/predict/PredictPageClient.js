@@ -46,6 +46,14 @@ const COMPOUND_COLORS = {
 	WET: '#0080FF',
 };
 
+function normalizePredictErrorMessage(message) {
+	const raw = String(message || 'Prediction failed');
+	if (raw.toLowerCase().includes('/track')) {
+		return 'Race data is unavailable right now. Automatic generation has been triggered; please retry shortly.';
+	}
+	return raw;
+}
+
 export default function PredictPageClient() {
 	const searchParams = useSearchParams();
 	const [activeTab, setActiveTab] = useState('manual');
@@ -233,7 +241,7 @@ export default function PredictPageClient() {
 			const msg = typeof detail === 'string' ? detail
 				: Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
 				: err.message || 'Prediction failed';
-			setError(msg);
+			setError(normalizePredictErrorMessage(msg));
 		} finally {
 			setPredicting(false);
 		}
@@ -267,7 +275,7 @@ export default function PredictPageClient() {
 			const msg = typeof detail === 'string' ? detail
 				: Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
 				: e.message || 'Replay failed';
-			setReplayError(msg);
+			setReplayError(normalizePredictErrorMessage(msg));
 		} finally {
 			setReplayLoading(false);
 		}
