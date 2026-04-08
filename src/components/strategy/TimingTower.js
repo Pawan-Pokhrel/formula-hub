@@ -1,3 +1,5 @@
+import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
+import { getDriverImage } from '@/utils/f1_images';
 import { COMPOUND_COLORS, COMPOUND_SHORT } from './constants';
 import { formatGap, formatLap } from './utils';
 
@@ -10,8 +12,8 @@ export default function TimingTower({
 	const pitDrivers = new Set(currentPits.map((p) => p.abbr));
 
 	return (
-		<div className="bg-linear-to-b from-white/5 to-white/2 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
-			<div className="grid grid-cols-[40px_50px_1fr_90px_80px_70px_80px_60px] gap-2 px-4 py-2.5 border-b border-white/10 text-[10px] uppercase tracking-[0.15em] text-gray-500 font-medium">
+		<div className="bg-linear-to-b from-black/55 to-black/45 backdrop-blur-2xl border border-white/20 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.42)]">
+			<div className="grid grid-cols-[40px_76px_1fr_90px_80px_70px_80px_60px] gap-2 px-4 py-2.5 border-b border-white/15 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-medium">
 				<div>Pos</div>
 				<div></div>
 				<div>Driver</div>
@@ -27,16 +29,18 @@ export default function TimingTower({
 					const isSelected = driver.abbr === selectedDriver;
 					const isPitting = pitDrivers.has(driver.abbr);
 					const compoundColor = COMPOUND_COLORS[driver.compound] || '#666';
+					const driverImage = getDriverImage(driver.abbr);
+					const teamLogo = getTeamLogoPath(driver.team);
 
 					return (
 						<div
 							key={driver.abbr}
 							onClick={() => onSelectDriver(driver.abbr)}
-							className={`grid grid-cols-[40px_50px_1fr_90px_80px_70px_80px_60px] gap-2 px-4 py-2 cursor-pointer transition-all border-l-2 ${
+							className={`grid grid-cols-[40px_76px_1fr_90px_80px_70px_80px_60px] gap-2 px-4 py-2 cursor-pointer transition-all border-l-2 ${
 								isSelected ?
-									'bg-white/8 border-l-red-500'
-								:	'hover:bg-white/4 border-l-transparent'
-							} ${isPitting ? 'bg-blue-500/10' : ''} ${idx % 2 === 0 ? 'bg-white/1' : ''}`}
+									'bg-white/12 border-l-red-500'
+								:	'hover:bg-white/7 border-l-transparent'
+							} ${isPitting ? 'bg-blue-500/14' : ''} ${idx % 2 === 0 ? 'bg-white/4' : ''}`}
 						>
 							<div className="flex items-center">
 								<span
@@ -51,17 +55,42 @@ export default function TimingTower({
 								</span>
 							</div>
 
-							<div className="flex items-center">
-								<div
-									className="w-1 h-6 rounded-full mr-2"
-									style={{ backgroundColor: driver.color || '#fff' }}
-								/>
-								<span className="text-xs font-bold text-white">
-									{driver.abbr}
-								</span>
+							<div className="flex items-center gap-2">
+								{driverImage ?
+									<img
+										src={driverImage}
+										alt={driver.abbr}
+										onError={(e) => {
+											e.currentTarget.style.display = 'none';
+										}}
+										className="h-7 w-7 rounded-full object-cover border border-white/20 bg-black/40"
+									/>
+								:	<div className="h-7 w-7 rounded-full border border-white/20 bg-black/40 text-[9px] font-black text-gray-300 flex items-center justify-center">
+										{driver.abbr}
+									</div>
+								}
+								<div className="flex items-center gap-1.5 min-w-0">
+									<div
+										className="w-1 h-6 rounded-full"
+										style={{ backgroundColor: driver.color || '#fff' }}
+									/>
+									<span className="text-xs font-bold text-white">
+										{driver.abbr}
+									</span>
+								</div>
 							</div>
 
 							<div className="flex items-center gap-2">
+								{teamLogo && (
+									<img
+										src={teamLogo}
+										alt={driver.team || 'Team'}
+										onError={(e) => {
+											e.currentTarget.style.display = 'none';
+										}}
+										className="h-4 w-4 object-contain opacity-90"
+									/>
+								)}
 								<span className="text-xs text-gray-400 truncate">
 									{driver.team}
 								</span>
