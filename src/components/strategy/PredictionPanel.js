@@ -6,20 +6,24 @@ import {
 	FaFlag,
 } from 'react-icons/fa';
 
+import TyreIcon from '@/components/common/TyreIcon';
+import { getDriverImage, getCarImage } from '@/utils/f1_images';
 import { COMPOUND_COLORS, COMPOUND_SHORT, URGENCY_CONFIG } from './constants';
 
-function MiniStat({ label, value, color, sub }) {
+function MiniStat({ label, value, color, sub, icon }) {
 	return (
-		<div className="bg-white/5 rounded-lg px-3 py-1.5 text-center">
-			<p className="text-[9px] uppercase tracking-widest text-gray-600">
+		<div className="bg-white/5 rounded-lg px-3 py-1.5 text-center flex flex-col items-center justify-center min-w-[50px]">
+			<p className="text-[9px] uppercase tracking-widest text-gray-600 mb-1">
 				{label}
 			</p>
-			<p
-				className="text-sm font-bold tabular-nums"
-				style={{ color: color || '#fff' }}
-			>
-				{value}
-			</p>
+			{icon ? icon : (
+				<p
+					className="text-sm font-bold tabular-nums"
+					style={{ color: color || '#fff' }}
+				>
+					{value}
+				</p>
+			)}
 			{sub && <p className="text-[9px] text-gray-600">{sub}</p>}
 		</div>
 	);
@@ -79,7 +83,7 @@ export default function PredictionPanel({
 		.filter((f) => f.lap === currentLap)
 		.some((f) => f.type === 'VSC' || f.type === 'SC');
 
-	if (vscOngoing && currentState.tyre_age > 3) {
+	if (vscOngoing && currentState.tyre_age > 8) {
 		urgency = 'PIT NOW (VSC)';
 		urgencyConfig = {
 			bg: 'from-yellow-600/30 to-yellow-900/30',
@@ -96,17 +100,19 @@ export default function PredictionPanel({
 
 	const heuristicSection =
 		heuristic ?
-			<div className="border-t border-white/5 pt-4 mt-4">
-				<p className="text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-2">
-					Heuristic Strategy
-				</p>
-				<div className="bg-white/3 rounded-lg p-3 space-y-1 text-xs text-gray-400">
-					<div className="flex justify-between">
-						<span>Recommended</span>
-						<span className="text-white">{heuristic.action || '--'}</span>
+			<div className="relative overflow-hidden rounded-xl border border-blue-500/40 bg-linear-to-b from-blue-600/20 to-blue-900/20 p-4 transition-all duration-500 drop-shadow-lg" title="Real-time race telemetry heuristic strategy calculation">
+				<div className="absolute inset-0 bg-blue-500/10 animate-pulse opacity-30 pointer-events-none" />
+				<div className="relative flex flex-col gap-2">
+					<div className="flex items-center justify-between">
+						<p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-300">
+							Heuristic Strategy Call
+						</p>
+					</div>
+					<div className="flex justify-between items-end">
+						<span className="text-xl font-black tracking-wider text-white uppercase">{heuristic.action || '--'}</span>
 					</div>
 					{heuristic.reason && (
-						<p className="text-gray-600 text-[11px] mt-1 italic">
+						<p className="text-blue-200/80 text-[11px] mt-1 font-medium bg-blue-950/40 p-2 rounded border border-blue-500/20 shadow-inner">
 							{heuristic.reason}
 						</p>
 					)}
@@ -119,14 +125,32 @@ export default function PredictionPanel({
 	return (
 		<div className="bg-linear-to-b from-white/5 to-white/2 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
 			<div
-				className="px-5 py-4 border-b border-white/10"
+				className="relative px-5 py-4 border-b border-white/10 overflow-hidden group"
 				style={{ borderTop: `3px solid ${driverInfo?.color || '#666'}` }}
 			>
-				<div className="flex items-center justify-between">
-					<div>
-						<h3 className="text-white font-bold text-base">
-							{selectedDriver} - {driverInfo?.team || 'Unknown Team'}
-						</h3>
+				{getCarImage(driverInfo?.team) && (
+					<img 
+						src={getCarImage(driverInfo?.team)} 
+						alt="Car" 
+						className="absolute -right-4 -bottom-6 h-28 opacity-25 object-contain drop-shadow-2xl pointer-events-none transition-transform duration-700 group-hover:scale-105" 
+					/>
+				)}
+				<div className="flex items-center justify-between relative z-10">
+					<div className="flex items-center gap-3">
+						<img 
+							src={getDriverImage(selectedDriver)} 
+							onError={(e) => e.currentTarget.style.display = 'none'}
+							className="w-12 h-12 object-cover rounded-full bg-black/40 border border-white/20 shadow-xl" 
+							alt={selectedDriver} 
+						/>
+						<div>
+							<h3 className="text-white font-black text-lg tracking-wider relative -bottom-0.5">
+								{selectedDriver}
+							</h3>
+							<p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+								{driverInfo?.team || 'Unknown Team'}
+							</p>
+						</div>
 					</div>
 					<div className="flex gap-2">
 						<MiniStat
@@ -135,8 +159,7 @@ export default function PredictionPanel({
 						/>
 						<MiniStat
 							label="TYRE"
-							value={COMPOUND_SHORT[currentState.compound] || '?'}
-							color={COMPOUND_COLORS[currentState.compound]}
+							icon={<TyreIcon compound={currentState.compound} className="w-5 h-5 mx-auto" sizeLabel={true} />}
 						/>
 						<MiniStat
 							label="STOPS"
@@ -147,12 +170,6 @@ export default function PredictionPanel({
 			</div>
 
 			<div className="p-5 space-y-4">
-				{loading && mlData && (
-					<div className="text-[11px] uppercase tracking-[0.2em] text-rose-200/80 text-center">
-						Refreshing strategy data...
-					</div>
-				)}
-
 				{!mlData ?
 					<div className="space-y-4">
 						<div className="flex flex-col items-center justify-center py-6 text-gray-600">
@@ -165,21 +182,18 @@ export default function PredictionPanel({
 						{heuristicSection}
 					</div>
 				:	<div className="animate-fade-in space-y-4">
+						{heuristicSection}
+
 						<div
-							className={`relative overflow-hidden rounded-xl border ${urgencyConfig.border} ${urgencyConfig.bg} p-4 transition-all duration-500`}
+							className={`rounded-xl border border-white/5 bg-white/5 p-4 transition-all duration-500`} title="Secondary Machine Learning prediction base"
 						>
-							{urgencyConfig.pulse && (
-								<div
-									className={`absolute inset-0 ${urgencyConfig.bg} animate-pulse opacity-30`}
-								/>
-							)}
 							<div className="relative flex items-center justify-between">
 								<div>
 									<p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-1">
-										Strategy Call
+										ML Base Strategy
 									</p>
 									<p
-										className={`text-xl font-black tracking-wider ${urgencyConfig.text}`}
+										className={`text-lg font-bold tracking-wider ${urgencyConfig.text}`}
 									>
 										{urgency}
 									</p>
@@ -189,7 +203,7 @@ export default function PredictionPanel({
 										Laps to Pit
 									</p>
 									<p
-										className={`text-3xl font-black tabular-nums ${urgencyConfig.text}`}
+										className={`text-2xl font-bold tabular-nums text-white`}
 									>
 										{typeof lapsToPit === 'number' ?
 											Math.round(lapsToPit)
@@ -208,27 +222,21 @@ export default function PredictionPanel({
 							</div>
 						)}
 
-						<div className="flex items-center justify-between bg-white/3 rounded-xl p-4 border border-white/5 transition-all duration-500">
+
+
+						<div className="flex items-center justify-between bg-white/3 rounded-xl p-4 border border-white/5 transition-all duration-500 hover:bg-white/5" title="The mathematically optimal tyre compound to switch to">
 							<div>
-								<p className="text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1">
+								<p className="text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-2">
 									Recommended Compound
 								</p>
-								<div className="flex items-center gap-2">
-									<div
-										className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-black"
-										style={{
-											borderColor: COMPOUND_COLORS[compound] || '#666',
-											color: COMPOUND_COLORS[compound] || '#666',
-										}}
-									>
-										{COMPOUND_SHORT[compound] || '?'}
-									</div>
-									<span className="text-white font-bold capitalize">
+								<div className="flex items-center gap-3">
+									<TyreIcon compound={compound} className="w-10 h-10 -ml-0.5 drop-shadow-xl hover:scale-105 transition-transform" />
+									<span className="text-white font-black text-lg tracking-wide uppercase">
 										{compound}
 									</span>
 								</div>
 							</div>
-							<div className="text-right">
+							<div className="text-right" title="ML Model Confidence Score for this recommendation">
 								<p className="text-[10px] uppercase tracking-[0.15em] text-gray-500 mb-1">
 									Confidence
 								</p>
@@ -251,13 +259,8 @@ export default function PredictionPanel({
 											key={comp}
 											className="flex items-center gap-2"
 										>
-											<div
-												className="w-3 h-3 rounded-full"
-												style={{
-													backgroundColor: COMPOUND_COLORS[comp] || '#666',
-												}}
-											/>
-											<span className="text-xs text-gray-400 w-14 capitalize">
+											<TyreIcon compound={comp} className="w-4 h-4 ml-[-2px] text-white" forceCircle={true} />
+											<span className="text-[11px] font-medium text-gray-300 w-16 capitalize">
 												{comp}
 											</span>
 											<div className="flex-1 bg-white/5 rounded-full h-2">
@@ -303,8 +306,6 @@ export default function PredictionPanel({
 								)}
 							</div>
 						)}
-
-						{heuristicSection}
 					</div>
 				}
 			</div>

@@ -5,6 +5,7 @@ import {
 	predictLapTime,
 	simulateRacePredictions,
 } from '@/lib/api/predictionApi';
+import { getCircuits } from '@/lib/api/strategyApi';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -18,7 +19,9 @@ import {
 	FaTachometerAlt,
 } from 'react-icons/fa';
 import CustomSelect from '@/components/common/CustomSelect';
+import TyreIcon from '@/components/common/TyreIcon';
 import { getCountryFlag } from '@/utils/flags';
+import { getDriverImage, getCarImage } from '@/utils/f1_images';
 
 const TEAM_COLORS = {
 	'Red Bull Racing': '#3671C6',
@@ -86,6 +89,9 @@ export default function PredictPageClient() {
 	const replayTimerRef = useRef(null);
 	const [mounted, setMounted] = useState(false);
 
+	const [circuits, setCircuits] = useState([]);
+	const [circuitsLoading, setCircuitsLoading] = useState(false);
+
 	useEffect(() => {
 		setMounted(true);
 		setReplayCfg((c) => ({ ...c, year: new Date().getFullYear() }));
@@ -131,6 +137,23 @@ export default function PredictPageClient() {
 			.catch((e) => setMetaError(e.message || 'Failed to load model metadata'))
 			.finally(() => setMetaLoading(false));
 	}, []);
+
+	useEffect(() => {
+		async function fetchCircuits() {
+			setCircuitsLoading(true);
+			try {
+				const res = await getCircuits(replayCfg.year);
+				setCircuits(res.data || []);
+			} catch {
+				setCircuits([]);
+			}
+			setCircuitsLoading(false);
+		}
+		
+		if (replayCfg.year) {
+			fetchCircuits();
+		}
+	}, [replayCfg.year]);
 
 	useEffect(() => {
 		if (!replayPlaying || !replayData?.predictions?.length) {
@@ -393,10 +416,7 @@ export default function PredictPageClient() {
 																: 'border-white/8 bg-white/4 text-gray-500 hover:border-white/15 hover:text-white'
 														}`}
 													>
-														<span
-															className="h-2.5 w-2.5 rounded-full"
-															style={{ backgroundColor: color }}
-														/>
+														<TyreIcon compound={cmp} className="w-3.5 h-3.5 shadow-sm rounded-full drop-shadow-black/50" />
 														{cmp}
 													</button>
 												);
@@ -596,66 +616,90 @@ export default function PredictPageClient() {
 				{/* ─── REPLAY TAB ─── */}
 				{activeTab === 'replay' && (
 					<div className="animate-fade-in space-y-6">
-						<div className="rounded-2xl border border-white/10 bg-black/50 p-5 backdrop-blur-xl">
+						<div className="rounded-2xl border border-white/10 bg-black/50 p-6 backdrop-blur-xl transition-all duration-300">
 							<p className="mb-4 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">
 								Simulation Config
 							</p>
-							<div className="grid grid-cols-1 gap-3 items-end md:grid-cols-6">
-								<NumberField
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+								<CustomSelect
 									label="Season"
 									value={replayCfg.year}
 									onChange={(v) => setReplayCfg((c) => ({ ...c, year: v }))}
-									min={2018}
-									max={2035}
+									options={Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i).map(y => ({ value: y, label: `${y} Season` }))}
+									getOptionValue={(opt) => opt.value}
+									renderOption={(opt) => opt.label}
 								/>
-								<NumberField
-									label="Round"
-									value={replayCfg.round}
-									onChange={(v) => setReplayCfg((c) => ({ ...c, round: v }))}
-									min={1}
-									max={30}
-								/>
+
+								<div className="lg:col-span-2">
+									<CustomSelect
+										label="Grand Prix"
+										value={replayCfg.round}
+										onChange={(v) => setReplayCfg((c) => ({ ...c, round: v }))}
+										options={circuits.map(c => ({
+											value: c.round,
+											label: `R${c.round} ${c.event}`,
+											country: c.country || c.circuit || c.event
+										}))}
+										disabled={circuitsLoading}
+										placeholder={circuitsLoading ? 'Loading circuits...' : 'Select Grand Prix'}
+										getOptionValue={(opt) => opt.value}
+										renderOption={(opt) => (
+											<span className="flex items-center gap-2">
+												<span className="text-lg leading-none">{getCountryFlag(opt.country)}</span>
+												<span>{opt.label}</span>
+											</span>
+										)}
+									/>
+								</div>
+
 								<NumberField
 									label="Start Lap"
-									value={replayCfg.start_lap}
-									onChange={(v) =>
-										setReplayCfg((c) => ({ ...c, start_lap: v }))
-									}
+									value={replayCfg.start_lap || 4}
+									onChange={(v) => setReplayCfg((c) => ({ ...c, start_lap: v || 4 }))}
 									min={4}
 									max={80}
 								/>
-								<NumberField
-									label="End Lap"
-									value={replayCfg.end_lap}
-									onChange={(v) => setReplayCfg((c) => ({ ...c, end_lap: v }))}
-									min={4}
-									max={80}
-									placeholder="optional"
-								/>
+
 								<SelectField
 									label="Driver Filter"
 									value={replayCfg.driver}
 									onChange={(v) => setReplayCfg((c) => ({ ...c, driver: v }))}
 									options={['', ...(meta?.drivers || [])]}
 								/>
-								<button
-									type="button"
-									onClick={runReplaySimulation}
-									disabled={replayLoading}
-									className="flex h-[42px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-sm font-bold text-white transition-all hover:bg-red-500 disabled:bg-red-900 disabled:cursor-not-allowed"
-								>
-									{replayLoading ? (
-										<FaSync className="animate-spin" />
-									) : (
-										<FaBolt />
-									)}{' '}
-									{replayLoading ? 'Simulating...' : 'Simulate'}
-								</button>
+
+								<div className="lg:col-span-1">
+									<button
+										type="button"
+										onClick={runReplaySimulation}
+										disabled={!replayCfg.round || replayLoading}
+										className="w-full h-[42px] flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-red-600/20 disabled:shadow-none"
+									>
+										{replayLoading ?
+											<>
+												<div className="h-2.5 w-2.5 rounded-full bg-white/80 animate-pulse" />
+												Loading
+											</>
+										: !replayCfg.round ? 
+											<>Select a Race</>
+										:	<>
+												<FaPlay className="text-xs" />
+												Load Race
+											</>
+										}
+									</button>
+								</div>
 							</div>
 							{replayLoading && (
-								<p className="mt-3 animate-pulse text-xs text-gray-500">
-									Loading race data from FastF1 cache. This may take 30-60 seconds...
-								</p>
+								<div className="mt-5 text-center">
+									<div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10">
+										<div className="h-3 w-20 rounded-full bg-white/10 overflow-hidden">
+											<div className="h-full w-1/2 bg-red-500/60 animate-pulse" />
+										</div>
+										<span className="text-xs text-gray-400">
+											Loading race data. First load may take 30-60 seconds.
+										</span>
+									</div>
+								</div>
 							)}
 						</div>
 
@@ -733,15 +777,30 @@ export default function PredictPageClient() {
 												className="overflow-hidden rounded-xl border border-white/10 bg-black/50 backdrop-blur-xl"
 												style={{ borderLeftColor: teamColor, borderLeftWidth: 3 }}
 											>
-												<div className="p-4">
-													<div className="mb-3 flex items-center justify-between">
-														<div>
-															<p className="text-lg font-black" style={{ color: teamColor }}>
-																{p.driver}
-															</p>
-															<p className="text-xs text-gray-500">
-																P{p.position} · {p.team}
-															</p>
+												<div className="p-4 relative overflow-hidden group">
+													{getCarImage(p.team) && (
+														<img 
+															src={getCarImage(p.team)} 
+															className="absolute right-0 bottom-0 h-28 opacity-10 object-contain translate-y-3 translate-x-2 pointer-events-none transition-transform duration-700 group-hover:scale-105" 
+															alt="Car UI background"
+														/>
+													)}
+													<div className="mb-3 flex items-center justify-between relative z-10">
+														<div className="flex items-center gap-3">
+															<img 
+																src={getDriverImage(p.driver)} 
+																onError={(e) => e.currentTarget.style.display = 'none'}
+																className="w-11 h-11 object-cover rounded-full bg-black/40 border border-white/10 shadow-md" 
+																alt={p.driver} 
+															/>
+															<div>
+																<p className="text-lg font-black tracking-wide" style={{ color: teamColor }}>
+																	{p.driver}
+																</p>
+																<p className="text-[10px] uppercase font-bold tracking-widest text-gray-500">
+																	P{p.position} · {p.team}
+																</p>
+															</div>
 														</div>
 														<div className="text-right">
 															<p className="text-[10px] uppercase text-gray-600">Predicted</p>
@@ -757,8 +816,8 @@ export default function PredictPageClient() {
 														</div>
 														<div className="flex justify-between text-gray-500">
 															<span>Compound</span>
-															<span className="inline-flex items-center gap-1 text-white">
-																<span className="h-2 w-2 rounded-full" style={{ backgroundColor: COMPOUND_COLORS[p.compound] || '#888' }} />
+															<span className="inline-flex items-center gap-1.5 text-white font-bold">
+																<TyreIcon compound={p.compound} className="w-3.5 h-3.5 shadow-sm rounded-full" />
 																{p.compound}
 															</span>
 														</div>
