@@ -12,6 +12,7 @@ import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 
 import EmptyState from './EmptyState';
 import FlagBanner from './FlagBanner';
+import PaceDegradationChart from './PaceDegradationChart';
 import PitStopLog from './PitStopLog';
 import PlaybackBar from './PlaybackBar';
 import PredictionPanel from './PredictionPanel';
@@ -20,6 +21,7 @@ import RaceSetupPanel from './RaceSetupPanel';
 import StrategyHeader from './StrategyHeader';
 import StrategyTimeline from './StrategyTimeline';
 import TimingTower from './TimingTower';
+import TrackConditionsCard from './TrackConditionsCard';
 
 export default function StrategyPageClient() {
 	const searchParams = useSearchParams();
@@ -36,8 +38,10 @@ export default function StrategyPageClient() {
 
 	const [currentLap, setCurrentLap] = useState(1);
 	const [playing, setPlaying] = useState(false);
-	const [playSpeed, setPlaySpeed] = useState(1);
+	const [lapDurationSec, setLapDurationSec] = useState(5);
+	const [lapProgress, setLapProgress] = useState(0);
 	const playRef = useRef(null);
+	const lapTimerRef = useRef(0);
 
 	const [selectedDriver, setSelectedDriver] = useState(null);
 	const [prediction, setPrediction] = useState(null);
@@ -99,23 +103,43 @@ export default function StrategyPageClient() {
 		prefillRoundRef.current = null;
 	}, [circuits, circuitsLoading]);
 
-	// Handle auto play loop and stop at the last lap.
+	// Handle smooth auto-play with configurable lap duration.
 	useEffect(() => {
 		if (playing && raceData) {
 			const totalLaps = raceData.circuit_info.total_laps;
+			const tickMs = 100;
 			playRef.current = setInterval(() => {
-				setCurrentLap((prev) => {
-					if (prev >= totalLaps) {
-						setPlaying(false);
-						return prev;
-					}
-					return prev + 1;
-				});
-			}, 1500 / playSpeed);
+				lapTimerRef.current += tickMs / 1000;
+				const nextProgress = Math.min(1, lapTimerRef.current / lapDurationSec);
+				setLapProgress(nextProgress);
+
+				if (lapTimerRef.current >= lapDurationSec) {
+					lapTimerRef.current = 0;
+					setCurrentLap((prev) => {
+						if (prev >= totalLaps) {
+							setPlaying(false);
+							setLapProgress(0);
+							return prev;
+						}
+						const next = prev + 1;
+						if (next >= totalLaps) {
+							setPlaying(false);
+							setLapProgress(0);
+						}
+						return next;
+					});
+				}
+			}, tickMs);
 		}
 
 		return () => clearInterval(playRef.current);
-	}, [playing, playSpeed, raceData]);
+	}, [playing, lapDurationSec, raceData]);
+
+	const jumpToLap = (lapValue) => {
+		lapTimerRef.current = 0;
+		setLapProgress(0);
+		setCurrentLap(lapValue);
+	};
 
 	// Fetch ML + heuristic recommendations with a small debounce.
 	useEffect(() => {
@@ -184,6 +208,8 @@ export default function StrategyPageClient() {
 		predictionCacheRef.current.clear();
 		setCurrentLap(1);
 		setPlaying(false);
+		setLapProgress(0);
+		lapTimerRef.current = 0;
 
 		try {
 			const res = await loadRaceData({ year, roundNum: selectedRound });
@@ -241,11 +267,55 @@ export default function StrategyPageClient() {
 		return (raceData.pit_stops || []).filter((pit) => pit.lap === currentLap);
 	}, [raceData, currentLap]);
 
+	const paceTelemetryData = useMemo(() => {
+		if (!raceData || !selectedDriver) return [];
+
+		const selectedDriverLaps = raceData.driver_laps?.[selectedDriver] || [];
+		if (!selectedDriverLaps.length) return [];
+
+		const lapWindowStart = Math.max(1, currentLap - 14);
+		const byLap = new Map();
+		selectedDriverLaps.forEach((lap) => {
+			byLap.set(Number(lap.lap), lap);
+		});
+
+		const allDriverLaps = Object.values(raceData.driver_laps || {});
+		const result = [];
+
+		for (let lapNum = lapWindowStart; lapNum <= currentLap; lapNum += 1) {
+			const mine = byLap.get(lapNum);
+			if (!mine || !Number.isFinite(Number(mine.time))) continue;
+
+			const fieldTimes = [];
+			allDriverLaps.forEach((laps) => {
+				const row = laps.find((entry) => Number(entry.lap) === lapNum);
+				if (!row || !row.is_clean || !Number.isFinite(Number(row.time))) return;
+				fieldTimes.push(Number(row.time));
+			});
+
+			if (!fieldTimes.length) continue;
+			fieldTimes.sort((a, b) => a - b);
+			const mid = Math.floor(fieldTimes.length / 2);
+			const fieldMedian =
+				fieldTimes.length % 2 === 0 ?
+					(fieldTimes[mid - 1] + fieldTimes[mid]) / 2
+				:	fieldTimes[mid];
+
+			result.push({
+				lap: lapNum,
+				driverPace: Number(mine.time),
+				fieldPace: Number(fieldMedian),
+			});
+		}
+
+		return result;
+	}, [raceData, selectedDriver, currentLap]);
+
 	const totalLaps = raceData?.circuit_info?.total_laps || 0;
 
 	return (
 		<div className="min-h-screen bg-black text-white pt-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
-			<div className="fixed inset-0 bg-black/80 z-0" />
+			<div className="fixed inset-0 bg-black/88 z-0" />
 
 			<div className="relative z-10">
 				<StrategyHeader
@@ -294,24 +364,32 @@ export default function StrategyPageClient() {
 							<PlaybackBar
 								currentLap={currentLap}
 								totalLaps={totalLaps}
+								lapProgress={lapProgress}
 								playing={playing}
-								playSpeed={playSpeed}
+								lapDurationSec={lapDurationSec}
 								onPlay={() => setPlaying((prev) => !prev)}
-								onLapChange={setCurrentLap}
-								onSpeedChange={setPlaySpeed}
-								onStepBack={() =>
-									setCurrentLap((prev) => Math.max(1, prev - 1))
-								}
+								onLapChange={jumpToLap}
+								onLapDurationChange={setLapDurationSec}
+								onStepBack={() => jumpToLap(Math.max(1, currentLap - 1))}
 								onStepForward={() =>
-									setCurrentLap((prev) => Math.min(totalLaps, prev + 1))
+									jumpToLap(Math.min(totalLaps, currentLap + 1))
 								}
 								flags={raceData.flags || []}
 							/>
 
 							<FlagBanner currentFlags={currentFlags} />
 
-							<div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
-								<div className="space-y-4">
+							<div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)] gap-4">
+								<div
+									className="space-y-4 transition-[opacity,transform,filter] duration-500 ease-out"
+									style={{
+										opacity: playing ? 0.96 + lapProgress * 0.04 : 1,
+										transform:
+											playing ?
+												`translateY(${(1 - lapProgress) * 1.2}px)`
+											:	'none',
+									}}
+								>
 									<TimingTower
 										snapshot={lapSnapshot}
 										currentPits={currentPits}
@@ -324,9 +402,39 @@ export default function StrategyPageClient() {
 										currentLap={currentLap}
 										selectedDriver={selectedDriver}
 									/>
+
+									<div className="bg-black/45 backdrop-blur-xl rounded-2xl border border-white/20 p-5 mt-4 shadow-[0_12px_32px_rgba(0,0,0,0.45)]">
+										<div className="flex items-center justify-between mb-2">
+											<h3 className="text-white font-bold text-sm tracking-wider uppercase flex items-center gap-2">
+												<span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+												Live Degradation Telemetry
+											</h3>
+										</div>
+										<PaceDegradationChart
+											telemetryData={paceTelemetryData}
+											cliffLap={heuristic?.cliff_lap || null}
+										/>
+									</div>
 								</div>
 
-								<div className="space-y-4">
+								<div
+									className="space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin scrollbar-thumb-red-500/40 scrollbar-track-white/5 transition-[opacity,transform] duration-500 ease-out"
+									style={{
+										opacity: playing ? 0.97 + lapProgress * 0.03 : 1,
+										transform:
+											playing ?
+												`translateY(${(1 - lapProgress) * 0.8}px)`
+											:	'none',
+									}}
+								>
+									<TrackConditionsCard
+										raceData={raceData}
+										currentLap={currentLap}
+										currentFlags={currentFlags}
+										prediction={prediction}
+										heuristic={heuristic}
+									/>
+
 									<PredictionPanel
 										prediction={prediction}
 										heuristic={heuristic}
@@ -341,6 +449,8 @@ export default function StrategyPageClient() {
 										pitStops={raceData.pit_stops || []}
 										drivers={raceData.drivers}
 										currentLap={currentLap}
+										prediction={prediction}
+										selectedDriver={selectedDriver}
 									/>
 								</div>
 							</div>

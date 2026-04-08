@@ -166,8 +166,8 @@ export default function StrategyTimeline({
 	}, [raceData, currentLap, selectedDriver]);
 
 	return (
-		<div className="bg-linear-to-b from-white/5 to-white/2 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
-			<h3 className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
+		<div className="bg-linear-to-b from-black/55 to-black/45 backdrop-blur-2xl border border-white/20 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
+			<h3 className="text-xs uppercase tracking-[0.15em] text-gray-400 font-medium mb-3">
 				Strategy Timeline
 			</h3>
 			<div
