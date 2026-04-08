@@ -634,7 +634,7 @@ export function UpcomingSessionsWidget({
 			title="Upcoming Sessions"
 			subtitle="Next race weekends at a glance"
 		>
-			<div className="space-y-2.5">
+			<div className="max-h-[430px] space-y-2.5 overflow-y-auto pr-1">
 				{upcomingRaces.length === 0 && (
 					<p className="text-sm text-gray-300">
 						No upcoming sessions available.

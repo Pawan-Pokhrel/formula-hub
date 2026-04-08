@@ -695,6 +695,7 @@ export default function DashboardPage() {
 		return (
 			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
 				<div className="fixed inset-0 z-0 bg-black/90" />
+				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_14%,rgba(239,68,68,0.14),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(39,244,210,0.11),transparent_33%),radial-gradient(circle_at_78%_76%,rgba(255,128,0,0.10),transparent_36%),radial-gradient(circle_at_18%_82%,rgba(54,113,198,0.10),transparent_34%)]" />
 				<div className="relative z-10 mx-auto w-full max-w-[1760px] space-y-4 animate-fade-in pt-8">
 					<div className="h-12 w-80 animate-pulse rounded-2xl bg-white/8" />
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -721,7 +722,7 @@ export default function DashboardPage() {
 		return (
 			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
 				<div className="fixed inset-0 z-0 bg-black/90" />
-				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
+				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_14%,rgba(239,68,68,0.14),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(39,244,210,0.11),transparent_33%),radial-gradient(circle_at_78%_76%,rgba(255,128,0,0.10),transparent_36%),radial-gradient(circle_at_18%_82%,rgba(54,113,198,0.10),transparent_34%)]" />
 				<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 pb-12 animate-fade-in">
 					{/* Hero Banner */}
 					<div className="relative overflow-hidden rounded-2xl border border-white/12 bg-black/60 p-7 backdrop-blur-xl md:p-10">
@@ -955,7 +956,7 @@ export default function DashboardPage() {
 	return (
 		<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
 			<div className="fixed inset-0 z-0 bg-black/90" />
-			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
+			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_14%,rgba(239,68,68,0.14),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(39,244,210,0.11),transparent_33%),radial-gradient(circle_at_78%_76%,rgba(255,128,0,0.10),transparent_36%),radial-gradient(circle_at_18%_82%,rgba(54,113,198,0.10),transparent_34%)]" />
 			<div className="relative z-10 mx-auto w-full max-w-[1700px] space-y-4 pb-12 animate-fade-in">
 				{/* ── Premium Header ── */}
 				<div className="flex flex-col gap-2 pt-6 md:flex-row md:items-end md:justify-between">

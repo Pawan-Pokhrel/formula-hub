@@ -376,12 +376,24 @@ function EntityDropdown({
 	const ref = useRef(null);
 
 	useEffect(() => {
+		if (!open) return undefined;
 		const fn = (e) => {
 			if (ref.current && !ref.current.contains(e.target)) setOpen(false);
 		};
+		const onEscape = (e) => {
+			if (e.key === 'Escape') setOpen(false);
+		};
 		document.addEventListener('mousedown', fn);
-		return () => document.removeEventListener('mousedown', fn);
-	}, []);
+		document.addEventListener('keydown', onEscape);
+		return () => {
+			document.removeEventListener('mousedown', fn);
+			document.removeEventListener('keydown', onEscape);
+		};
+	}, [open]);
+
+	useEffect(() => {
+		setOpen(false);
+	}, [value, comparisonType, disabled]);
 
 	const selected = entities.find((e) => getKey(e, comparisonType) === value);
 
@@ -401,7 +413,7 @@ function EntityDropdown({
 	return (
 		<div
 			ref={ref}
-			className="relative"
+			className={`relative ${open ? 'z-80' : 'z-10'}`}
 		>
 			<label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-white/30">
 				{label}
@@ -410,6 +422,8 @@ function EntityDropdown({
 				type="button"
 				disabled={disabled}
 				onClick={() => setOpen((v) => !v)}
+				aria-expanded={open}
+				aria-haspopup="listbox"
 				className="w-full flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				{selected ?
@@ -464,7 +478,7 @@ function EntityDropdown({
 			</button>
 
 			{open && (
-				<div className="absolute z-50 mt-1.5 w-full rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl overflow-hidden">
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-90 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
 					<div className="max-h-72 overflow-y-auto py-1">
 						{entities.map((entity) => {
 							const key = getKey(entity, comparisonType);
@@ -506,7 +520,7 @@ function EntityDropdown({
 									)}
 									<div className="flex-1 min-w-0">
 										<p
-											className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-white/65'}`}
+											className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-white/72'}`}
 										>
 											{comparisonType === 'drivers' ?
 												entity.driver_name
@@ -634,14 +648,26 @@ function IdentityCard({
 
 	return (
 		<div className="relative overflow-hidden rounded-3xl border border-white/[0.06]">
+			{isDriverCard && (
+				<div
+					className="pointer-events-none absolute inset-0 z-1 opacity-[0.28]"
+					style={{
+						backgroundImage:
+							'repeating-linear-gradient(0deg,rgba(255,255,255,0.10) 0px,rgba(255,255,255,0.10) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(90deg,rgba(255,255,255,0.08) 0px,rgba(255,255,255,0.08) 1px,transparent 1px,transparent 18px)',
+					}}
+				/>
+			)}
 			<div
-				className="relative h-52 overflow-hidden"
+				className="relative z-2 h-52 overflow-hidden"
 				style={{
-					background: `linear-gradient(135deg, ${isDriverCard ? `${tc}52` : `${tc}30`} 0%, ${isDriverCard ? `${tc}1f` : `${tc}08`} 58%, #050507 100%)`,
+					background:
+						isDriverCard ?
+							`linear-gradient(120deg, ${tc}DE 0%, ${tc}B8 58%, rgba(8,8,10,0.92) 100%)`
+						: 	`linear-gradient(135deg, ${tc}30 0%, ${tc}08 58%, #050507 100%)`,
 				}}
 			>
 				<div
-					className="pointer-events-none absolute inset-0 opacity-20"
+					className="pointer-events-none absolute inset-0 opacity-40"
 					style={{
 						backgroundImage:
 							'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 20px),repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 20px)',
@@ -695,7 +721,15 @@ function IdentityCard({
 				<div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-[#050507] to-transparent" />
 			</div>
 
-			<div className="bg-[#050507] px-5 pb-5 pt-3">
+			<div
+				className="relative z-2 px-5 pb-5 pt-3"
+				style={{
+					background:
+						isDriverCard ?
+							`linear-gradient(180deg, rgba(5,5,7,0.98) 0%, ${tc}12 120%)`
+						: 	'#050507',
+				}}
+			>
 				<div className="flex items-end justify-between mb-3">
 					<div>
 						<p className="text-[10px] uppercase tracking-[0.22em] text-white/25 mb-0.5">
@@ -719,8 +753,8 @@ function IdentityCard({
 							key={s.label}
 							className="flex flex-col py-2.5 px-3 rounded-xl"
 							style={{
-								background: isDriverCard ? `${tc}1a` : `${tc}0d`,
-								border: `1px solid ${isDriverCard ? `${tc}48` : `${tc}20`}`,
+								background: isDriverCard ? `${tc}24` : `${tc}0d`,
+								border: `1px solid ${isDriverCard ? `${tc}54` : `${tc}20`}`,
 							}}
 						>
 							<span className="text-[9px] uppercase tracking-[0.16em] text-white/25 mb-1">
