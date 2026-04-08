@@ -10,6 +10,7 @@ import {
 import { getCircuits } from '@/lib/api/strategyApi';
 import { getCarImage, getDriverImage } from '@/utils/f1_images';
 import { getCountryFlag } from '@/utils/flags';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -583,7 +584,7 @@ export default function PredictPageClient() {
 						<div className="space-y-4">
 							{result ?
 								<div className="overflow-hidden rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl animate-fade-in">
-									<div className="bg-gradient-to-b from-red-600/15 to-transparent px-6 pb-6 pt-8 text-center">
+									<div className="bg-linear-to-b from-red-600/15 to-transparent px-6 pb-6 pt-8 text-center">
 										<p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
 											Predicted Lap Time
 										</p>
@@ -836,16 +837,20 @@ export default function PredictPageClient() {
 											>
 												<div className="p-4 relative overflow-hidden group">
 													{getCarImage(p.team) && (
-														<img
+														<Image
 															src={getCarImage(p.team)}
+															width={224}
+															height={112}
 															className="absolute right-0 bottom-0 h-28 opacity-10 object-contain translate-y-3 translate-x-2 pointer-events-none transition-transform duration-700 group-hover:scale-105"
 															alt="Car UI background"
 														/>
 													)}
 													<div className="mb-3 flex items-center justify-between relative z-10">
 														<div className="flex items-center gap-3">
-															<img
+															<Image
 																src={getDriverImage(p.driver)}
+																width={44}
+																height={44}
 																onError={(e) =>
 																	(e.currentTarget.style.display = 'none')
 																}
@@ -939,7 +944,7 @@ function FormSection({ icon, title, accent = 'border-l-red-500', children }) {
 				<h3 className="text-xs font-bold uppercase tracking-[0.15em] text-gray-400">
 					{title}
 				</h3>
-				<div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+				<div className="h-px flex-1 bg-linear-to-r from-white/10 to-transparent" />
 			</div>
 			{children}
 		</div>
