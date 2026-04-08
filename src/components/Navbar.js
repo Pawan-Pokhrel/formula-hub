@@ -276,6 +276,11 @@ export default function Navbar() {
 		setMegaMenuOpen(menuKey);
 	};
 
+	const collapseHoverMenu = () => {
+		clearMenuCloseTimer();
+		setMegaMenuOpen(null);
+	};
+
 	const desktopLinkClass = (active) =>
 		`relative rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${
 			active ?
@@ -308,6 +313,7 @@ export default function Navbar() {
 						<Link
 							href="/dashboard"
 							prefetch={true}
+							onMouseEnter={collapseHoverMenu}
 							className={desktopLinkClass(
 								isRouteActive(pathname, '/dashboard')
 							)}
@@ -397,6 +403,7 @@ export default function Navbar() {
 									key={item.href}
 									href={item.href}
 									prefetch={true}
+									onMouseEnter={collapseHoverMenu}
 									onClick={(event) => handleProtectedNavigation(event, item)}
 									className={desktopLinkClass(active)}
 								>
