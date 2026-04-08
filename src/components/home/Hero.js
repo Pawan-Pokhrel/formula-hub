@@ -10,9 +10,9 @@ export default function Hero() {
 					TODO: User will provide the actual image asset.
 					For now, using a highly aesthetic F1-themed placeholder overlay or a placeholder image URL.
 				*/}
-				<img 
-					src="/images/FormulaHub-BG.png" 
-					alt="F1 Background Placeholder" 
+				<img
+					src="/images/FormulaHub-BG.png"
+					alt="F1 Background Placeholder"
 					className="h-full w-full object-cover object-center opacity-40 brightness-75 mix-blend-lighten"
 				/>
 				{/* Gradient Overlays for Readability and Blending */}
@@ -54,6 +54,22 @@ export default function Hero() {
 							className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-md px-8 py-4 text-sm font-bold uppercase tracking-widest text-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:border-red-500/50 hover:bg-red-600/20"
 						>
 							Create Account
+						</Link>
+
+						<Link
+							href="/schedule"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-red-500/35 bg-red-600/10 px-6 py-4 text-sm font-bold uppercase tracking-widest text-red-100 transition-all duration-300 hover:-translate-y-1 hover:bg-red-600/20"
+						>
+							Race Schedule
+						</Link>
+
+						<Link
+							href="/standings"
+							prefetch={true}
+							className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-red-500/35 bg-red-600/10 px-6 py-4 text-sm font-bold uppercase tracking-widest text-red-100 transition-all duration-300 hover:-translate-y-1 hover:bg-red-600/20"
+						>
+							Standings
 						</Link>
 					</div>
 

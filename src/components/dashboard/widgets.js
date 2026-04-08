@@ -156,6 +156,7 @@ export function NextRaceWidget({
 		<DashboardCard
 			title="Next Race Window"
 			subtitle="Countdown and circuit context"
+			fitContent
 			mediaSrc={trackImage}
 			mediaAlt={nextRace?.race_name || 'Next race circuit'}
 			mediaClassName="object-cover"
@@ -788,8 +789,9 @@ export function LastRaceWidget({ lastRace, formatDate }) {
 		<DashboardCard
 			title="Last Result Snapshot"
 			subtitle={`${lastRace.race_name} • ${formatDate(lastRace.date)}`}
+			fitContent
 			rightSlot={
-				<div className="hidden items-center gap-2 rounded-full border border-yellow-400/35 bg-yellow-500/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-yellow-100 md:inline-flex">
+				<div className="hidden items-center gap-2 rounded-full border border-red-400/35 bg-red-500/15 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] text-red-100 md:inline-flex">
 					<FaTrophy className="text-red-400" /> Podium Finishers
 				</div>
 			}
@@ -857,13 +859,13 @@ export function LastRaceWidget({ lastRace, formatDate }) {
 						const position = Number(driver.position);
 						const teamColor = getTeamColorHex(driver.team_name);
 						const heightClass =
-							position === 1 ? 'h-80'
-							: position === 2 ? 'h-68'
-							: 'h-62';
+							position === 1 ? 'h-72'
+							: position === 2 ? 'h-62'
+							: 'h-56';
 						const marginTopClass =
 							position === 1 ? 'mt-0'
-							: position === 2 ? 'mt-10'
-							: 'mt-14';
+							: position === 2 ? 'mt-8'
+							: 'mt-12';
 
 						return (
 							<div
@@ -880,10 +882,10 @@ export function LastRaceWidget({ lastRace, formatDate }) {
 										<span
 											className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.12em] ${
 												position === 1 ?
-													'border-yellow-300/45 bg-yellow-400/18 text-yellow-200'
+													'border-red-300/45 bg-red-500/18 text-red-100'
 												: position === 2 ?
 													'border-zinc-300/40 bg-zinc-300/15 text-zinc-100'
-												:	'border-amber-400/40 bg-amber-500/15 text-amber-200'
+												:	'border-red-500/40 bg-red-600/15 text-red-200'
 											}`}
 										>
 											P{position}
@@ -1249,14 +1251,36 @@ export function F1NewsWidget({ newsItems }) {
 
 /* Country code helper for flags in saved races widget */
 const SAVED_COUNTRY_CODES = {
-	Australia: 'aus', Bahrain: 'bhr', 'Saudi Arabia': 'sau', Japan: 'jpn',
-	China: 'chn', USA: 'usa', 'United States': 'usa', Italy: 'ita',
-	Monaco: 'mon', Canada: 'can', Spain: 'esp', Austria: 'aut',
-	'Great Britain': 'gbr', 'United Kingdom': 'gbr', Hungary: 'hun',
-	Belgium: 'bel', Netherlands: 'ned', Singapore: 'sgp', Mexico: 'mex',
-	Brazil: 'bra', 'United Arab Emirates': 'uae', UAE: 'uae',
-	'Abu Dhabi': 'uae', Azerbaijan: 'aze', France: 'fra', Germany: 'ger',
-	Portugal: 'por', Qatar: 'qat', 'Las Vegas': 'usa', Miami: 'usa',
+	Australia: 'aus',
+	Bahrain: 'bhr',
+	'Saudi Arabia': 'sau',
+	Japan: 'jpn',
+	China: 'chn',
+	USA: 'usa',
+	'United States': 'usa',
+	Italy: 'ita',
+	Monaco: 'mon',
+	Canada: 'can',
+	Spain: 'esp',
+	Austria: 'aut',
+	'Great Britain': 'gbr',
+	'United Kingdom': 'gbr',
+	Hungary: 'hun',
+	Belgium: 'bel',
+	Netherlands: 'ned',
+	Singapore: 'sgp',
+	Mexico: 'mex',
+	Brazil: 'bra',
+	'United Arab Emirates': 'uae',
+	UAE: 'uae',
+	'Abu Dhabi': 'uae',
+	Azerbaijan: 'aze',
+	France: 'fra',
+	Germany: 'ger',
+	Portugal: 'por',
+	Qatar: 'qat',
+	'Las Vegas': 'usa',
+	Miami: 'usa',
 };
 
 function getSavedRaceFlag(country) {
@@ -1276,13 +1300,13 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 			title="Saved Races"
 			subtitle="Your bookmarked track replays"
 			rightSlot={
-				<span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-400/35 bg-yellow-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-yellow-200">
+				<span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/35 bg-red-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-red-200">
 					<FaStar className="text-[8px]" />
 					{races.length} Saved
 				</span>
 			}
 		>
-			{races.length === 0 ? (
+			{races.length === 0 ?
 				<div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
 					<div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
 						<FaStar className="text-2xl text-gray-600" />
@@ -1302,8 +1326,7 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 						Open Track Lab
 					</a>
 				</div>
-			) : (
-				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+			:	<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
 					{races.map((race, idx) => {
 						const flagCode = getSavedRaceFlag(race.country);
 						const hasData = race.has_data;
@@ -1314,7 +1337,7 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 								key={`${race.year}_${race.round}`}
 								href={trackHref}
 								style={{ animationDelay: `${idx * 40}ms` }}
-								className="group relative flex h-[130px] overflow-hidden rounded-xl border border-white/12 bg-black/85 text-left backdrop-blur-xl transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_0_24px_rgba(234,179,8,0.12)] animate-fade-in"
+								className="group relative flex h-[130px] overflow-hidden rounded-xl border border-white/12 bg-black/85 text-left backdrop-blur-xl transition-all duration-300 hover:border-red-400/40 hover:shadow-[0_0_24px_rgba(239,68,68,0.14)] animate-fade-in"
 							>
 								{/* Flag background */}
 								{flagCode && (
@@ -1333,27 +1356,25 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 									</div>
 								)}
 
-								{/* Left yellow accent bar (saved = gold) */}
-								<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-yellow-400/60 transition-all duration-300 group-hover:bg-yellow-300" />
+								<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-red-500/60 transition-all duration-300 group-hover:bg-red-400" />
 
 								{/* Content */}
 								<div className="relative z-10 flex flex-col justify-between p-4 pl-5 w-full">
 									<div>
 										<div className="flex items-center justify-between mb-1.5">
 											<span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-												<FaStar className="text-yellow-400/80 text-[8px]" />
-												R{String(race.round).padStart(2, '0')}
+												<FaStar className="text-red-400/80 text-[8px]" />R
+												{String(race.round).padStart(2, '0')}
 											</span>
 											<div className="flex items-center gap-1.5">
-												{hasData ? (
+												{hasData ?
 													<span className="rounded-full border border-green-500/25 bg-green-500/12 px-2 py-0.5 text-[9px] font-bold text-green-400">
 														Ready
 													</span>
-												) : (
-													<span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold text-gray-500">
+												:	<span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold text-gray-500">
 														Available
 													</span>
-												)}
+												}
 											</div>
 										</div>
 										<h3 className="font-bold text-[13px] leading-tight text-white/90 transition-colors group-hover:text-white line-clamp-2">
@@ -1372,7 +1393,7 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 												</>
 											)}
 										</div>
-										<span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[9px] font-semibold text-gray-300 transition-all group-hover:border-yellow-400/35 group-hover:text-yellow-200">
+										<span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[9px] font-semibold text-gray-300 transition-all group-hover:border-red-400/35 group-hover:text-red-200">
 											View <FaChevronRight className="text-[7px]" />
 										</span>
 									</div>
@@ -1381,13 +1402,13 @@ export function SavedRacesWidget({ savedRaces = [], currentYear }) {
 						);
 					})}
 				</div>
-			)}
+			}
 
 			{races.length > 0 && (
 				<div className="mt-4 flex items-center justify-between">
 					<p className="text-[11px] text-gray-500">
-						{races.length} race{races.length !== 1 ? 's' : ''} saved · manage from
-						Track Lab
+						{races.length} race{races.length !== 1 ? 's' : ''} saved · manage
+						from Track Lab
 					</p>
 					<a
 						href="/track"

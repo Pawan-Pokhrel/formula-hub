@@ -14,24 +14,38 @@ export default function DashboardShell({
 		const secondRowIds = safeIds.filter(
 			(id) => id === 'next-race' || id === 'upcoming-sessions'
 		);
+		const remainingIds = safeIds.filter(
+			(id) =>
+				id !== 'last-race' && id !== 'next-race' && id !== 'upcoming-sessions'
+		);
 
 		return (
-			<div className="flex h-full w-full flex-col gap-5">
+			<div className="flex w-full flex-col gap-5">
 				{podiumId && (
-					<div className="w-full min-h-0 md:min-h-[430px]">
-						{renderWidget(podiumId)}
-					</div>
+					<div className="w-full min-h-0">{renderWidget(podiumId)}</div>
 				)}
-				<div className="flex min-h-0 w-full flex-col gap-5 md:flex-row md:h-104">
+				<div className="grid min-h-0 w-full grid-cols-1 gap-5 md:grid-cols-2">
 					{secondRowIds.map((widgetId) => (
 						<div
 							key={widgetId}
-							className="min-h-0 w-full md:w-1/2"
+							className="min-h-0 w-full"
 						>
 							{renderWidget(widgetId)}
 						</div>
 					))}
 				</div>
+				{remainingIds.length > 0 && (
+					<div className="grid min-h-0 w-full grid-cols-1 gap-5 md:grid-cols-2">
+						{remainingIds.map((widgetId) => (
+							<div
+								key={widgetId}
+								className={`min-h-0 ${spanMap[widgetId] || ''}`}
+							>
+								{renderWidget(widgetId)}
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 		);
 	}

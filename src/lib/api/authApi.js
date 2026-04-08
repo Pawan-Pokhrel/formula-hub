@@ -37,6 +37,26 @@ const authApi = {
 		const { data } = await api.get('/auth/me', config);
 		return data;
 	},
+
+	updateProfile: async (payload) => {
+		const { data } = await api.put('/auth/profile', payload);
+		return data;
+	},
+
+	requestEmailChange: async (payload) => {
+		const { data } = await api.post('/auth/email-change/request', payload);
+		return data;
+	},
+
+	verifyEmailChange: async (payload) => {
+		const { data } = await api.post('/auth/email-change/verify', payload);
+		return data;
+	},
+
+	changePassword: async (payload) => {
+		const { data } = await api.post('/auth/change-password', payload);
+		return data;
+	},
 };
 
 export default authApi;
