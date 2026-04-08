@@ -148,7 +148,6 @@ export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 	const [megaMenuOpen, setMegaMenuOpen] = useState(null);
-	const [pinnedMenu, setPinnedMenu] = useState(null);
 	const pathname = usePathname();
 	const router = useRouter();
 	const { isAuthenticated, user, logout } = useAuth();
@@ -179,11 +178,8 @@ export default function Navbar() {
 			.map((driver) => ({
 				...driver,
 				imagePath:
-					getTelemetryDriverImage(
-						driver.code,
-						driver.fullName,
-						driver.teamName
-					) || getDriverImagePath(driver.code),
+					getTelemetryDriverImage(driver.code, 2026) ||
+					getDriverImagePath(driver.code),
 			}));
 	}, [teamRankByCode]);
 
@@ -233,7 +229,6 @@ export default function Navbar() {
 		const onMouseDown = (event) => {
 			if (!megaMenuRef.current?.contains(event.target)) {
 				setMegaMenuOpen(null);
-				setPinnedMenu(null);
 			}
 		};
 		document.addEventListener('mousedown', onMouseDown);
@@ -258,7 +253,6 @@ export default function Navbar() {
 		event.preventDefault();
 		setIsOpen(false);
 		setMegaMenuOpen(null);
-		setPinnedMenu(null);
 		toast.error(`Please log in to access ${item.label}.`);
 		router.push(`/login?next=${encodeURIComponent(item.href)}`);
 	};
@@ -271,7 +265,6 @@ export default function Navbar() {
 	};
 
 	const scheduleMenuClose = () => {
-		if (pinnedMenu === 'drivers') return;
 		clearMenuCloseTimer();
 		closeTimerRef.current = setTimeout(() => {
 			setMegaMenuOpen(null);
@@ -279,7 +272,6 @@ export default function Navbar() {
 	};
 
 	const openHoverMenu = (menuKey) => {
-		if (pinnedMenu === 'drivers') return;
 		clearMenuCloseTimer();
 		setMegaMenuOpen(menuKey);
 	};
@@ -353,7 +345,6 @@ export default function Navbar() {
 												prefetch={true}
 												onClick={() => {
 													setMegaMenuOpen(null);
-													setPinnedMenu(null);
 												}}
 												className="flex items-center gap-2.5 px-3.5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
 											>
@@ -371,19 +362,10 @@ export default function Navbar() {
 							)}
 						</div>
 
-						<button
-							type="button"
+						<Link
+							href="/drivers"
+							prefetch={true}
 							onMouseEnter={() => openHoverMenu('drivers')}
-							onClick={() => {
-								clearMenuCloseTimer();
-								setPinnedMenu('drivers');
-								setMegaMenuOpen('drivers');
-							}}
-							onDoubleClick={() => {
-								setMegaMenuOpen(null);
-								setPinnedMenu(null);
-								router.push('/drivers');
-							}}
 							className={desktopLinkClass(isRouteActive(pathname, '/drivers'))}
 						>
 							<span className="inline-flex items-center gap-1.5">
@@ -392,10 +374,11 @@ export default function Navbar() {
 									className={`text-[11px] transition-transform ${megaMenuOpen === 'drivers' ? 'rotate-180' : ''}`}
 								/>
 							</span>
-						</button>
+						</Link>
 
-						<button
-							type="button"
+						<Link
+							href="/teams"
+							prefetch={true}
 							onMouseEnter={() => openHoverMenu('teams')}
 							className={desktopLinkClass(isRouteActive(pathname, '/teams'))}
 						>
@@ -405,7 +388,7 @@ export default function Navbar() {
 									className={`text-[11px] transition-transform ${megaMenuOpen === 'teams' ? 'rotate-180' : ''}`}
 								/>
 							</span>
-						</button>
+						</Link>
 
 						{CENTER_LINK_ITEMS.map((item) => {
 							const active = isRouteActive(pathname, item.href);
@@ -424,12 +407,13 @@ export default function Navbar() {
 					</div>
 
 					{megaMenuOpen && megaMenuOpen !== 'race-hub' && (
-						<div className="absolute left-1/2 top-[calc(100%+6px)] z-50 w-[min(96vw,1620px)] -translate-x-1/2">
-							<div className="rounded-2xl border border-white/12 bg-black/94 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+						<div className="absolute left-1/2 top-[calc(100%+6px)] z-50 w-screen -translate-x-1/2 px-5">
+							<div className="w-full rounded-2xl border border-white/12 bg-black/94 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
 								{megaMenuOpen === 'drivers' && (
 									<div>
 										<div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
-											{driverCards.map((driver) => {
+											<div className="mx-auto grid w-[1320px] max-w-full grid-cols-4 gap-x-5 gap-y-2">
+												{driverCards.map((driver) => {
 												const nameParts = String(driver.fullName || '')
 													.trim()
 													.split(/\s+/)
@@ -450,7 +434,6 @@ export default function Navbar() {
 														prefetch={true}
 														onClick={() => {
 															setMegaMenuOpen(null);
-															setPinnedMenu(null);
 														}}
 														className="group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-px hover:brightness-110"
 														style={getDriverAccentStyle(driver.teamColor)}
@@ -464,7 +447,7 @@ export default function Navbar() {
 																className="object-cover object-top scale-[1.12]"
 															/>
 														</div>
-														<p className="truncate text-sm font-semibold text-white">
+														<p className="truncate text-sm font-semibold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
 															<span>{firstName}</span>
 															{lastName && (
 																<span className="ml-1 font-black uppercase tracking-wide text-white/95">
@@ -474,7 +457,8 @@ export default function Navbar() {
 														</p>
 													</Link>
 												);
-											})}
+												})}
+											</div>
 										</div>
 									</div>
 								)}
@@ -497,13 +481,12 @@ export default function Navbar() {
 													prefetch={true}
 													onClick={() => {
 														setMegaMenuOpen(null);
-														setPinnedMenu(null);
 													}}
-													className="rounded-xl border p-3 transition-all hover:-translate-y-px hover:brightness-110"
+													className="group rounded-xl border p-3 transition-all hover:-translate-y-px hover:brightness-110"
 													style={getTeamAccentStyle(team.teamColor)}
 												>
 													<div className="flex items-center justify-between gap-2">
-														<p className="truncate text-xs font-bold text-white">
+														<p className="truncate text-xs font-bold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
 															{team.teamName}
 														</p>
 														{team.teamLogo && (
