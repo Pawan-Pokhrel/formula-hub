@@ -69,8 +69,7 @@ function buildFallbackHistoryEvents(scheduleRows, selectedYear) {
 }
 
 function getPreferredSessionName(eventItem, preferredSession = '') {
-	const sessions =
-		Array.isArray(eventItem?.sessions) ? eventItem.sessions : [];
+	const sessions = Array.isArray(eventItem?.sessions) ? eventItem.sessions : [];
 	if (!sessions.length) return preferredSession || '';
 
 	const normalizedPreferred = String(preferredSession || '')
@@ -316,7 +315,7 @@ export default function TelemetryPageClient() {
 					round: Number(initialQueryRoundRef.current),
 					session: initialQuerySessionRef.current || undefined,
 				})
-			: 	getCurrentTelemetrySnapshot();
+			:	getCurrentTelemetrySnapshot();
 
 		Promise.all([
 			snapshotPromise,
@@ -338,9 +337,7 @@ export default function TelemetryPageClient() {
 				setHistoryEvents(history);
 
 				const initialRound =
-					useInitialQuerySnapshot ?
-						Number(initialQueryRoundRef.current)
-					: 	null;
+					useInitialQuerySnapshot ? Number(initialQueryRoundRef.current) : null;
 				const rounds = history;
 				const matching = rounds.find(
 					(event) => Number(event.round) === initialRound

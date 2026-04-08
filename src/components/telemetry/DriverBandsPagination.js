@@ -6,11 +6,11 @@ import Image from 'next/image';
 import { useState } from 'react';
 import PodiumTop3 from './PodiumTop3';
 import {
-	getTelemetryMetric,
+	getRacePointsByPosition,
 	getTeamCardBackground,
 	getTelemetryCardTexturePattern,
-	getRacePointsByPosition,
 	getTelemetryDriverImage,
+	getTelemetryMetric,
 } from './telemetryUiUtils';
 
 const BAND_TABS = [
@@ -24,7 +24,8 @@ function DriverRow({ row, sessionType, seasonYear }) {
 	const carImage = getCarImage(row.team_name);
 	const accent = row.team_color || '#6B7280';
 	const metric = getTelemetryMetric(row, sessionType);
-	const points = sessionType === 'race' ? getRacePointsByPosition(row.position) : 0;
+	const points =
+		sessionType === 'race' ? getRacePointsByPosition(row.position) : 0;
 
 	return (
 		<div
@@ -40,7 +41,9 @@ function DriverRow({ row, sessionType, seasonYear }) {
 			/>
 			<div className="flex items-center gap-3">
 				<div className="flex items-center gap-3">
-					<span className="w-8 text-sm font-bold text-zinc-300">P{row.position}</span>
+					<span className="w-8 text-sm font-bold text-zinc-300">
+						P{row.position}
+					</span>
 					<div className="relative h-16 w-16 overflow-hidden rounded-lg bg-white/8">
 						{driverImage && (
 							<Image
@@ -53,7 +56,9 @@ function DriverRow({ row, sessionType, seasonYear }) {
 						)}
 					</div>
 					<div>
-						<p className="text-sm font-semibold text-white">{row.driver_name}</p>
+						<p className="text-sm font-semibold text-white">
+							{row.driver_name}
+						</p>
 						<p className="text-xs text-zinc-400">
 							{row.driver_code || 'N/A'} - {row.team_name}
 						</p>
@@ -86,7 +91,9 @@ function DriverRow({ row, sessionType, seasonYear }) {
 					)}
 					<div className="text-right">
 						<p className="text-xs text-zinc-500">{metric.primaryLabel}</p>
-						<p className={`text-sm font-semibold ${metric.retired ? 'text-red-400' : 'text-zinc-100'}`}>
+						<p
+							className={`text-sm font-semibold ${metric.retired ? 'text-red-400' : 'text-zinc-100'}`}
+						>
 							{metric.primaryValue}
 						</p>
 						{metric.secondaryLabel && (
@@ -97,8 +104,12 @@ function DriverRow({ row, sessionType, seasonYear }) {
 					</div>
 					{sessionType === 'race' && (
 						<div className="rounded-lg border border-red-300/35 bg-red-500/18 px-3 py-1.5 text-center">
-							<p className="text-lg font-black leading-none text-red-100">+{points}</p>
-							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-200">pts</p>
+							<p className="text-lg font-black leading-none text-red-100">
+								+{points}
+							</p>
+							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-200">
+								pts
+							</p>
 						</div>
 					)}
 				</div>
@@ -156,7 +167,7 @@ export default function DriverBandsPagination({
 							className={`rounded-full px-4 py-2 text-xs font-bold tracking-[0.15em] transition-colors ${
 								activeTab === tab.key ?
 									'bg-white text-black'
-								: 'text-zinc-300 hover:text-white'
+								:	'text-zinc-300 hover:text-white'
 							}`}
 						>
 							{tab.label}
@@ -183,7 +194,7 @@ export default function DriverBandsPagination({
 						/>
 					</div>
 				</div>
-			: <DriverList
+			:	<DriverList
 					rows={currentRows}
 					sessionType={sessionType}
 					seasonYear={seasonYear}

@@ -129,11 +129,7 @@ function PodiumCard({
 	);
 }
 
-export default function PodiumTop3({
-	rows,
-	sessionType = 'race',
-	seasonYear,
-}) {
+export default function PodiumTop3({ rows, sessionType = 'race', seasonYear }) {
 	if (!rows || rows.length === 0) {
 		return (
 			<div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-400">
