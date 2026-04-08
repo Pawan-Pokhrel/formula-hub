@@ -50,10 +50,15 @@ function _formatSeconds(secondsStr) {
 	return `${sec.toFixed(3)} s`;
 }
 
-export function getTelemetryDriverImage(driverCode) {
+export function getTelemetryDriverImage(driverCode, seasonYear) {
 	const code = String(driverCode || '').toUpperCase();
 	if (!code) return null;
-	return DRIVER_IMAGE_2026_MAP[code] || getDriverImagePath(code);
+	const parsedYear = Number(seasonYear);
+	const use2026Pack = Number.isFinite(parsedYear) && parsedYear === 2026;
+	if (use2026Pack) {
+		return DRIVER_IMAGE_2026_MAP[code] || getDriverImagePath(code);
+	}
+	return getDriverImagePath(code);
 }
 
 export function isRetiredStatus(value) {

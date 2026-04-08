@@ -18,9 +18,9 @@ const BAND_TABS = [
 	{ key: 'p11_p22', label: 'P11-P22' },
 ];
 
-function DriverRow({ row, sessionType }) {
+function DriverRow({ row, sessionType, seasonYear }) {
 	const teamLogo = getTeamLogoPath(row.team_name);
-	const driverImage = getTelemetryDriverImage(row.driver_code);
+	const driverImage = getTelemetryDriverImage(row.driver_code, seasonYear);
 	const carImage = getCarImage(row.team_name);
 	const accent = row.team_color || '#6B7280';
 	const metric = getTelemetryMetric(row, sessionType);
@@ -107,7 +107,7 @@ function DriverRow({ row, sessionType }) {
 	);
 }
 
-function DriverList({ rows, sessionType }) {
+function DriverList({ rows, sessionType, seasonYear }) {
 	if (!rows.length) {
 		return (
 			<div className="rounded-xl border border-dashed border-white/15 bg-white/4 px-4 py-6 text-sm text-zinc-400">
@@ -123,13 +123,18 @@ function DriverList({ rows, sessionType }) {
 					key={`${row.position}_${row.driver_code || row.driver_name}`}
 					row={row}
 					sessionType={sessionType}
+					seasonYear={seasonYear}
 				/>
 			))}
 		</div>
 	);
 }
 
-export default function DriverBandsPagination({ bands, sessionType = 'race' }) {
+export default function DriverBandsPagination({
+	bands,
+	sessionType = 'race',
+	seasonYear,
+}) {
 	const [activeTab, setActiveTab] = useState('p1_p10');
 
 	const top3Rows = bands?.top3?.rows || [];
@@ -165,6 +170,7 @@ export default function DriverBandsPagination({ bands, sessionType = 'race' }) {
 					<PodiumTop3
 						rows={top3Rows}
 						sessionType={sessionType}
+						seasonYear={seasonYear}
 					/>
 					<div className="rounded-xl border border-white/10 bg-black/30 p-3">
 						<p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
@@ -173,12 +179,14 @@ export default function DriverBandsPagination({ bands, sessionType = 'race' }) {
 						<DriverList
 							rows={currentRows}
 							sessionType={sessionType}
+							seasonYear={seasonYear}
 						/>
 					</div>
 				</div>
 			: <DriverList
 					rows={currentRows}
 					sessionType={sessionType}
+					seasonYear={seasonYear}
 				/>
 			}
 		</div>

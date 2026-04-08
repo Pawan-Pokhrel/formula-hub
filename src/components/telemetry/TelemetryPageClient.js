@@ -68,6 +68,38 @@ function buildFallbackHistoryEvents(scheduleRows, selectedYear) {
 		.sort((a, b) => b.round - a.round);
 }
 
+function getPreferredSessionName(eventItem, preferredSession = '') {
+	const sessions =
+		Array.isArray(eventItem?.sessions) ? eventItem.sessions : [];
+	if (!sessions.length) return preferredSession || '';
+
+	const normalizedPreferred = String(preferredSession || '')
+		.trim()
+		.toLowerCase();
+	if (normalizedPreferred) {
+		const preferredMatch = sessions.find(
+			(session) =>
+				String(session?.name || '')
+					.trim()
+					.toLowerCase() === normalizedPreferred
+		);
+		if (preferredMatch?.name) return preferredMatch.name;
+	}
+
+	const raceSession = sessions.find((session) => {
+		const byType = String(session?.session_type || '')
+			.trim()
+			.toLowerCase();
+		const byName = String(session?.name || '')
+			.trim()
+			.toLowerCase();
+		return byType === 'race' || byName === 'race';
+	});
+	if (raceSession?.name) return raceSession.name;
+
+	return sessions[sessions.length - 1]?.name || preferredSession || '';
+}
+
 const TYRE_COMPOUND_META = {
 	S: { label: 'Soft' },
 	M: {
@@ -240,6 +272,10 @@ export default function TelemetryPageClient() {
 	const querySession = String(searchParams.get('session') || '').trim();
 	const initialYear =
 		Number.isFinite(queryYear) && queryYear >= 2018 ? queryYear : currentYear;
+	const initialQueryRoundRef = useRef(
+		Number.isFinite(queryRound) && queryRound > 0 ? queryRound : null
+	);
+	const initialQuerySessionRef = useRef(querySession);
 
 	const [snapshot, setSnapshot] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -252,6 +288,8 @@ export default function TelemetryPageClient() {
 	const [selectedSession, setSelectedSession] = useState(querySession);
 	const [selectedDriverCode, setSelectedDriverCode] = useState('');
 	const [error, setError] = useState(null);
+	const hasConsumedInitialQueryRef = useRef(false);
+	const skipNextSessionFetchRef = useRef(false);
 
 	const yearOptions = useMemo(
 		() =>
@@ -265,8 +303,23 @@ export default function TelemetryPageClient() {
 	useEffect(() => {
 		let active = true;
 
+		const hasQueryRound =
+			Number.isFinite(initialQueryRoundRef.current) &&
+			Number(initialQueryRoundRef.current) > 0;
+		const useInitialQuerySnapshot =
+			hasQueryRound && !hasConsumedInitialQueryRef.current;
+
+		const snapshotPromise =
+			useInitialQuerySnapshot ?
+				getTelemetrySessionSnapshot({
+					year: selectedYear,
+					round: Number(initialQueryRoundRef.current),
+					session: initialQuerySessionRef.current || undefined,
+				})
+			: 	getCurrentTelemetrySnapshot();
+
 		Promise.all([
-			getCurrentTelemetrySnapshot(),
+			snapshotPromise,
 			getTelemetryHistoryEvents(selectedYear, 32).catch(() => []),
 			getSchedule(selectedYear).catch(() => []),
 		])
@@ -285,9 +338,9 @@ export default function TelemetryPageClient() {
 				setHistoryEvents(history);
 
 				const initialRound =
-					Number.isFinite(queryRound) && queryRound > 0 ?
-						queryRound
-					:	Number(snapshotData?.event?.round || 0);
+					useInitialQuerySnapshot ?
+						Number(initialQueryRoundRef.current)
+					: 	null;
 				const rounds = history;
 				const matching = rounds.find(
 					(event) => Number(event.round) === initialRound
@@ -296,11 +349,16 @@ export default function TelemetryPageClient() {
 				if (selectedEvent) {
 					setSelectedRound(Number(selectedEvent.round));
 					const fallbackSession =
-						querySession ||
-						snapshotData?.session?.name ||
-						selectedEvent.sessions?.[selectedEvent.sessions.length - 1]?.name ||
-						'';
+						(useInitialQuerySnapshot ? initialQuerySessionRef.current : '') ||
+						getPreferredSessionName(
+							selectedEvent,
+							snapshotData?.session?.name || ''
+						);
 					setSelectedSession(fallbackSession);
+				}
+
+				if (useInitialQuerySnapshot) {
+					skipNextSessionFetchRef.current = true;
 				}
 
 				const firstDriverCode =
@@ -313,6 +371,7 @@ export default function TelemetryPageClient() {
 			})
 			.finally(() => {
 				if (!active) return;
+				hasConsumedInitialQueryRef.current = true;
 				setLoading(false);
 				setHistoryLoading(false);
 			});
@@ -320,10 +379,14 @@ export default function TelemetryPageClient() {
 		return () => {
 			active = false;
 		};
-	}, [selectedYear, queryRound, querySession]);
+	}, [selectedYear]);
 
 	useEffect(() => {
 		if (!selectedRound) return;
+		if (skipNextSessionFetchRef.current) {
+			skipNextSessionFetchRef.current = false;
+			return;
+		}
 		let active = true;
 
 		getTelemetrySessionSnapshot({
@@ -354,6 +417,35 @@ export default function TelemetryPageClient() {
 			active = false;
 		};
 	}, [selectedYear, selectedRound, selectedSession]);
+
+	useEffect(() => {
+		if (!selectedRound) return;
+
+		const nextYear = String(selectedYear);
+		const nextRound = String(selectedRound);
+		const nextSession = String(selectedSession || '');
+		const currentYearParam = String(searchParams.get('year') || '');
+		const currentRoundParam = String(searchParams.get('round') || '');
+		const currentSessionParam = String(searchParams.get('session') || '');
+
+		if (
+			currentYearParam === nextYear &&
+			currentRoundParam === nextRound &&
+			currentSessionParam === nextSession
+		) {
+			return;
+		}
+
+		const nextParams = new URLSearchParams({
+			year: nextYear,
+			round: nextRound,
+		});
+		if (nextSession) {
+			nextParams.set('session', nextSession);
+		}
+
+		router.replace(`/telemetry?${nextParams.toString()}`, { scroll: false });
+	}, [router, searchParams, selectedYear, selectedRound, selectedSession]);
 
 	const event = snapshot?.event;
 	const session = snapshot?.session;
@@ -460,10 +552,13 @@ export default function TelemetryPageClient() {
 				driverCode: trace.driver_code,
 				driverName: trace.driver_name,
 				teamName: trace.team_name,
-				driverImage: getTelemetryDriverImage(trace.driver_code),
+				driverImage: getTelemetryDriverImage(
+					trace.driver_code,
+					event?.year || selectedYear
+				),
 				teamLogo: getTeamLogoPath(trace.team_name),
 			})),
-		[lapTraces]
+		[lapTraces, event?.year, selectedYear]
 	);
 
 	const renderDriverOption = (option) => (
@@ -567,6 +662,8 @@ export default function TelemetryPageClient() {
 								onChange={(nextValue) => {
 									setLoading(true);
 									setHistoryLoading(true);
+									setSelectedRound(null);
+									setSelectedSession('');
 									setSelectedYear(Number(nextValue));
 								}}
 								options={seasonOptions}
@@ -586,10 +683,7 @@ export default function TelemetryPageClient() {
 									);
 									setLoading(true);
 									setSelectedRound(round);
-									setSelectedSession(
-										nextEvent?.sessions?.[nextEvent.sessions.length - 1]
-											?.name || ''
-									);
+									setSelectedSession(getPreferredSessionName(nextEvent));
 								}}
 								options={raceOptions}
 								disabled={historyLoading || raceOptions.length === 0}
@@ -689,6 +783,7 @@ export default function TelemetryPageClient() {
 						<DriverBandsPagination
 							bands={snapshot?.driver_bands}
 							sessionType={session?.session_type || 'race'}
+							seasonYear={event?.year || selectedYear}
 						/>
 
 						<div className="rounded-2xl border border-white/10 bg-black/40 p-4 md:p-5">

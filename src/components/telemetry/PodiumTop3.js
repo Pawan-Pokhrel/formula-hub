@@ -11,7 +11,12 @@ import {
 
 const PODIUM_LAYOUT = [2, 1, 3];
 
-function PodiumCard({ row, emphasized = false, sessionType = 'race' }) {
+function PodiumCard({
+	row,
+	emphasized = false,
+	sessionType = 'race',
+	seasonYear,
+}) {
 	if (!row) {
 		return (
 			<div className="h-56 rounded-2xl border border-dashed border-white/15 bg-white/5 p-4" />
@@ -19,7 +24,7 @@ function PodiumCard({ row, emphasized = false, sessionType = 'race' }) {
 	}
 
 	const teamLogo = getTeamLogoPath(row.team_name);
-	const driverImage = getTelemetryDriverImage(row.driver_code);
+	const driverImage = getTelemetryDriverImage(row.driver_code, seasonYear);
 	const carImage = getCarImage(row.team_name);
 	const accent = row.team_color || '#6B7280';
 	const metric = getTelemetryMetric(row, sessionType);
@@ -124,7 +129,11 @@ function PodiumCard({ row, emphasized = false, sessionType = 'race' }) {
 	);
 }
 
-export default function PodiumTop3({ rows, sessionType = 'race' }) {
+export default function PodiumTop3({
+	rows,
+	sessionType = 'race',
+	seasonYear,
+}) {
 	if (!rows || rows.length === 0) {
 		return (
 			<div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-400">
@@ -143,6 +152,7 @@ export default function PodiumTop3({ rows, sessionType = 'race' }) {
 					row={rowByPosition.get(position)}
 					emphasized={position === 1}
 					sessionType={sessionType}
+					seasonYear={seasonYear}
 				/>
 			))}
 		</div>
