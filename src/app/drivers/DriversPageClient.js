@@ -36,6 +36,7 @@ const NATIONALITY_FLAG_MAP = {
 	spanish: 'esp',
 	'thai-british': 'tha',
 	'thai british': 'tha',
+	'british-swedish': 'gbr',
 	'new zealander': 'nzl',
 };
 
@@ -519,7 +520,7 @@ export default function DriversPage() {
 											</p>
 											<div className="mt-auto inline-flex items-center gap-2">
 												{flagCode && (
-													<div className="h-5 overflow-hidden rounded border border-white/25 bg-black/25">
+													<div className="h-5 overflow-hidden  border-2 border-white rounded-sm bg-black/25">
 														<Image
 															src={`/images/flags/${flagCode}.png`}
 															alt={`${countryName} flag`}

@@ -17,11 +17,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-	FaArrowLeft,
-	FaArrowRight,
-	FaBalanceScale,
-} from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaBalanceScale } from 'react-icons/fa';
 import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 
 export const revalidate = 300;
@@ -434,7 +430,7 @@ export default async function DriverDetailPage({ params }) {
 						</h2>
 					</div>
 
-					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 md:p-6 backdrop-blur-sm">
+					<div className="rounded-3xl border border-white/10 bg-white/2 p-5 md:p-6 backdrop-blur-sm">
 						<DriverSeasonStatsClient
 							driverCode={driver.code}
 							driverName={driver.fullName}
@@ -445,17 +441,23 @@ export default async function DriverDetailPage({ params }) {
 				</section>
 
 				<section className="mt-6 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
-					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+					<div className="rounded-3xl border border-white/10 bg-white/2 p-6 md:p-8 backdrop-blur-sm">
 						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-8">
 							Career Overview
 						</h2>
 
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
 							{careerStats.map((item) => (
-								<div key={item.label} className="flex flex-col p-4 rounded-xl bg-white/[0.015] border border-white/[0.04]">
+								<div
+									key={item.label}
+									className="flex flex-col p-4 rounded-xl bg-white/1.5 border border-white/4"
+								>
 									<div className="flex items-center gap-2 mb-1">
-										<div className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: driver.teamColor }} />
-										<p className="text-[10px] uppercase tracking-[0.18em] text-white/40 leading-none mt-[1px]">
+										<div
+											className="w-1 h-1 rounded-full opacity-60"
+											style={{ backgroundColor: driver.teamColor }}
+										/>
+										<p className="text-[10px] uppercase tracking-widest text-white/40 leading-none mt-px">
 											{item.label}
 										</p>
 									</div>
@@ -467,7 +469,7 @@ export default async function DriverDetailPage({ params }) {
 						</div>
 					</div>
 
-					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+					<div className="rounded-3xl border border-white/10 bg-white/2 p-6 md:p-8 backdrop-blur-sm">
 						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-2">
 							Driver Profile
 						</h2>
@@ -476,30 +478,54 @@ export default async function DriverDetailPage({ params }) {
 						)}
 
 						<div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 text-sm">
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Born</span>
-								<span className="text-sm text-white/90 font-medium">{formatBirthDate(driver.birthDate)}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Born
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{formatBirthDate(driver.birthDate)}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Age</span>
-								<span className="text-sm text-white/90 font-medium">{age == null ? 'Unknown' : age}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Age
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{age == null ? 'Unknown' : age}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Birthplace</span>
-								<span className="text-sm text-white/90 font-medium">{driver.placeOfBirth}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Birthplace
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{driver.placeOfBirth}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Nationality</span>
-								<span className="text-sm text-white/90 font-medium">{driver.nationality}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Nationality
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{driver.nationality}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Current Team</span>
-								<span className="text-sm text-white/90 font-medium">{driver.teamName}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Current Team
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{driver.teamName}
+								</span>
 							</div>
 							{teammate && (
-								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Teammate</span>
-									<span className="text-sm text-white/90 font-medium">{teammate.fullName}</span>
+								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+										Teammate
+									</span>
+									<span className="text-sm text-white/90 font-medium">
+										{teammate.fullName}
+									</span>
 								</div>
 							)}
 						</div>
@@ -510,7 +536,10 @@ export default async function DriverDetailPage({ params }) {
 							</h3>
 							<div className="grid grid-cols-2 md:grid-cols-3 gap-3">
 								{timeline.map((item) => (
-									<div key={item.label} className="flex flex-col p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+									<div
+										key={item.label}
+										className="flex flex-col p-3.5 rounded-xl bg-white/2 border border-white/5"
+									>
 										<p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
 											{item.label}
 										</p>
