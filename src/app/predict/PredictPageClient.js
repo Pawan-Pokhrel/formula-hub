@@ -1,11 +1,15 @@
 'use client';
 
+import CustomSelect from '@/components/common/CustomSelect';
+import TyreIcon from '@/components/common/TyreIcon';
 import {
 	getPredictionMetadata,
 	predictLapTime,
 	simulateRacePredictions,
 } from '@/lib/api/predictionApi';
 import { getCircuits } from '@/lib/api/strategyApi';
+import { getCarImage, getDriverImage } from '@/utils/f1_images';
+import { getCountryFlag } from '@/utils/flags';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -15,13 +19,8 @@ import {
 	FaInfoCircle,
 	FaPause,
 	FaPlay,
-	FaSync,
 	FaTachometerAlt,
 } from 'react-icons/fa';
-import CustomSelect from '@/components/common/CustomSelect';
-import TyreIcon from '@/components/common/TyreIcon';
-import { getCountryFlag } from '@/utils/flags';
-import { getDriverImage, getCarImage } from '@/utils/f1_images';
 
 const TEAM_COLORS = {
 	'Red Bull Racing': '#3671C6',
@@ -157,7 +156,7 @@ export default function PredictPageClient() {
 			}
 			setCircuitsLoading(false);
 		}
-		
+
 		if (replayCfg.year) {
 			fetchCircuits();
 		}
@@ -238,9 +237,11 @@ export default function PredictPageClient() {
 			setResult(res);
 		} catch (err) {
 			const detail = err?.response?.data?.detail;
-			const msg = typeof detail === 'string' ? detail
-				: Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
-				: err.message || 'Prediction failed';
+			const msg =
+				typeof detail === 'string' ? detail
+				: Array.isArray(detail) ?
+					detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+				:	err.message || 'Prediction failed';
 			setError(normalizePredictErrorMessage(msg));
 		} finally {
 			setPredicting(false);
@@ -272,9 +273,11 @@ export default function PredictPageClient() {
 			}
 		} catch (e) {
 			const detail = e?.response?.data?.detail;
-			const msg = typeof detail === 'string' ? detail
-				: Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
-				: e.message || 'Replay failed';
+			const msg =
+				typeof detail === 'string' ? detail
+				: Array.isArray(detail) ?
+					detail.map((d) => d.msg || JSON.stringify(d)).join('; ')
+				:	e.message || 'Replay failed';
 			setReplayError(normalizePredictErrorMessage(msg));
 		} finally {
 			setReplayLoading(false);
@@ -360,9 +363,9 @@ export default function PredictPageClient() {
 									type="button"
 									onClick={() => setActiveTab(tab.id)}
 									className={`inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
-										active
-											? 'bg-red-600 text-white shadow-lg shadow-red-600/25'
-											: 'text-gray-500 hover:text-gray-300'
+										active ?
+											'bg-red-600 text-white shadow-lg shadow-red-600/25'
+										:	'text-gray-500 hover:text-gray-300'
 									}`}
 								>
 									<Icon className="text-xs" />
@@ -376,9 +379,16 @@ export default function PredictPageClient() {
 				{/* ─── MANUAL TAB ─── */}
 				{activeTab === 'manual' && (
 					<div className="grid grid-cols-1 gap-6 animate-fade-in lg:grid-cols-[1fr_380px]">
-						<form onSubmit={handleSubmit} className="space-y-4">
+						<form
+							onSubmit={handleSubmit}
+							className="space-y-4"
+						>
 							{/* Session Setup */}
-							<FormSection icon={<FaFlagCheckered />} title="Session Setup" accent="border-l-red-500">
+							<FormSection
+								icon={<FaFlagCheckered />}
+								title="Session Setup"
+								accent="border-l-red-500"
+							>
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 									<SelectField
 										label="Driver"
@@ -399,7 +409,9 @@ export default function PredictPageClient() {
 										options={meta.circuits}
 										renderOption={(opt) => (
 											<span className="flex items-center gap-2">
-												<span className="text-lg leading-none">{getCountryFlag(opt)}</span>
+												<span className="text-lg leading-none">
+													{getCountryFlag(opt)}
+												</span>
 												<span>{opt}</span>
 											</span>
 										)}
@@ -419,12 +431,15 @@ export default function PredictPageClient() {
 														type="button"
 														onClick={() => update('compound', cmp)}
 														className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
-															active
-																? 'border-white/30 bg-white/15 text-white'
-																: 'border-white/8 bg-white/4 text-gray-500 hover:border-white/15 hover:text-white'
+															active ?
+																'border-white/30 bg-white/15 text-white'
+															:	'border-white/8 bg-white/4 text-gray-500 hover:border-white/15 hover:text-white'
 														}`}
 													>
-														<TyreIcon compound={cmp} className="w-3.5 h-3.5 shadow-sm rounded-full drop-shadow-black/50" />
+														<TyreIcon
+															compound={cmp}
+															className="w-3.5 h-3.5 shadow-sm rounded-full drop-shadow-black/50"
+														/>
 														{cmp}
 													</button>
 												);
@@ -450,7 +465,11 @@ export default function PredictPageClient() {
 							</FormSection>
 
 							{/* Tyre Strategy */}
-							<FormSection icon={<FaTachometerAlt />} title="Tyre Strategy" accent="border-l-yellow-500">
+							<FormSection
+								icon={<FaTachometerAlt />}
+								title="Tyre Strategy"
+								accent="border-l-yellow-500"
+							>
 								<div className="grid grid-cols-3 gap-4">
 									<NumberField
 										label="Tyre Life"
@@ -477,7 +496,11 @@ export default function PredictPageClient() {
 							</FormSection>
 
 							{/* Race Data */}
-							<FormSection icon={<FaClock />} title="Race Context" accent="border-l-cyan-500">
+							<FormSection
+								icon={<FaClock />}
+								title="Race Context"
+								accent="border-l-cyan-500"
+							>
 								<div className="mb-4 grid grid-cols-2 gap-4">
 									<NumberField
 										label="Lap Number"
@@ -504,9 +527,9 @@ export default function PredictPageClient() {
 										step={0.1}
 										required
 										placeholder={
-											circuitBaseline
-												? `~${circuitBaseline.mean.toFixed(1)}`
-												: ''
+											circuitBaseline ?
+												`~${circuitBaseline.mean.toFixed(1)}`
+											:	''
 										}
 									/>
 									<NumberField
@@ -536,17 +559,16 @@ export default function PredictPageClient() {
 								disabled={predicting}
 								className="flex w-full items-center justify-center gap-3 rounded-2xl bg-red-600 py-4 text-base font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-500 hover:-translate-y-px disabled:bg-red-900 disabled:cursor-not-allowed"
 							>
-								{predicting ? (
+								{predicting ?
 									<>
 										<div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
 										Calculating...
 									</>
-								) : (
-									<>
+								:	<>
 										<FaBolt />
 										Predict Lap Time
 									</>
-								)}
+								}
 							</button>
 
 							{error && (
@@ -559,7 +581,7 @@ export default function PredictPageClient() {
 
 						{/* Result Panel */}
 						<div className="space-y-4">
-							{result ? (
+							{result ?
 								<div className="overflow-hidden rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl animate-fade-in">
 									<div className="bg-gradient-to-b from-red-600/15 to-transparent px-6 pb-6 pt-8 text-center">
 										<p className="mb-3 text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
@@ -576,13 +598,17 @@ export default function PredictPageClient() {
 									{result.model_info && (
 										<div className="grid grid-cols-2 gap-px border-t border-white/10 bg-white/5">
 											<div className="p-4 text-center">
-												<p className="text-[10px] uppercase tracking-wider text-gray-500">MAE</p>
+												<p className="text-[10px] uppercase tracking-wider text-gray-500">
+													MAE
+												</p>
 												<p className="mt-1 font-mono text-sm font-bold text-cyan-400">
 													{result.model_info.test_mae?.toFixed(3)}s
 												</p>
 											</div>
 											<div className="p-4 text-center">
-												<p className="text-[10px] uppercase tracking-wider text-gray-500">R²</p>
+												<p className="text-[10px] uppercase tracking-wider text-gray-500">
+													R²
+												</p>
 												<p className="mt-1 font-mono text-sm font-bold text-green-400">
 													{(result.model_info.test_r2 * 100).toFixed(1)}%
 												</p>
@@ -592,20 +618,25 @@ export default function PredictPageClient() {
 									{/* Delta vs baseline */}
 									{circuitBaseline && (
 										<div className="border-t border-white/10 p-4 text-center">
-											<p className="text-[10px] uppercase tracking-wider text-gray-500">vs Circuit Average</p>
+											<p className="text-[10px] uppercase tracking-wider text-gray-500">
+												vs Circuit Average
+											</p>
 											{(() => {
-												const delta = result.predicted_lap_time_sec - circuitBaseline.mean;
+												const delta =
+													result.predicted_lap_time_sec - circuitBaseline.mean;
 												return (
-													<p className={`mt-1 font-mono text-lg font-black ${delta > 0 ? 'text-red-400' : 'text-green-400'}`}>
-														{delta > 0 ? '+' : ''}{delta.toFixed(3)}s
+													<p
+														className={`mt-1 font-mono text-lg font-black ${delta > 0 ? 'text-red-400' : 'text-green-400'}`}
+													>
+														{delta > 0 ? '+' : ''}
+														{delta.toFixed(3)}s
 													</p>
 												);
 											})()}
 										</div>
 									)}
 								</div>
-							) : (
-								<div className="rounded-2xl border border-white/10 bg-black/50 p-10 text-center backdrop-blur-xl">
+							:	<div className="rounded-2xl border border-white/10 bg-black/50 p-10 text-center backdrop-blur-xl">
 									<div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
 										<FaTachometerAlt className="text-2xl text-gray-700" />
 									</div>
@@ -616,7 +647,7 @@ export default function PredictPageClient() {
 										Set race context and run prediction.
 									</p>
 								</div>
-							)}
+							}
 						</div>
 					</div>
 				)}
@@ -633,7 +664,10 @@ export default function PredictPageClient() {
 									label="Season"
 									value={replayCfg.year}
 									onChange={(v) => setReplayCfg((c) => ({ ...c, year: v }))}
-									options={Array.from({ length: 8 }, (_, i) => new Date().getFullYear() - i).map(y => ({ value: y, label: `${y} Season` }))}
+									options={Array.from(
+										{ length: 8 },
+										(_, i) => new Date().getFullYear() - i
+									).map((y) => ({ value: y, label: `${y} Season` }))}
 									getOptionValue={(opt) => opt.value}
 									renderOption={(opt) => opt.label}
 								/>
@@ -643,17 +677,23 @@ export default function PredictPageClient() {
 										label="Grand Prix"
 										value={replayCfg.round}
 										onChange={(v) => setReplayCfg((c) => ({ ...c, round: v }))}
-										options={circuits.map(c => ({
+										options={circuits.map((c) => ({
 											value: c.round,
 											label: `R${c.round} ${c.event}`,
-											country: c.country || c.circuit || c.event
+											country: c.country || c.circuit || c.event,
 										}))}
 										disabled={circuitsLoading}
-										placeholder={circuitsLoading ? 'Loading circuits...' : 'Select Grand Prix'}
+										placeholder={
+											circuitsLoading ?
+												'Loading circuits...'
+											:	'Select Grand Prix'
+										}
 										getOptionValue={(opt) => opt.value}
 										renderOption={(opt) => (
 											<span className="flex items-center gap-2">
-												<span className="text-lg leading-none">{getCountryFlag(opt.country)}</span>
+												<span className="text-lg leading-none">
+													{getCountryFlag(opt.country)}
+												</span>
 												<span>{opt.label}</span>
 											</span>
 										)}
@@ -663,7 +703,9 @@ export default function PredictPageClient() {
 								<NumberField
 									label="Start Lap"
 									value={replayCfg.start_lap || 4}
-									onChange={(v) => setReplayCfg((c) => ({ ...c, start_lap: v || 4 }))}
+									onChange={(v) =>
+										setReplayCfg((c) => ({ ...c, start_lap: v || 4 }))
+									}
 									min={4}
 									max={80}
 								/>
@@ -687,7 +729,7 @@ export default function PredictPageClient() {
 												<div className="h-2.5 w-2.5 rounded-full bg-white/80 animate-pulse" />
 												Loading
 											</>
-										: !replayCfg.round ? 
+										: !replayCfg.round ?
 											<>Select a Race</>
 										:	<>
 												<FaPlay className="text-xs" />
@@ -739,7 +781,9 @@ export default function PredictPageClient() {
 												onClick={() => setReplayPlaying((p) => !p)}
 												className="flex items-center gap-2 rounded-xl bg-white/6 px-4 py-2 text-sm font-bold hover:bg-white/10"
 											>
-												{replayPlaying ? <FaPause /> : <FaPlay />}{' '}
+												{replayPlaying ?
+													<FaPause />
+												:	<FaPlay />}{' '}
 												{replayPlaying ? 'Pause' : 'Play'}
 											</button>
 											{[1, 2, 4].map((s) => (
@@ -758,7 +802,9 @@ export default function PredictPageClient() {
 									<div>
 										<div className="mb-2 flex items-center justify-between text-xs text-gray-500">
 											<span>Replay Lap</span>
-											<span className="font-mono font-bold text-white">L{replayLap}</span>
+											<span className="font-mono font-bold text-white">
+												L{replayLap}
+											</span>
 										</div>
 										<input
 											type="range"
@@ -776,33 +822,41 @@ export default function PredictPageClient() {
 									{replayLapRows.map((p, idx) => {
 										const teamColor = TEAM_COLORS[p.team] || '#666';
 										const delta =
-											p.actual_lap_time_sec != null
-												? p.predicted_lap_time_sec - p.actual_lap_time_sec
-												: null;
+											p.actual_lap_time_sec != null ?
+												p.predicted_lap_time_sec - p.actual_lap_time_sec
+											:	null;
 										return (
 											<div
 												key={`${p.driver}_${p.predicted_lap}_${idx}`}
 												className="overflow-hidden rounded-xl border border-white/10 bg-black/50 backdrop-blur-xl"
-												style={{ borderLeftColor: teamColor, borderLeftWidth: 3 }}
+												style={{
+													borderLeftColor: teamColor,
+													borderLeftWidth: 3,
+												}}
 											>
 												<div className="p-4 relative overflow-hidden group">
 													{getCarImage(p.team) && (
-														<img 
-															src={getCarImage(p.team)} 
-															className="absolute right-0 bottom-0 h-28 opacity-10 object-contain translate-y-3 translate-x-2 pointer-events-none transition-transform duration-700 group-hover:scale-105" 
+														<img
+															src={getCarImage(p.team)}
+															className="absolute right-0 bottom-0 h-28 opacity-10 object-contain translate-y-3 translate-x-2 pointer-events-none transition-transform duration-700 group-hover:scale-105"
 															alt="Car UI background"
 														/>
 													)}
 													<div className="mb-3 flex items-center justify-between relative z-10">
 														<div className="flex items-center gap-3">
-															<img 
-																src={getDriverImage(p.driver)} 
-																onError={(e) => e.currentTarget.style.display = 'none'}
-																className="w-11 h-11 object-cover rounded-full bg-black/40 border border-white/10 shadow-md" 
-																alt={p.driver} 
+															<img
+																src={getDriverImage(p.driver)}
+																onError={(e) =>
+																	(e.currentTarget.style.display = 'none')
+																}
+																className="w-11 h-11 object-cover rounded-full bg-black/40 border border-white/10 shadow-md"
+																alt={p.driver}
 															/>
 															<div>
-																<p className="text-lg font-black tracking-wide" style={{ color: teamColor }}>
+																<p
+																	className="text-lg font-black tracking-wide"
+																	style={{ color: teamColor }}
+																>
 																	{p.driver}
 																</p>
 																<p className="text-[10px] uppercase font-bold tracking-widest text-gray-500">
@@ -811,7 +865,9 @@ export default function PredictPageClient() {
 															</div>
 														</div>
 														<div className="text-right">
-															<p className="text-[10px] uppercase text-gray-600">Predicted</p>
+															<p className="text-[10px] uppercase text-gray-600">
+																Predicted
+															</p>
 															<p className="font-mono font-bold text-white">
 																{p.predicted_lap_time_str}
 															</p>
@@ -820,19 +876,26 @@ export default function PredictPageClient() {
 													<div className="grid grid-cols-2 gap-2 text-xs">
 														<div className="flex justify-between text-gray-500">
 															<span>Context</span>
-															<span className="text-white">L{p.context_lap}</span>
+															<span className="text-white">
+																L{p.context_lap}
+															</span>
 														</div>
 														<div className="flex justify-between text-gray-500">
 															<span>Compound</span>
 															<span className="inline-flex items-center gap-1.5 text-white font-bold">
-																<TyreIcon compound={p.compound} className="w-3.5 h-3.5 shadow-sm rounded-full" />
+																<TyreIcon
+																	compound={p.compound}
+																	className="w-3.5 h-3.5 shadow-sm rounded-full"
+																/>
 																{p.compound}
 															</span>
 														</div>
 														<div className="flex justify-between text-gray-500">
 															<span>Actual</span>
 															<span className="font-mono text-white">
-																{p.actual_lap_time_sec != null ? fmtSec(p.actual_lap_time_sec) : '-'}
+																{p.actual_lap_time_sec != null ?
+																	fmtSec(p.actual_lap_time_sec)
+																:	'-'}
 															</span>
 														</div>
 														<div className="flex justify-between text-gray-500">
@@ -844,9 +907,9 @@ export default function PredictPageClient() {
 																	: 'text-green-400'
 																}`}
 															>
-																{delta == null
-																	? '-'
-																	: `${delta > 0 ? '+' : ''}${delta.toFixed(3)}s`}
+																{delta == null ?
+																	'-'
+																:	`${delta > 0 ? '+' : ''}${delta.toFixed(3)}s`}
 															</span>
 														</div>
 													</div>
@@ -868,7 +931,9 @@ export default function PredictPageClient() {
 
 function FormSection({ icon, title, accent = 'border-l-red-500', children }) {
 	return (
-		<div className={`rounded-2xl border border-white/10 bg-black/50 p-5 backdrop-blur-xl border-l-[3px] ${accent} transition-colors duration-300 hover:border-white/15`}>
+		<div
+			className={`rounded-2xl border border-white/10 bg-black/50 p-5 backdrop-blur-xl border-l-[3px] ${accent} transition-colors duration-300 hover:border-white/15`}
+		>
 			<div className="mb-4 flex items-center gap-2.5">
 				<span className="text-sm text-red-500/70">{icon}</span>
 				<h3 className="text-xs font-bold uppercase tracking-[0.15em] text-gray-400">
@@ -893,13 +958,20 @@ function SelectField({ label, value, onChange, options }) {
 				className="w-full rounded-xl border border-white/10 bg-white/6 px-3 py-2.5 text-sm text-white transition-all focus:border-red-600/50 focus:outline-none focus:ring-1 focus:ring-red-600/20"
 			>
 				{options.includes('') && (
-					<option value="" className="bg-gray-900 text-white">
+					<option
+						value=""
+						className="bg-gray-900 text-white"
+					>
 						All
 					</option>
 				)}
 				{options.map((opt) =>
 					opt === '' ? null : (
-						<option key={opt} value={opt} className="bg-gray-900 text-white">
+						<option
+							key={opt}
+							value={opt}
+							className="bg-gray-900 text-white"
+						>
 							{opt}
 						</option>
 					)
