@@ -25,7 +25,7 @@ export default function DashboardCard({
 
 	return (
 		<div
-			className={`group relative flex ${cardHeightClass} flex-col overflow-hidden rounded-2xl border border-white/14 bg-linear-to-br from-zinc-900/45 via-black/70 to-zinc-800/35 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-300 hover:border-amber-300/30 hover:shadow-[0_18px_52px_rgba(245,158,11,0.14)] md:p-6 ${cardClassName}`}
+			className={`group relative flex ${cardHeightClass} flex-col overflow-hidden rounded-2xl border border-white/14 bg-linear-to-br from-zinc-900/45 via-black/70 to-zinc-800/35 p-5 shadow-[0_14px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-300 hover:border-red-400/30 hover:shadow-[0_18px_52px_rgba(239,68,68,0.14)] md:p-6 ${cardClassName}`}
 			style={cardStyle}
 		>
 			{mediaSrc && (
@@ -44,7 +44,7 @@ export default function DashboardCard({
 			)}
 			<div className="relative z-10 mb-4 flex items-start justify-between gap-3">
 				<div>
-					<p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-100/85">
+					<p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-red-100/85">
 						{title}
 					</p>
 					{subtitle && (
