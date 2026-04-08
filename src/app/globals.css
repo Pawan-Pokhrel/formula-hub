@@ -127,3 +127,16 @@ select:-webkit-autofill {
 	font-weight: 500;
 	font-size: 16px !important;
 }
+
+/* Contrast fix for dark team logos (Cadillac + Aston Martin) */
+img[src*='/images/teams/cad.png'],
+img[src*='images%2Fteams%2Fcad.png'],
+img[src*='/images/teams/ast.png'],
+img[src*='images%2Fteams%2Fast.png'] {
+	background:
+		radial-gradient(circle at 26% 22%, rgba(255, 255, 255, 0.72), transparent 42%),
+		linear-gradient(135deg, rgba(224, 229, 236, 0.95) 0%, rgba(196, 204, 214, 0.95) 56%, rgba(171, 182, 196, 0.92) 100%);
+	border-radius: 8px;
+	box-shadow: none;
+	padding: 2px;
+}

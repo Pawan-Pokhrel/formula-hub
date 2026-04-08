@@ -10,8 +10,6 @@ export default function ScheduleTable({
 	nextRound,
 	selectedYear,
 	nextRaceYear,
-	isAuthenticated,
-	isAuthLoading,
 }) {
 	return (
 		<div className="bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/20 overflow-hidden">
@@ -23,7 +21,7 @@ export default function ScheduleTable({
 							<th className="px-6 py-4">Grand Prix</th>
 							<th className="px-6 py-4">Circuit</th>
 							<th className="px-6 py-4">Track</th>
-							<th className="px-6 py-4 text-right">Track Data</th>
+							<th className="px-6 py-4 text-right">Telemetries</th>
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-white/5 border-t border-white/10">
@@ -31,12 +29,11 @@ export default function ScheduleTable({
 							const isNext =
 								Number(nextRound) === Number(race.round) &&
 								Number(selectedYear) === Number(nextRaceYear);
-							const isReady = Boolean(isAuthenticated && race.has_data);
-							const isPast = Boolean(race.is_past);
 							const countryCode = getCountryCode(
 								race.country || race.circuit?.country
 							);
 							const trackImage = getTrackImagePath(race);
+							const telemetryHref = `/telemetry?year=${race.year || new Date().getFullYear()}&round=${race.round}&session=Race`;
 
 							return (
 								<tr
@@ -103,32 +100,12 @@ export default function ScheduleTable({
 										:	<span className="text-xs text-gray-500">N/A</span>}
 									</td>
 									<td className="px-6 py-4 text-right">
-										{isAuthLoading ?
-											<span className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-300 border border-gray-500/25 uppercase tracking-[0.12em]">
-												Checking
-											</span>
-										: !isAuthenticated && isPast ?
-											<Link
-												href="/login"
-												className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-gray-500/15 text-gray-200 border border-gray-500/25 uppercase tracking-[0.12em] hover:bg-gray-500/25 transition-colors"
-											>
-												Login Required
-											</Link>
-										: isReady ?
-											<span className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25 uppercase tracking-[0.12em]">
-												Ready
-											</span>
-										: isPast ?
-											<Link
-												href={`/track?year=${race.year || new Date().getFullYear()}&round=${race.round}`}
-												className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/25 uppercase tracking-[0.12em] hover:bg-red-500/25 transition-colors"
-											>
-												Generate
-											</Link>
-										:	<span className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/25 uppercase tracking-[0.12em]">
-												Upcoming
-											</span>
-										}
+										<Link
+											href={telemetryHref}
+											className="inline-block text-[10px] px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 border border-red-500/25 uppercase tracking-[0.12em] hover:bg-red-500/25 transition-colors"
+										>
+											See Telemetries
+										</Link>
 									</td>
 								</tr>
 							);

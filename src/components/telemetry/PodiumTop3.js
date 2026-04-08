@@ -1,56 +1,72 @@
 import {
-	getDriverImagePath,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
+import { getCarImage } from '@/utils/f1_images';
 import Image from 'next/image';
+import {
+	getTelemetryMetric,
+	getTeamCardBackground,
+	getTelemetryCardTexturePattern,
+	getRacePointsByPosition,
+	getTelemetryDriverImage,
+} from './telemetryUiUtils';
 
 const PODIUM_LAYOUT = [2, 1, 3];
 
-function PodiumCard({ row, emphasized = false }) {
+function PodiumCard({ row, emphasized = false, sessionType = 'race' }) {
 	if (!row) {
 		return (
-			<div className="h-48 rounded-2xl border border-dashed border-white/15 bg-white/5 p-4" />
+			<div className="h-56 rounded-2xl border border-dashed border-white/15 bg-white/5 p-4" />
 		);
 	}
 
 	const teamLogo = getTeamLogoPath(row.team_name);
-	const driverImage = getDriverImagePath(row.driver_code);
+	const driverImage = getTelemetryDriverImage(row.driver_code);
+	const carImage = getCarImage(row.team_name);
 	const accent = row.team_color || '#6B7280';
+	const metric = getTelemetryMetric(row, sessionType);
+	const points = sessionType === 'race' ? getRacePointsByPosition(row.position) : 0;
 
 	return (
 		<div
-			className={`relative overflow-hidden rounded-2xl border border-white/10 bg-black/45 p-4 ${
-				emphasized ? 'md:-translate-y-3 md:scale-[1.02]' : ''
+			className={`relative overflow-hidden rounded-2xl border border-white/15 p-4 shadow-[0_16px_48px_rgba(0,0,0,0.45)] backdrop-blur-md ${
+				emphasized ? 'md:-translate-y-4 md:scale-[1.035]' : ''
 			}`}
+			style={{ background: getTeamCardBackground(accent) }}
 		>
 			<div
-				className="absolute left-0 top-0 h-full w-1"
-				style={{ backgroundColor: accent }}
+				className="pointer-events-none absolute inset-0 opacity-35"
+				style={{
+					backgroundImage: getTelemetryCardTexturePattern(),
+					backgroundSize: '22px 22px, 100% 100%, 180px 100%',
+				}}
 			/>
 			<div className="mb-4 flex items-center justify-between">
 				<span className="rounded-full border border-white/20 bg-white/8 px-3 py-1 text-xs font-bold tracking-[0.18em] text-white">
 					P{row.position}
 				</span>
 				{teamLogo && (
-					<Image
-						src={teamLogo}
-						alt={row.team_name}
-						width={28}
-						height={28}
-						className="h-7 w-7 rounded-full bg-white/10 p-1"
-					/>
+					<div className="relative h-10 w-10 shrink-0 rounded-lg bg-black/20 p-1">
+						<Image
+							src={teamLogo}
+							alt={row.team_name}
+							fill
+							sizes="40px"
+							className="object-contain p-1"
+						/>
+					</div>
 				)}
 			</div>
 
 			<div className="flex items-center gap-3">
-				<div className="relative h-16 w-16 overflow-hidden rounded-xl border border-white/10 bg-white/8">
+				<div className="relative h-24 w-24 overflow-hidden rounded-xl bg-white/8">
 					{driverImage && (
 						<Image
 							src={driverImage}
 							alt={row.driver_name}
 							fill
-							sizes="64px"
-							className="object-cover"
+							sizes="96px"
+							className="object-cover object-top"
 						/>
 					)}
 				</div>
@@ -58,23 +74,48 @@ function PodiumCard({ row, emphasized = false }) {
 					<p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
 						{row.driver_code || row.driver_name}
 					</p>
-					<p className="text-xl font-black text-white">{row.driver_name}</p>
-					<p className="text-sm text-zinc-400">{row.team_name}</p>
+					<p className="text-xl font-black leading-tight text-white">{row.driver_name}</p>
+					<p className="text-sm text-zinc-300">{row.team_name}</p>
+				</div>
+				<div className="relative ml-auto hidden h-9 w-28 md:block">
+					{carImage && (
+						<Image
+							src={carImage}
+							alt={`${row.team_name} car`}
+							fill
+							sizes="112px"
+							className="object-contain opacity-95"
+						/>
+					)}
 				</div>
 			</div>
 
-			<p className="mt-3 text-xs text-zinc-400">
-				{row.time ||
-					row.best_lap ||
-					row.q3 ||
-					row.gap_to_pole ||
-					'Official result'}
-			</p>
+			<div className="mt-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2">
+				<p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400">{metric.primaryLabel}</p>
+				<div className="mt-1 flex items-center justify-between gap-3">
+					<div>
+						<p className={`text-sm font-bold ${metric.retired ? 'text-red-400' : 'text-zinc-100'}`}>
+							{metric.primaryValue}
+						</p>
+						{metric.secondaryLabel && (
+							<p className="text-[11px] text-zinc-300">
+								{metric.secondaryLabel}: {metric.secondaryValue}
+							</p>
+						)}
+					</div>
+					{sessionType === 'race' && (
+						<div className="rounded-lg border border-red-300/35 bg-red-500/18 px-3 py-1.5 text-center">
+							<p className="text-xl font-black leading-none text-red-100">+{points}</p>
+							<p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-200">pts</p>
+						</div>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }
 
-export default function PodiumTop3({ rows }) {
+export default function PodiumTop3({ rows, sessionType = 'race' }) {
 	if (!rows || rows.length === 0) {
 		return (
 			<div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-400">
@@ -92,6 +133,7 @@ export default function PodiumTop3({ rows }) {
 					key={position}
 					row={rowByPosition.get(position)}
 					emphasized={position === 1}
+					sessionType={sessionType}
 				/>
 			))}
 		</div>
