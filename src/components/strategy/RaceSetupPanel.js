@@ -66,7 +66,7 @@ export default function RaceSetupPanel({
 									<div className="h-2.5 w-2.5 rounded-full bg-white/80 animate-pulse" />
 									Preparing race
 								</>
-							:	<>
+							: !selectedRound ? <>Select a Race</> :	<>
 									<FaPlay className="text-xs" />
 									Load Race
 								</>

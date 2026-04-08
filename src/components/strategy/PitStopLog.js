@@ -1,4 +1,5 @@
 import { FaArrowRight, FaWrench } from 'react-icons/fa';
+import TyreIcon from '@/components/common/TyreIcon';
 
 import { COMPOUND_COLORS } from './constants';
 
@@ -50,30 +51,24 @@ export default function PitStopLog({ pitStops, drivers, currentLap }) {
 								<span className="text-xs font-bold text-white w-10">
 									{stop.abbr}
 								</span>
-								<div className="flex items-center gap-1 flex-1">
+								<div className="flex items-center gap-1.5 flex-1">
 									{stop.compound_from && (
 										<>
-											<div
-												className="w-3.5 h-3.5 rounded-full border"
-												style={{
-													borderColor:
-														COMPOUND_COLORS[stop.compound_from] || '#666',
-												}}
-											/>
-											<FaArrowRight className="text-[8px] text-gray-600" />
+											<div className="flex items-center gap-1 opacity-60">
+												<TyreIcon compound={stop.compound_from} className="w-[14px] h-[14px]" />
+												<span className="text-[10px] text-gray-400 capitalize hidden sm:inline-block font-medium">
+													{stop.compound_from}
+												</span>
+											</div>
+											<FaArrowRight className="text-[8px] text-gray-500 mx-0.5" />
 										</>
 									)}
-									<div
-										className="w-3.5 h-3.5 rounded-full"
-										style={{
-											backgroundColor:
-												COMPOUND_COLORS[stop.compound_to || stop.compound] ||
-												'#666',
-										}}
-									/>
-									<span className="text-[10px] text-gray-500 capitalize ml-1">
-										{stop.compound_to || stop.compound}
-									</span>
+									<div className="flex items-center gap-1.5">
+										<TyreIcon compound={stop.compound_to || stop.compound} className="w-4 h-4 shadow-black/40 shadow-sm rounded-full" />
+										<span className="text-[11px] font-bold text-white capitalize tracking-wide">
+											{stop.compound_to || stop.compound}
+										</span>
+									</div>
 								</div>
 								{stop.duration && (
 									<span className="text-[10px] font-mono text-gray-600 tabular-nums">
