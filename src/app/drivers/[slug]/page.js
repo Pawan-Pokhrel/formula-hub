@@ -290,6 +290,7 @@ export default async function DriverDetailPage({ params }) {
 			<div className="relative z-10 max-w-[1300px] mx-auto pb-12 animate-fade-in">
 				<Link
 					href="/drivers"
+					prefetch={true}
 					className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors mb-5"
 				>
 					<FaArrowLeft className="text-red-500" />
@@ -390,6 +391,7 @@ export default async function DriverDetailPage({ params }) {
 							<div className="mt-6 inline-flex flex-wrap items-center gap-3">
 								<Link
 									href={compareHref}
+									prefetch={true}
 									className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-black/18 px-5 py-2.5 text-sm font-bold text-white hover:bg-black/28 transition-colors"
 								>
 									<FaBalanceScale className="text-xs" />

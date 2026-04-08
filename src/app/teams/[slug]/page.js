@@ -528,6 +528,7 @@ export default async function TeamDetailPage({ params }) {
 			<div className="relative z-10 max-w-[1400px] mx-auto pb-12 animate-fade-in">
 				<Link
 					href="/teams"
+					prefetch={true}
 					className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors mb-5"
 				>
 					Back to Teams
@@ -642,6 +643,7 @@ export default async function TeamDetailPage({ params }) {
 							<div className="mt-3">
 								<Link
 									href={pairCompareHref}
+									prefetch={true}
 									className="inline-flex items-center justify-center rounded-full border border-white/80 bg-black/22 px-4 py-2 text-xs font-semibold text-white hover:bg-black/32 transition-colors"
 								>
 									Compare Team Drivers
@@ -672,6 +674,7 @@ export default async function TeamDetailPage({ params }) {
 								<Link
 									key={driver.slug}
 									href={`/drivers/${driver.slug}`}
+									prefetch={true}
 									className="group relative h-68 rounded-2xl border border-white/14 overflow-hidden p-3.5 cursor-pointer hover:border-white/28 transition-all duration-300"
 									style={{
 										background: `linear-gradient(112deg, ${hexToRgba(teamColor, 0.9)} 0%, ${hexToRgba(midTeamTone, 0.92)} 52%, rgba(7,7,9,0.95) 100%)`,
