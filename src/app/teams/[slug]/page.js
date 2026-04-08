@@ -746,7 +746,7 @@ export default async function TeamDetailPage({ params }) {
 				</section>
 
 				<section className="mt-6 grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
-					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+					<div className="rounded-3xl border border-white/10 bg-white/2 p-6 md:p-8 backdrop-blur-sm">
 						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-6">
 							Season {CURRENT_SEASON} Stats
 						</h2>
@@ -759,49 +759,67 @@ export default async function TeamDetailPage({ params }) {
 						</div>
 					</div>
 
-					<div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 backdrop-blur-sm">
+					<div className="rounded-3xl border border-white/10 bg-white/2 p-6 md:p-8 backdrop-blur-sm">
 						<h2 className="text-lg md:text-xl font-semibold tracking-[-0.02em] text-white mb-6">
 							Team Profile
 						</h2>
 						<div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3 text-sm">
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">First Season</span>
-								<span className="text-sm text-white/90 font-medium">{founded}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									First Season
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{founded}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Seasons Active</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Seasons Active
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{seasonsActive ? seasonsActive : 'New entry'}
 								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Home Base</span>
-								<span className="text-sm text-white/90 font-medium">{base}</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Home Base
+								</span>
+								<span className="text-sm text-white/90 font-medium">
+									{base}
+								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Total Team Wins</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Total Team Wins
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.totalWins}
 								</span>
 							</div>
 							{hasTeamWins ?
-								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">First Team Win</span>
+								<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+									<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+										First Team Win
+									</span>
 									<span className="text-sm text-white/90 font-medium">
 										{teamHistory.firstWin}
 									</span>
 								</div>
 							:	<>
-									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Best Finish</span>
+									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2` border border-white/5">
+										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+											Best Finish
+										</span>
 										<span className="text-sm text-white/90 font-medium">
 											{teamHistory.highestFinish ?
 												`P${teamHistory.highestFinish}`
 											:	'N/A'}
 										</span>
 									</div>
-									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Max Finish Freq</span>
+									<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+										<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+											Max Finish Freq
+										</span>
 										<span className="text-sm text-white/90 font-medium">
 											{teamHistory.highestFinishCount ?
 												`${teamHistory.highestFinishCount} times`
@@ -810,26 +828,34 @@ export default async function TeamDetailPage({ params }) {
 									</div>
 								</>
 							}
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Total Poles</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Total Poles
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.totalPoles}
 								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Team Principal</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Team Principal
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.teamPrincipal}
 								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">CEO</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									CEO
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{teamHistory.ceo}
 								</span>
 							</div>
-							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/[0.02] border border-white/5 sm:col-span-2">
-								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Reserve Drivers</span>
+							<div className="flex flex-col justify-center p-4 rounded-xl bg-white/2 border border-white/5 sm:col-span-2">
+								<span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">
+									Reserve Drivers
+								</span>
 								<span className="text-sm text-white/90 font-medium">
 									{reserveDriversLabel}
 								</span>
