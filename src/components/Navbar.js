@@ -414,49 +414,49 @@ export default function Navbar() {
 										<div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
 											<div className="mx-auto grid w-[1320px] max-w-full grid-cols-4 gap-x-5 gap-y-2">
 												{driverCards.map((driver) => {
-												const nameParts = String(driver.fullName || '')
-													.trim()
-													.split(/\s+/)
-													.filter(Boolean);
-												const firstName =
-													nameParts.length > 1 ?
-														nameParts.slice(0, -1).join(' ')
-													:	nameParts[0] || driver.shortName;
-												const lastName =
-													nameParts.length > 1 ?
-														nameParts[nameParts.length - 1]
-													:	'';
+													const nameParts = String(driver.fullName || '')
+														.trim()
+														.split(/\s+/)
+														.filter(Boolean);
+													const firstName =
+														nameParts.length > 1 ?
+															nameParts.slice(0, -1).join(' ')
+														:	nameParts[0] || driver.shortName;
+													const lastName =
+														nameParts.length > 1 ?
+															nameParts[nameParts.length - 1]
+														:	'';
 
-												return (
-													<Link
-														key={driver.slug}
-														href={`/drivers/${driver.slug}`}
-														prefetch={true}
-														onClick={() => {
-															setMegaMenuOpen(null);
-														}}
-														className="group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-px hover:brightness-110"
-														style={getDriverAccentStyle(driver.teamColor)}
-													>
-														<div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/25 bg-black/20">
-															<Image
-																src={driver.imagePath}
-																alt={driver.fullName}
-																fill
-																sizes="48px"
-																className="object-cover object-top scale-[1.12]"
-															/>
-														</div>
-														<p className="truncate text-sm font-semibold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
-															<span>{firstName}</span>
-															{lastName && (
-																<span className="ml-1 font-black uppercase tracking-wide text-white/95">
-																	{lastName}
-																</span>
-															)}
-														</p>
-													</Link>
-												);
+													return (
+														<Link
+															key={driver.slug}
+															href={`/drivers/${driver.slug}`}
+															prefetch={true}
+															onClick={() => {
+																setMegaMenuOpen(null);
+															}}
+															className="group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all hover:-translate-y-px hover:brightness-110"
+															style={getDriverAccentStyle(driver.teamColor)}
+														>
+															<div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-white/25 bg-black/20">
+																<Image
+																	src={driver.imagePath}
+																	alt={driver.fullName}
+																	fill
+																	sizes="48px"
+																	className="object-cover object-top scale-[1.12]"
+																/>
+															</div>
+															<p className="truncate text-sm font-semibold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
+																<span>{firstName}</span>
+																{lastName && (
+																	<span className="ml-1 font-black uppercase tracking-wide text-white/95">
+																		{lastName}
+																	</span>
+																)}
+															</p>
+														</Link>
+													);
 												})}
 											</div>
 										</div>
