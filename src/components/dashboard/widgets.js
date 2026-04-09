@@ -6,8 +6,10 @@ import {
 	getTeamLogoPath,
 	getTrackImagePath,
 } from '@/components/schedule/scheduleHelpers';
+import { getTelemetrySessionSnapshot } from '@/lib/api/scheduleApi';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import {
 	FaBolt,
 	FaBroadcastTower,
@@ -1249,175 +1251,272 @@ export function F1NewsWidget({ newsItems }) {
 	);
 }
 
-/* Country code helper for flags in saved races widget */
-const SAVED_COUNTRY_CODES = {
-	Australia: 'aus',
-	Bahrain: 'bhr',
-	'Saudi Arabia': 'sau',
-	Japan: 'jpn',
-	China: 'chn',
-	USA: 'usa',
-	'United States': 'usa',
-	Italy: 'ita',
-	Monaco: 'mon',
-	Canada: 'can',
-	Spain: 'esp',
-	Austria: 'aut',
-	'Great Britain': 'gbr',
-	'United Kingdom': 'gbr',
-	Hungary: 'hun',
-	Belgium: 'bel',
-	Netherlands: 'ned',
-	Singapore: 'sgp',
-	Mexico: 'mex',
-	Brazil: 'bra',
-	'United Arab Emirates': 'uae',
-	UAE: 'uae',
-	'Abu Dhabi': 'uae',
-	Azerbaijan: 'aze',
-	France: 'fra',
-	Germany: 'ger',
-	Portugal: 'por',
-	Qatar: 'qat',
-	'Las Vegas': 'usa',
-	Miami: 'usa',
-};
+export function GeneratedRacesWidget({
+	races = [],
+	currentYear,
+	onToggleSave,
+}) {
+	const generatedRaces = Array.isArray(races) ? races : [];
+	const orderedRaces = generatedRaces.slice().sort((a, b) => {
+		const favDelta =
+			Number(Boolean(b.is_favorite)) - Number(Boolean(a.is_favorite));
+		if (favDelta !== 0) return favDelta;
+		return Number(b.round || 0) - Number(a.round || 0);
+	});
+	const savedCount = orderedRaces.filter((race) => race.is_favorite).length;
+	const [expandedRaceKey, setExpandedRaceKey] = useState(null);
+	const [podiumByRace, setPodiumByRace] = useState({});
+	const [podiumLoadingKey, setPodiumLoadingKey] = useState(null);
+	const [podiumErrorByRace, setPodiumErrorByRace] = useState({});
 
-function getSavedRaceFlag(country) {
-	if (!country) return null;
-	if (SAVED_COUNTRY_CODES[country]) return SAVED_COUNTRY_CODES[country];
-	for (const [k, v] of Object.entries(SAVED_COUNTRY_CODES)) {
-		if (country.toLowerCase().includes(k.toLowerCase())) return v;
-	}
-	return null;
-}
+	const getRaceKey = (race) => `${race.year ?? currentYear}_${race.round}`;
 
-export function SavedRacesWidget({ savedRaces = [], currentYear }) {
-	const races = Array.isArray(savedRaces) ? savedRaces : [];
+	const handleSaveClick = (event, race) => {
+		event.preventDefault();
+		event.stopPropagation();
+		onToggleSave?.(race);
+	};
+
+	const handlePodiumToggle = async (event, race) => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		const raceKey = getRaceKey(race);
+		if (expandedRaceKey === raceKey) {
+			setExpandedRaceKey(null);
+			return;
+		}
+
+		setExpandedRaceKey(raceKey);
+		if (Array.isArray(podiumByRace[raceKey])) return;
+
+		setPodiumLoadingKey(raceKey);
+		try {
+			const snapshot = await getTelemetrySessionSnapshot({
+				year: Number(race.year || currentYear),
+				round: Number(race.round),
+				session: 'race',
+			});
+
+			const sourceRows =
+				Array.isArray(snapshot?.podium) ? snapshot.podium
+				: Array.isArray(snapshot?.rows) ? snapshot.rows
+				: [];
+
+			const rows = sourceRows
+				.slice()
+				.filter(Boolean)
+				.sort((a, b) => Number(a?.position || 99) - Number(b?.position || 99))
+				.filter(
+					(row) => Number(row?.position) >= 1 && Number(row?.position) <= 3
+				)
+				.slice(0, 3);
+
+			setPodiumByRace((prev) => ({ ...prev, [raceKey]: rows }));
+			setPodiumErrorByRace((prev) => ({ ...prev, [raceKey]: '' }));
+		} catch {
+			setPodiumByRace((prev) => ({ ...prev, [raceKey]: [] }));
+			setPodiumErrorByRace((prev) => ({
+				...prev,
+				[raceKey]: 'Unable to load podium.',
+			}));
+		} finally {
+			setPodiumLoadingKey((prev) => (prev === raceKey ? null : prev));
+		}
+	};
 
 	return (
 		<DashboardCard
-			title="Saved Races"
-			subtitle="Your bookmarked track replays"
+			title="Generated Races"
 			rightSlot={
 				<span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/35 bg-red-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-red-200">
 					<FaStar className="text-[8px]" />
-					{races.length} Saved
+					{savedCount} Saved
 				</span>
 			}
 		>
-			{races.length === 0 ?
+			{orderedRaces.length === 0 ?
 				<div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
 					<div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-						<FaStar className="text-2xl text-gray-600" />
+						<FaProjectDiagram className="text-2xl text-gray-600" />
 					</div>
-					<div>
-						<p className="font-semibold text-gray-300">No saved races yet</p>
-						<p className="mt-1 text-xs text-gray-500">
-							Go to the Track Lab and click ★ Save on any race to bookmark it
-							here.
-						</p>
-					</div>
-					<a
-						href="/track"
-						className="inline-flex items-center gap-2 rounded-full border border-red-400/35 bg-red-500/15 px-4 py-2 text-xs font-semibold text-red-100 transition-colors hover:bg-red-500/25"
-					>
-						<FaProjectDiagram className="text-[10px]" />
-						Open Track Lab
-					</a>
+					<p className="font-semibold text-gray-300">No generated races yet</p>
 				</div>
-			:	<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-					{races.map((race, idx) => {
-						const flagCode = getSavedRaceFlag(race.country);
+			:	<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					{orderedRaces.map((race, idx) => {
+						const raceKey = getRaceKey(race);
+						const flagCode = getCountryCode(
+							race.country || race.circuit?.country
+						);
 						const hasData = race.has_data;
 						const trackHref = `/track?year=${race.year ?? currentYear}&round=${race.round}`;
+						const isFavorite = Boolean(race.is_favorite);
+						const isExpanded = expandedRaceKey === raceKey;
+						const isPodiumLoading = podiumLoadingKey === raceKey;
+						const podiumRows =
+							Array.isArray(podiumByRace[raceKey]) ? podiumByRace[raceKey] : [];
+						const podiumError = podiumErrorByRace[raceKey];
 
 						return (
-							<a
+							<div
 								key={`${race.year}_${race.round}`}
-								href={trackHref}
 								style={{ animationDelay: `${idx * 40}ms` }}
-								className="group relative flex h-[130px] overflow-hidden rounded-xl border border-white/12 bg-black/85 text-left backdrop-blur-xl transition-all duration-300 hover:border-red-400/40 hover:shadow-[0_0_24px_rgba(239,68,68,0.14)] animate-fade-in"
+								className="space-y-2"
 							>
-								{/* Flag background */}
-								{flagCode && (
-									<div className="pointer-events-none absolute inset-y-0 right-0 w-[55%] overflow-hidden rounded-r-xl">
-										<Image
-											src={`/images/flags/${flagCode}.png`}
-											alt={race.country || 'Flag'}
-											fill
-											sizes="200px"
-											className="object-cover object-center opacity-[0.11] brightness-75 transition-all duration-500 group-hover:opacity-[0.38] group-hover:brightness-105"
-											onError={(e) => {
-												e.currentTarget.style.display = 'none';
-											}}
-										/>
-										<div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/65 to-transparent" />
-									</div>
-								)}
+								<Link
+									href={trackHref}
+									className="animate-fade-in text-left rounded-xl border transition-all duration-300 group relative overflow-hidden h-[130px] bg-black/90 backdrop-blur-3xl backdrop-brightness-90 bg-linear-to-r from-white/4 to-white/2 border-white/10 hover:border-green-500/40 hover:shadow-lg hover:shadow-green-500/5 cursor-pointer block"
+								>
+									{(flagCode || race.country === 'United Kingdom') && (
+										<div className="absolute inset-y-0 right-0 w-[60%] pointer-events-none overflow-hidden rounded-r-xl">
+											<Image
+												src={`/images/flags/${flagCode || 'gbr'}.png`}
+												alt={race.country || race.circuit?.country || 'Flag'}
+												fill
+												sizes="300px"
+												className="object-cover object-center opacity-[0.12] group-hover:opacity-[0.45] transition-all duration-500 scale-105 group-hover:scale-110 brightness-75 group-hover:brightness-110"
+												onError={(event) => {
+													event.currentTarget.style.display = 'none';
+												}}
+											/>
+											<div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+										</div>
+									)}
 
-								<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl bg-red-500/60 transition-all duration-300 group-hover:bg-red-400" />
+									<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl transition-all duration-300 bg-green-500/50 group-hover:bg-green-400" />
 
-								{/* Content */}
-								<div className="relative z-10 flex flex-col justify-between p-4 pl-5 w-full">
-									<div>
-										<div className="flex items-center justify-between mb-1.5">
-											<span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-												<FaStar className="text-red-400/80 text-[8px]" />R
-												{String(race.round).padStart(2, '0')}
-											</span>
+									<div className="relative z-10 p-4 pl-5 h-full flex flex-col justify-between">
+										<div>
+											<div className="flex items-center justify-between mb-2">
+												<span className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+													<FaStar
+														className={
+															isFavorite ?
+																'text-yellow-300 text-[8px]'
+															:	'text-red-400/80 text-[8px]'
+														}
+													/>
+													<span>R{String(race.round).padStart(2, '0')}</span>
+												</span>
+												<span className="text-[9px] font-bold bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full border border-green-500/20">
+													Generated
+												</span>
+											</div>
+											<h3 className="font-bold text-[13px] leading-tight text-white/90 group-hover:text-white transition-colors line-clamp-2">
+												{race.event}
+											</h3>
+										</div>
+
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-3 text-[10px] text-gray-500">
+												<span className="flex items-center gap-1">
+													<FaMapMarkerAlt className="text-[8px] text-gray-600" />
+													{race.country || race.circuit?.country}
+												</span>
+												{race.date && (
+													<>
+														<span className="text-gray-700">•</span>
+														<span>{race.date}</span>
+													</>
+												)}
+											</div>
 											<div className="flex items-center gap-1.5">
-												{hasData ?
-													<span className="rounded-full border border-green-500/25 bg-green-500/12 px-2 py-0.5 text-[9px] font-bold text-green-400">
-														Ready
-													</span>
-												:	<span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold text-gray-500">
-														Available
-													</span>
-												}
+												<button
+													type="button"
+													onClick={(event) => handleSaveClick(event, race)}
+													className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] transition-all ${
+														isFavorite ?
+															'border-yellow-500/30 bg-yellow-500/12 text-yellow-300'
+														:	'border-white/10 bg-black/35 text-gray-400 hover:text-white'
+													}`}
+												>
+													<FaStar className="text-[8px]" />
+													{isFavorite ? 'Unsave' : 'Save'}
+												</button>
+												<button
+													type="button"
+													onClick={(event) => handlePodiumToggle(event, race)}
+													className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] transition-all ${
+														isExpanded ?
+															'border-red-400/35 bg-red-500/15 text-red-200'
+														:	'border-white/10 bg-black/35 text-gray-300 hover:text-white'
+													}`}
+												>
+													<FaTrophy className="text-[8px]" />
+													Podium Sneak
+												</button>
 											</div>
 										</div>
-										<h3 className="font-bold text-[13px] leading-tight text-white/90 transition-colors group-hover:text-white line-clamp-2">
-											{race.event}
-										</h3>
 									</div>
+								</Link>
 
-									<div className="flex items-center justify-between">
-										<div className="flex items-center gap-2 text-[10px] text-gray-500">
-											<FaMapMarkerAlt className="text-[8px] text-gray-600" />
-											<span>{race.country}</span>
-											{race.date && (
-												<>
-													<span className="text-gray-700">•</span>
-													<span>{race.date}</span>
-												</>
-											)}
-										</div>
-										<span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[9px] font-semibold text-gray-300 transition-all group-hover:border-red-400/35 group-hover:text-red-200">
-											View <FaChevronRight className="text-[7px]" />
-										</span>
+								{isExpanded && (
+									<div className="rounded-xl border border-white/12 bg-black/55 p-3">
+										{isPodiumLoading ?
+											<p className="text-xs text-gray-300">Loading podium...</p>
+										: podiumError ?
+											<p className="text-xs text-red-200">{podiumError}</p>
+										: podiumRows.length === 0 ?
+											<p className="text-xs text-gray-300">
+												No podium data for this race.
+											</p>
+										:	<div className="space-y-2">
+												{podiumRows.map((row) => (
+													<div
+														key={`${raceKey}-${row.position}-${row.driver_code || row.driver_name}`}
+														className="flex items-center justify-between rounded-lg border border-white/10 bg-black/45 px-2.5 py-2"
+													>
+														<div className="inline-flex items-center gap-2 min-w-0">
+															<span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] font-semibold text-gray-200">
+																P{row.position}
+															</span>
+															{getDriverImagePath(row.driver_code) && (
+																<div className="relative h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-black/40">
+																	<Image
+																		src={getDriverImagePath(row.driver_code)}
+																		alt={row.driver_name}
+																		fill
+																		className="object-cover object-top"
+																		onError={(event) => {
+																			event.currentTarget.style.display =
+																				'none';
+																		}}
+																	/>
+																</div>
+															)}
+															<div className="min-w-0">
+																<p className="truncate text-xs font-semibold text-white">
+																	{row.driver_name}
+																</p>
+																<p className="truncate text-[10px] text-gray-400">
+																	{row.team_name}
+																</p>
+															</div>
+														</div>
+														{getTeamLogoPath(row.team_name) && (
+															<div className="relative h-6 w-6 overflow-hidden rounded-sm border border-white/20 bg-black/40 p-0.5">
+																<Image
+																	src={getTeamLogoPath(row.team_name)}
+																	alt={row.team_name}
+																	fill
+																	className="object-contain"
+																	onError={(event) => {
+																		event.currentTarget.style.display = 'none';
+																	}}
+																/>
+															</div>
+														)}
+													</div>
+												))}
+											</div>
+										}
 									</div>
-								</div>
-							</a>
+								)}
+							</div>
 						);
 					})}
 				</div>
 			}
-
-			{races.length > 0 && (
-				<div className="mt-4 flex items-center justify-between">
-					<p className="text-[11px] text-gray-500">
-						{races.length} race{races.length !== 1 ? 's' : ''} saved · manage
-						from Track Lab
-					</p>
-					<a
-						href="/track"
-						className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red-300 transition-colors hover:text-red-200"
-					>
-						Manage in Track Lab <FaChevronRight className="text-[9px]" />
-					</a>
-				</div>
-			)}
 		</DashboardCard>
 	);
 }

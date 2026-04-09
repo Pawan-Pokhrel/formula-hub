@@ -5,10 +5,10 @@ import {
 	ChampionshipPulseWidget,
 	ConstructorBattleWidget,
 	F1NewsWidget,
+	GeneratedRacesWidget,
 	KpisWidget,
 	LastRaceWidget,
 	NextRaceWidget,
-	SavedRacesWidget,
 	SessionResultsWidget,
 	StartingGridWidget,
 	TitleFightWidget,
@@ -28,7 +28,7 @@ import {
 	getConstructorStandings,
 	getDriverStandings,
 } from '@/lib/api/standingsApi';
-import { getYearSchedule } from '@/lib/api/trackApi';
+import { getYearSchedule, toggleTrackFavorite } from '@/lib/api/trackApi';
 import {
 	FAVORITE_DRIVER_LIMIT,
 	FAVORITE_TEAM_LIMIT,
@@ -86,7 +86,7 @@ const DASHBOARD_ASPECTS = [
 	},
 	{
 		id: 'saved',
-		label: 'Saved Races',
+		label: 'Generated Races',
 		widgets: ['saved-races'],
 	},
 ];
@@ -205,9 +205,13 @@ export default function DashboardPage() {
 	const [weekendBrief, setWeekendBrief] = useState(null);
 	const [f1News, setF1News] = useState([]);
 
-	// Derived: saved/favorited races from the track schedule
-	const savedRaces = useMemo(
-		() => trackSchedule.filter((r) => r.is_favorite === true),
+	// Derived: generated races from the track schedule
+	const generatedRaces = useMemo(
+		() =>
+			trackSchedule
+				.filter((race) => race.is_past && race.has_data)
+				.slice()
+				.sort((a, b) => Number(b.round || 0) - Number(a.round || 0)),
 		[trackSchedule]
 	);
 
@@ -616,6 +620,31 @@ export default function DashboardPage() {
 		});
 	};
 
+	const handleToggleGeneratedRaceSave = async (race) => {
+		if (!race) return;
+		const raceYear = Number(race.year || currentYear);
+		const raceRound = Number(race.round);
+
+		try {
+			const result = await toggleTrackFavorite(raceYear, raceRound);
+			setTrackSchedule((prev) =>
+				prev.map((item) => {
+					const itemYear = Number(item.year || currentYear);
+					const itemRound = Number(item.round);
+					if (itemYear !== raceYear || itemRound !== raceRound) {
+						return item;
+					}
+					return {
+						...item,
+						is_favorite: Boolean(result?.is_favorite),
+					};
+				})
+			);
+		} catch {
+			// Keep current dashboard view if favorite toggle fails.
+		}
+	};
+
 	const renderWidget = (widgetId) => {
 		switch (widgetId) {
 			case 'kpis':
@@ -681,9 +710,10 @@ export default function DashboardPage() {
 				return <F1NewsWidget newsItems={f1News} />;
 			case 'saved-races':
 				return (
-					<SavedRacesWidget
-						savedRaces={savedRaces}
+					<GeneratedRacesWidget
+						races={generatedRaces}
 						currentYear={currentYear}
+						onToggleSave={handleToggleGeneratedRaceSave}
 					/>
 				);
 			default:
@@ -1019,11 +1049,11 @@ export default function DashboardPage() {
 									/>
 								)}
 								{aspect.label}
-								{isSaved && savedRaces.length > 0 && (
+								{isSaved && generatedRaces.length > 0 && (
 									<span
 										className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${active ? 'bg-red-500/30 text-red-100' : 'bg-white/10 text-gray-500'}`}
 									>
-										{savedRaces.length}
+										{generatedRaces.length}
 									</span>
 								)}
 							</button>
