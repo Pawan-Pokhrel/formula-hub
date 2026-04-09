@@ -78,8 +78,13 @@ function getCarImage(teamName) {
 }
 
 function teamColor(teamName) {
+	if (!teamName) return null;
+	const tLow = teamName.toLowerCase();
 	const d = DRIVER_CATALOG.find(
-		(x) => x.teamName?.toLowerCase() === teamName?.toLowerCase()
+		(x) =>
+			x.teamName?.toLowerCase() === tLow ||
+			x.teamName?.toLowerCase().includes(tLow) ||
+			tLow.includes(x.teamName?.toLowerCase())
 	);
 	return d?.teamColor || null;
 }
