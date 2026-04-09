@@ -1,5 +1,6 @@
 import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
 import { getDriverImage } from '@/utils/f1_images';
+import Image from 'next/image';
 import { COMPOUND_COLORS, COMPOUND_SHORT } from './constants';
 import { formatGap, formatLap } from './utils';
 
@@ -57,9 +58,11 @@ export default function TimingTower({
 
 							<div className="flex items-center gap-2">
 								{driverImage ?
-									<img
+									<Image
 										src={driverImage}
 										alt={driver.abbr}
+										width={28}
+										height={28}
 										onError={(e) => {
 											e.currentTarget.style.display = 'none';
 										}}
@@ -82,9 +85,11 @@ export default function TimingTower({
 
 							<div className="flex items-center gap-2">
 								{teamLogo && (
-									<img
+									<Image
 										src={teamLogo}
 										alt={driver.team || 'Team'}
+										width={24}
+										height={16}
 										onError={(e) => {
 											e.currentTarget.style.display = 'none';
 										}}

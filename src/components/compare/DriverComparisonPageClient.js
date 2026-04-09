@@ -1,36 +1,36 @@
 'use client';
 
 import {
-	getDriverImagePath,
-	getTeamCode,
-	getTeamLogoPath,
+  getDriverImagePath,
+  getTeamCode,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
-import { getComparisonDataset } from '@/lib/api/standingsApi';
+import { getComparisonDataset, getConstructorCareerStats, getDriverCareerStats } from '@/lib/api/standingsApi';
 import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-	FaCarSide,
-	FaChevronDown,
-	FaChevronRight,
-	FaExchangeAlt,
-	FaTrophy,
-	FaUsers,
+  FaCarSide,
+  FaChevronDown,
+  FaChevronRight,
+  FaExchangeAlt,
+  FaTrophy,
+  FaUsers,
 } from 'react-icons/fa';
 import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	PolarAngleAxis,
-	PolarGrid,
-	Radar,
-	RadarChart,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -362,8 +362,86 @@ function buildCareerMetrics(leftCat, rightCat) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   CUSTOM DROPDOWN
+   CUSTOM DROPDOWNS
 ───────────────────────────────────────────────────────────────────────────── */
+function SeasonDropdown({ value, onChange, years, disabled }) {
+	const [open, setOpen] = useState(false);
+	const ref = useRef(null);
+
+	useEffect(() => {
+		if (!open) return undefined;
+		const fn = (e) => {
+			if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+		};
+		const onEscape = (e) => {
+			if (e.key === 'Escape') setOpen(false);
+		};
+		document.addEventListener('mousedown', fn);
+		document.addEventListener('keydown', onEscape);
+		return () => {
+			document.removeEventListener('mousedown', fn);
+			document.removeEventListener('keydown', onEscape);
+		};
+	}, [open]);
+
+	const [prevValue, setPrevValue] = useState(value);
+	const [prevDisabled, setPrevDisabled] = useState(disabled);
+
+	if (value !== prevValue) {
+		setPrevValue(value);
+		setOpen(false);
+	}
+	if (disabled !== prevDisabled) {
+		setPrevDisabled(disabled);
+		setOpen(false);
+	}
+
+	return (
+		<div
+			ref={ref}
+			className={`relative ${open ? 'z-50' : 'z-10'}`}
+		>
+			<button
+				type="button"
+				disabled={disabled}
+				onClick={() => setOpen((v) => !v)}
+				aria-expanded={open}
+				aria-haspopup="listbox"
+				className="w-full flex items-center justify-between rounded-xl border border-white/6 bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+			>
+				<span>{value}</span>
+				<FaChevronDown
+					size={9}
+					className={`shrink-0 text-white/20 transition-transform ${open ? 'rotate-180' : ''}`}
+				/>
+			</button>
+
+			{open && (
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
+					<div className="max-h-72 overflow-y-auto py-1">
+						{years.map((y) => {
+							const active = y === value;
+							return (
+								<button
+									key={y}
+									type="button"
+									onClick={() => {
+										onChange(y);
+										setOpen(false);
+									}}
+									className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${active ? 'bg-white/6 text-white font-medium' : 'text-white/72 hover:bg-white/3'}`}
+								>
+									{y}
+								</button>
+							);
+						})}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
 function EntityDropdown({
 	label,
 	value,
@@ -391,9 +469,22 @@ function EntityDropdown({
 		};
 	}, [open]);
 
-	useEffect(() => {
+	const [prevValue, setPrevValue] = useState(value);
+	const [prevDisabled, setPrevDisabled] = useState(disabled);
+	const [prevCompType, setPrevCompType] = useState(comparisonType);
+
+	if (value !== prevValue) {
+		setPrevValue(value);
 		setOpen(false);
-	}, [value, comparisonType, disabled]);
+	}
+	if (disabled !== prevDisabled) {
+		setPrevDisabled(disabled);
+		setOpen(false);
+	}
+	if (comparisonType !== prevCompType) {
+		setPrevCompType(comparisonType);
+		setOpen(false);
+	}
 
 	const selected = entities.find((e) => getKey(e, comparisonType) === value);
 
@@ -424,7 +515,7 @@ function EntityDropdown({
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/[0.1] disabled:opacity-40 disabled:cursor-not-allowed"
+				className="w-full flex items-center gap-2.5 rounded-xl border border-white/6 bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				{selected ?
 					<>
@@ -497,7 +588,7 @@ function EntityDropdown({
 										onChange(key);
 										setOpen(false);
 									}}
-									className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'}`}
+									className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${active ? 'bg-white/6' : 'hover:bg-white/3'}`}
 								>
 									<span className="text-[10px] text-white/20 w-4 shrink-0 text-right">
 										{entity.position}
@@ -572,15 +663,15 @@ function Skeleton() {
 						key={i}
 						className="overflow-hidden rounded-3xl border border-white/10 bg-[#0b0d12]/95"
 					>
-						<div className="h-52 bg-white/[0.04]" />
+						<div className="h-52 bg-white/4" />
 						<div className="p-5 space-y-3">
-							<div className="h-3 w-20 rounded bg-white/[0.06]" />
-							<div className="h-5 w-36 rounded bg-white/[0.1]" />
+							<div className="h-3 w-20 rounded bg-white/6" />
+							<div className="h-5 w-36 rounded bg-white/10" />
 							<div className="grid grid-cols-3 gap-2 pt-2">
 								{[0, 1, 2].map((j) => (
 									<div
 										key={j}
-										className="h-14 rounded-xl bg-white/[0.04]"
+										className="h-14 rounded-xl bg-white/4"
 									/>
 								))}
 							</div>
@@ -590,15 +681,15 @@ function Skeleton() {
 			</div>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<div className="rounded-3xl border border-white/10 bg-[#0b0d12]/95 p-5">
-					<div className="h-4 w-32 rounded bg-white/[0.08] mb-4" />
-					<div className="h-64 rounded-xl bg-white/[0.03]" />
+					<div className="h-4 w-32 rounded bg-white/8 mb-4" />
+					<div className="h-64 rounded-xl bg-white/3" />
 				</div>
 				<div className="rounded-3xl border border-white/10 bg-[#0b0d12]/95 p-5 space-y-3">
-					<div className="h-4 w-32 rounded bg-white/[0.08] mb-2" />
+					<div className="h-4 w-32 rounded bg-white/8 mb-2" />
 					{Array.from({ length: 9 }).map((_, i) => (
 						<div
 							key={i}
-							className="h-10 rounded-xl bg-white/[0.03]"
+							className="h-10 rounded-xl bg-white/3"
 						/>
 					))}
 				</div>
@@ -661,7 +752,7 @@ function IdentityCard({
 			];
 
 	return (
-		<div className="relative overflow-hidden rounded-3xl border border-white/[0.06]">
+		<div className="relative overflow-hidden rounded-3xl border border-white/6">
 			<div
 				className="pointer-events-none absolute inset-0 z-1 opacity-[0.28]"
 				style={{
@@ -727,7 +818,7 @@ function IdentityCard({
 								/>
 							</div>
 						</div>)}
-				<div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-[#050507] to-transparent" />
+				<div className="absolute bottom-0 left-0 right-0 h-14 bg-linear-to-t from-[#050507] to-transparent" />
 			</div>
 
 			<div
@@ -785,7 +876,7 @@ function MetricRow({ metric, lc, rc }) {
 	const lp = pct(metric.lv, metric.rv);
 	const rp = 100 - lp;
 	return (
-		<div className="grid grid-cols-[1fr_78px_1fr] items-center gap-2 py-3 border-b border-white/[0.05] last:border-0">
+		<div className="grid grid-cols-[1fr_78px_1fr] items-center gap-2 py-3 border-b border-white/5 last:border-0">
 			<div className="flex flex-col items-start">
 				<span
 					className="text-xl font-semibold leading-tight"
@@ -808,7 +899,7 @@ function MetricRow({ metric, lc, rc }) {
 				)}
 			</div>
 			<div className="text-center">
-				<p className="text-[9px] uppercase tracking-[0.1em] text-white/45 mb-1.5 leading-none">
+				<p className="text-[9px] uppercase tracking-widest text-white/45 mb-1.5 leading-none">
 					{metric.label}
 				</p>
 				<div className="flex h-[3px] rounded-full overflow-hidden gap-px">
@@ -892,7 +983,7 @@ function CareerBarChart({ leftCat, rightCat, lName, rName, lc, rc }) {
 								className="w-2 h-2 rounded-full"
 								style={{ backgroundColor: l.color }}
 							/>
-							<span className="text-[10px] text-white/40 truncate max-w-[80px]">
+							<span className="text-[10px] text-white/40 truncate max-w-20">
 								{l.name}
 							</span>
 						</div>
@@ -977,6 +1068,9 @@ export default function DriverComparisonPageClient() {
 	});
 	const [loading, setLoading] = useState(true);
 
+	const [dbCareerStats, setDbCareerStats] = useState({ drivers: [], constructors: [] });
+	const [careerStatsLoading, setCareerStatsLoading] = useState(true);
+
 	// Seed from URL params once — state owns selection from here on
 	const [leftKey, setLeftKey] = useState(() => {
 		const p = searchParams.get('a') || '';
@@ -1018,10 +1112,35 @@ export default function DriverComparisonPageClient() {
 		};
 	}, [year]);
 
-	// Force season mode for constructors (no career catalog)
 	useEffect(() => {
-		if (comparisonType === 'constructors' && viewMode === 'career')
-			setViewMode('season');
+		Promise.allSettled([getDriverCareerStats(), getConstructorCareerStats()]).then(
+			([resD, resC]) => {
+				const mapKeysToCamel = (obj) => {
+					if (!obj) return {};
+					return {
+						...obj,
+						worldChampionships: obj.world_championships || 0,
+						careerEntries: obj.career_entries || 0,
+						careerStarts: obj.career_starts || 0,
+						careerWins: obj.career_wins || 0,
+						careerPodiums: obj.career_podiums || 0,
+						careerPoles: obj.career_poles || 0,
+						careerFastestLaps: obj.career_fastest_laps || 0,
+						careerPoints: obj.career_points || 0
+					};
+				};
+				setDbCareerStats({
+					drivers: resD.status === 'fulfilled' && Array.isArray(resD.value) ? resD.value.map(mapKeysToCamel) : [],
+					constructors: resC.status === 'fulfilled' && Array.isArray(resC.value) ? resC.value.map(mapKeysToCamel) : [],
+				});
+				setCareerStatsLoading(false);
+			}
+		);
+	}, []);
+
+	// Force season mode if career isn't available
+	useEffect(() => {
+		// Only forcefully reset to season if we know career stats are fully loaded but none matched
 	}, [comparisonType, viewMode]);
 
 	const entities = useMemo(() => {
@@ -1061,20 +1180,23 @@ export default function DriverComparisonPageClient() {
 	);
 
 	// Career catalog entries
-	const leftCat = useMemo(
-		() =>
-			comparisonType === 'drivers' ?
-				driverCatalog(leftEntity?.driver_code)
-			:	null,
-		[leftEntity, comparisonType]
-	);
-	const rightCat = useMemo(
-		() =>
-			comparisonType === 'drivers' ?
-				driverCatalog(rightEntity?.driver_code)
-			:	null,
-		[rightEntity, comparisonType]
-	);
+	const leftCat = useMemo(() => {
+		if (comparisonType === 'drivers') {
+			const dbD = dbCareerStats.drivers.find(d => d.driver_code === leftEntity?.driver_code || d.driver_name === leftEntity?.driver_name);
+			return dbD || driverCatalog(leftEntity?.driver_code);
+		} else {
+			return dbCareerStats.constructors.find(c => c.team_name === leftEntity?.team_name) || null;
+		}
+	}, [leftEntity, comparisonType, dbCareerStats]);
+
+	const rightCat = useMemo(() => {
+		if (comparisonType === 'drivers') {
+			const dbD = dbCareerStats.drivers.find(d => d.driver_code === rightEntity?.driver_code || d.driver_name === rightEntity?.driver_name);
+			return dbD || driverCatalog(rightEntity?.driver_code);
+		} else {
+			return dbCareerStats.constructors.find(c => c.team_name === rightEntity?.team_name) || null;
+		}
+	}, [rightEntity, comparisonType, dbCareerStats]);
 
 	const { lc, rc } = useMemo(
 		() => resolveColors(leftEntity, rightEntity),
@@ -1125,7 +1247,7 @@ export default function DriverComparisonPageClient() {
 	}, [metrics]);
 
 	const canCompare = Boolean(leftEntity && rightEntity);
-	const careerAvailable = comparisonType === 'drivers' && leftCat && rightCat;
+	const careerAvailable = (comparisonType === 'drivers' || comparisonType === 'constructors') && leftCat && rightCat;
 
 	return (
 		<div className="relative min-h-screen bg-[#060607] bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-14 pt-28 text-white md:px-10 lg:px-16">
@@ -1183,7 +1305,7 @@ export default function DriverComparisonPageClient() {
 							<button
 								type="button"
 								onClick={() => setViewMode('career')}
-								disabled={!careerAvailable && comparisonType === 'constructors'}
+								disabled={!careerAvailable}
 								className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 ${viewMode === 'career' ? 'bg-white/12 text-white' : 'text-white/35 hover:text-white/70'} disabled:opacity-25 disabled:cursor-not-allowed`}
 							>
 								<FaTrophy size={9} /> Career
@@ -1233,23 +1355,15 @@ export default function DriverComparisonPageClient() {
 						<label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-white/30">
 							Season
 						</label>
-						<select
+						<SeasonDropdown
 							value={year}
-							onChange={(e) => {
+							onChange={(v) => {
 								setLoading(true);
-								setYear(Number(e.target.value));
+								setYear(Number(v));
 							}}
-							className="w-full rounded-xl border border-white/15 bg-black/45 px-3 py-2.5 text-sm text-white outline-none transition focus:border-red-500/45"
-						>
-							{years.map((y) => (
-								<option
-									key={y}
-									value={y}
-								>
-									{y}
-								</option>
-							))}
-						</select>
+							years={years}
+							disabled={loading}
+						/>
 					</div>
 				</div>
 
@@ -1264,7 +1378,7 @@ export default function DriverComparisonPageClient() {
 				{loading && <Skeleton />}
 
 				{!loading && entities.length < 2 && (
-					<div className="rounded-2xl border border-amber-400/[0.12] bg-amber-500/[0.05] p-5 text-sm text-amber-200/60">
+					<div className="rounded-2xl border border-amber-400/12 bg-amber-500/5 p-5 text-sm text-amber-200/60">
 						Not enough data for this season.
 					</div>
 				)}
@@ -1311,7 +1425,7 @@ export default function DriverComparisonPageClient() {
 											className="flex items-center gap-2"
 										>
 											<div
-												className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+												className="w-2.5 h-2.5 rounded-full shrink-0"
 												style={{ backgroundColor: l.color }}
 											/>
 											<span className="text-[10px] text-white/40 truncate max-w-[100px]">
@@ -1363,10 +1477,10 @@ export default function DriverComparisonPageClient() {
 
 							{/* Metric rows */}
 							<div className="rounded-3xl border border-white/10 bg-[#0b0d12]/95 p-5">
-								<div className="grid grid-cols-[1fr_68px_1fr] items-center gap-2 mb-2 pb-3 border-b border-white/[0.05]">
+								<div className="grid grid-cols-[1fr_68px_1fr] items-center gap-2 mb-2 pb-3 border-b border-white/5">
 									<div className="flex items-center gap-2">
 										<div
-											className="w-2 h-2 rounded-full flex-shrink-0"
+											className="w-2 h-2 rounded-full shrink-0"
 											style={{ backgroundColor: lc }}
 										/>
 										<span className="text-[9px] uppercase tracking-[0.12em] text-white/35 truncate">
@@ -1379,7 +1493,7 @@ export default function DriverComparisonPageClient() {
 											{rName}
 										</span>
 										<div
-											className="w-2 h-2 rounded-full flex-shrink-0"
+											className="w-2 h-2 rounded-full shrink-0"
 											style={{ backgroundColor: rc }}
 										/>
 									</div>
@@ -1395,7 +1509,7 @@ export default function DriverComparisonPageClient() {
 							</div>
 						</div>
 
-						{/* Career bar chart (career mode, drivers only) */}
+						{/* Career bar chart (career mode) */}
 						{viewMode === 'career' && leftCat && rightCat && (
 							<CareerBarChart
 								leftCat={leftCat}

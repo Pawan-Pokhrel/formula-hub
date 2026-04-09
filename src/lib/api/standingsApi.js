@@ -126,3 +126,36 @@ export const getComparisonDataset = async (year, options = {}) => {
 		return await buildFallbackFromStandings();
 	}
 };
+
+export const getDriverCareerStats = async () => {
+	try {
+		const response = await api.get('/standings/drivers/career');
+		if (response.data.success) {
+			return response.data.data;
+		}
+		throw new Error(
+			response.data.message || 'Failed to fetch driver career stats'
+		);
+	} catch (error) {
+		throw new Error(
+			error.response?.data?.message || 'Failed to fetch driver career stats'
+		);
+	}
+};
+
+export const getConstructorCareerStats = async () => {
+	try {
+		const response = await api.get('/standings/constructors/career');
+		if (response.data.success) {
+			return response.data.data;
+		}
+		throw new Error(
+			response.data.message || 'Failed to fetch constructor career stats'
+		);
+	} catch (error) {
+		throw new Error(
+			error.response?.data?.message ||
+				'Failed to fetch constructor career stats'
+		);
+	}
+};

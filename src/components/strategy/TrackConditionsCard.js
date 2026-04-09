@@ -2,6 +2,7 @@ import {
 	getCountryCode,
 	getTrackImagePath,
 } from '@/components/schedule/scheduleHelpers';
+import Image from 'next/image';
 import {
 	FaCloudSun,
 	FaExclamationTriangle,
@@ -95,13 +96,14 @@ export default function TrackConditionsCard({
 	return (
 		<div className="relative overflow-hidden rounded-2xl border border-white/20 bg-black/62 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.42)]">
 			{trackImage && (
-				<img
+				<Image
 					src={trackImage}
 					alt={ci.event || 'Circuit'}
+					fill
 					onError={(e) => {
 						e.currentTarget.style.display = 'none';
 					}}
-					className="absolute inset-0 h-full w-full object-cover opacity-20"
+					className="object-cover opacity-20"
 				/>
 			)}
 			<div className="absolute inset-0 bg-linear-to-b from-black/78 via-black/82 to-black/90" />
@@ -121,9 +123,11 @@ export default function TrackConditionsCard({
 					</div>
 					<div className="flex items-center gap-2">
 						{countryCode && (
-							<img
+							<Image
 								src={`/images/flags/${countryCode}.png`}
 								alt={ci.country || 'Country'}
+								width={24}
+								height={16}
 								onError={(e) => {
 									e.currentTarget.style.display = 'none';
 								}}
