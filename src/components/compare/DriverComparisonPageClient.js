@@ -413,7 +413,7 @@ function EntityDropdown({
 	return (
 		<div
 			ref={ref}
-			className={`relative ${open ? 'z-80' : 'z-10'}`}
+			className={`relative ${open ? 'z-50' : 'z-10'}`}
 		>
 			<label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-white/30">
 				{label}
@@ -428,14 +428,20 @@ function EntityDropdown({
 			>
 				{selected ?
 					<>
-						<div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-white/[0.05] bg-white/[0.03]">
+						<div
+							className={`relative shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/3 flex items-center justify-center ${comparisonType === 'constructors' ? 'h-8 w-12' : 'h-8 w-8'}`}
+						>
 							{img(selected) && (
 								<Image
 									src={img(selected)}
 									alt=""
 									fill
-									sizes="32px"
-									className={`object-cover ${comparisonType === 'constructors' ? 'object-contain p-1' : 'object-top'}`}
+									sizes={comparisonType === 'constructors' ? '48px' : '32px'}
+									className={
+										comparisonType === 'constructors' ?
+											'object-contain p-1.5'
+										:	'object-cover object-top'
+									}
 								/>
 							)}
 						</div>
@@ -478,7 +484,7 @@ function EntityDropdown({
 			</button>
 
 			{open && (
-				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-90 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
 					<div className="max-h-72 overflow-y-auto py-1">
 						{entities.map((entity) => {
 							const key = getKey(entity, comparisonType);
@@ -496,14 +502,22 @@ function EntityDropdown({
 									<span className="text-[10px] text-white/20 w-4 shrink-0 text-right">
 										{entity.position}
 									</span>
-									<div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-white/[0.05] bg-white/[0.02]">
+									<div
+										className={`relative shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/2 flex items-center justify-center ${comparisonType === 'constructors' ? 'h-8 w-12' : 'h-8 w-8'}`}
+									>
 										{img(entity) && (
 											<Image
 												src={img(entity)}
 												alt=""
 												fill
-												sizes="32px"
-												className={`object-cover ${comparisonType === 'constructors' ? 'object-contain p-1' : 'object-top'}`}
+												sizes={
+													comparisonType === 'constructors' ? '48px' : '32px'
+												}
+												className={
+													comparisonType === 'constructors' ?
+														'object-contain p-1.5'
+													:	'object-cover object-top'
+												}
 											/>
 										)}
 									</div>
@@ -648,22 +662,17 @@ function IdentityCard({
 
 	return (
 		<div className="relative overflow-hidden rounded-3xl border border-white/[0.06]">
-			{isDriverCard && (
-				<div
-					className="pointer-events-none absolute inset-0 z-1 opacity-[0.28]"
-					style={{
-						backgroundImage:
-							'repeating-linear-gradient(0deg,rgba(255,255,255,0.10) 0px,rgba(255,255,255,0.10) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(90deg,rgba(255,255,255,0.08) 0px,rgba(255,255,255,0.08) 1px,transparent 1px,transparent 18px)',
-					}}
-				/>
-			)}
+			<div
+				className="pointer-events-none absolute inset-0 z-1 opacity-[0.28]"
+				style={{
+					backgroundImage:
+						'repeating-linear-gradient(0deg,rgba(255,255,255,0.10) 0px,rgba(255,255,255,0.10) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(90deg,rgba(255,255,255,0.08) 0px,rgba(255,255,255,0.08) 1px,transparent 1px,transparent 18px)',
+				}}
+			/>
 			<div
 				className="relative z-2 h-52 overflow-hidden"
 				style={{
-					background:
-						isDriverCard ?
-							`linear-gradient(120deg, ${tc}DE 0%, ${tc}B8 58%, rgba(8,8,10,0.92) 100%)`
-						:	`linear-gradient(135deg, ${tc}30 0%, ${tc}08 58%, #050507 100%)`,
+					background: `linear-gradient(120deg, ${tc}DE 0%, ${tc}B8 58%, rgba(8,8,10,0.92) 100%)`,
 				}}
 			>
 				<div
@@ -724,10 +733,7 @@ function IdentityCard({
 			<div
 				className="relative z-2 px-5 pb-5 pt-3"
 				style={{
-					background:
-						isDriverCard ?
-							`linear-gradient(180deg, rgba(5,5,7,0.98) 0%, ${tc}12 120%)`
-						:	'#050507',
+					background: `linear-gradient(180deg, rgba(5,5,7,0.98) 0%, ${tc}12 120%)`,
 				}}
 			>
 				<div className="flex items-end justify-between mb-3">
@@ -753,8 +759,8 @@ function IdentityCard({
 							key={s.label}
 							className="flex flex-col py-2.5 px-3 rounded-xl"
 							style={{
-								background: isDriverCard ? `${tc}24` : `${tc}0d`,
-								border: `1px solid ${isDriverCard ? `${tc}54` : `${tc}20`}`,
+								background: `${tc}24`,
+								border: `1px solid ${tc}54`,
 							}}
 						>
 							<span className="text-[9px] uppercase tracking-[0.16em] text-white/25 mb-1">
@@ -1187,7 +1193,7 @@ export default function DriverComparisonPageClient() {
 				</div>
 
 				{/* ── Controls ────────────────────────────────────── */}
-				<div className="rounded-2xl border border-white/10 bg-black/55 p-4 backdrop-blur-2xl md:grid md:grid-cols-[1fr_40px_1fr_110px] md:items-end md:gap-3 md:p-5">
+				<div className="relative z-50 rounded-2xl border border-white/10 bg-black/55 p-4 backdrop-blur-2xl md:grid md:grid-cols-[1fr_40px_1fr_110px] md:items-end md:gap-3 md:p-5 overflow-visible">
 					<EntityDropdown
 						label={comparisonType === 'drivers' ? 'Driver A' : 'Constructor A'}
 						value={resolvedLeft}
@@ -1266,7 +1272,7 @@ export default function DriverComparisonPageClient() {
 				{!loading && canCompare && (
 					<>
 						{/* Identity cards */}
-						<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+						<div className="relative z-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
 							<IdentityCard
 								entity={leftEntity}
 								comparisonType={comparisonType}
