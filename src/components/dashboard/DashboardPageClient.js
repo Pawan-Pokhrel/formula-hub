@@ -1082,7 +1082,7 @@ export default function DashboardPage() {
 
 						{favoriteDrivers.length > 0 || favoriteTeams.length > 0 ?
 							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-								{favoriteDrivers.slice(0, 3).map((code) => {
+								{favoriteDrivers.slice(0, FAVORITE_DRIVER_LIMIT).map((code) => {
 									const drv = driverStandings.find(
 										(d) => d.driver_code === code
 									);
@@ -1219,7 +1219,7 @@ export default function DashboardPage() {
 									);
 								})}
 
-								{favoriteTeams.slice(0, 3).map((teamName) => {
+								{favoriteTeams.slice(0, FAVORITE_TEAM_LIMIT).map((teamName) => {
 									const tm = constructorStandings.find(
 										(t) => t.team_name === teamName
 									);

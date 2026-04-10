@@ -19,7 +19,6 @@ import {
 	FaCalendarAlt,
 	FaChevronDown,
 	FaCog,
-	FaFlagCheckered,
 	FaSignOutAlt,
 	FaTrophy,
 	FaUserCircle,
@@ -293,9 +292,6 @@ export default function Navbar() {
 		<nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
 			<div className="relative mx-auto flex w-full max-w-[1720px] items-center justify-between px-6 py-3.5">
 				<div className="flex items-center gap-3">
-					<div className="h-11 w-11 rounded-xl bg-red-600/15 border border-red-500/30 flex items-center justify-center">
-						<FaFlagCheckered className="text-xl text-red-500" />
-					</div>
 					<Link
 						href="/"
 						className="text-2xl md:text-3xl font-bold tracking-wide text-white hover:text-red-200 transition-colors duration-300 cursor-pointer"

@@ -777,11 +777,11 @@ export default function ProfilePage() {
 						</p>
 					</div>
 					<h1 className="text-4xl font-black uppercase tracking-tight text-white md:text-5xl">
-						Driver Profile
+						User Profile
 					</h1>
 					<p className="mt-3 max-w-2xl text-sm font-medium tracking-wide text-gray-500">
-						CONFIGURE YOUR PERSONAL DETAILS, IDENTITY, AND TRACK PREFERENCES FOR
-						A TAILORED EXPERIENCE AND DASHBOARD.
+						CONFIGURE YOUR PERSONAL DETAILS, ACCOUNT IDENTITY, AND APP
+						PREFERENCES FOR A TAILORED EXPERIENCE.
 					</p>
 				</div>
 
@@ -792,11 +792,11 @@ export default function ProfilePage() {
 							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
 								<div>
 									<h2 className="text-lg font-black uppercase tracking-widest text-white">
-										Grid Favorites
+										Favorite Picks
 									</h2>
 									<p className="mt-1 text-xs text-gray-400 uppercase tracking-wider">
-										Select your lineup (up to {FAVORITE_DRIVER_LIMIT} drivers &{' '}
-										{FAVORITE_TEAM_LIMIT} constructors)
+										Select your favorites (up to {FAVORITE_DRIVER_LIMIT} drivers &{' '}
+										{FAVORITE_TEAM_LIMIT} teams)
 									</p>
 								</div>
 								{savingFavorites && (
@@ -812,8 +812,8 @@ export default function ProfilePage() {
 							<div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2 relative z-50">
 								<div className="relative z-50">
 									<FavoriteMultiSelect
-										label={`Selected Drivers (${favoriteDrivers.length}/${FAVORITE_DRIVER_LIMIT})`}
-										placeholder="Choose your drivers"
+										label={`Favorite Drivers (${favoriteDrivers.length}/${FAVORITE_DRIVER_LIMIT})`}
+										placeholder="Choose favorite drivers"
 										options={driverOptions}
 										selectedValues={favoriteDrivers}
 										onToggle={handleToggleFavoriteDriver}
@@ -823,8 +823,8 @@ export default function ProfilePage() {
 								</div>
 								<div className="relative z-40">
 									<FavoriteMultiSelect
-										label={`Selected Teams (${favoriteTeams.length}/${FAVORITE_TEAM_LIMIT})`}
-										placeholder="Choose your constructors"
+										label={`Favorite Teams (${favoriteTeams.length}/${FAVORITE_TEAM_LIMIT})`}
+										placeholder="Choose favorite teams"
 										options={teamOptions}
 										selectedValues={favoriteTeams}
 										onToggle={handleToggleFavoriteTeam}
@@ -837,12 +837,12 @@ export default function ProfilePage() {
 							<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
 									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
-										Active Driver Roster
+										Favorite Drivers
 									</p>
 									<div className="flex flex-wrap gap-2">
 										{favoriteDriverCards.length === 0 && (
 											<p className="text-xs text-gray-600 uppercase tracking-widest">
-												Empty Roster
+												No Favorite Drivers Yet
 											</p>
 										)}
 										{favoriteDriverCards.map((driver) => {
@@ -880,12 +880,12 @@ export default function ProfilePage() {
 
 								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
 									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
-										Active Team Garage
+										Favorite Teams
 									</p>
 									<div className="flex flex-wrap gap-2">
 										{favoriteTeamCards.length === 0 && (
 											<p className="text-xs text-gray-600 uppercase tracking-widest">
-												Empty Garage
+												No Favorite Teams Yet
 											</p>
 										)}
 										{favoriteTeamCards.map((team) => {
@@ -937,7 +937,7 @@ export default function ProfilePage() {
 							</div>
 							<div className="mb-6 rounded-2xl border border-white/12 bg-black/35 p-4">
 								<p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
-									Driver Portrait
+									Profile Photo
 								</p>
 								<div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 									<div className="flex items-center gap-3">
@@ -1017,7 +1017,7 @@ export default function ProfilePage() {
 												fullName: e.target.value,
 											}))
 										}
-										placeholder="e.g. Lewis Hamilton"
+										placeholder="e.g. Alex Morgan"
 										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
 									/>
 								</div>
