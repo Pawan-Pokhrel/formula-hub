@@ -795,8 +795,8 @@ export default function ProfilePage() {
 										Favorite Picks
 									</h2>
 									<p className="mt-1 text-xs text-gray-400 uppercase tracking-wider">
-										Select your favorites (up to {FAVORITE_DRIVER_LIMIT} drivers &{' '}
-										{FAVORITE_TEAM_LIMIT} teams)
+										Select your favorites (up to {FAVORITE_DRIVER_LIMIT} drivers
+										& {FAVORITE_TEAM_LIMIT} teams)
 									</p>
 								</div>
 								{savingFavorites && (
