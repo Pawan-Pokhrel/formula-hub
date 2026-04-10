@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
 
@@ -10,9 +11,12 @@ export default function Hero() {
 					TODO: User will provide the actual image asset.
 					For now, using a highly aesthetic F1-themed placeholder overlay or a placeholder image URL.
 				*/}
-				<img
+				<Image
 					src="/images/FormulaHub-BG.png"
 					alt="F1 Background Placeholder"
+					fill
+					sizes="100vw"
+					priority
 					className="h-full w-full object-cover object-center opacity-40 brightness-75 mix-blend-lighten"
 				/>
 				{/* Gradient Overlays for Readability and Blending */}
@@ -20,7 +24,7 @@ export default function Hero() {
 				<div className="absolute inset-0 bg-linear-to-r from-[#050507] via-[#050507]/40 to-transparent" />
 			</div>
 
-			<div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16 pt-20">
+			<div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16 pt-24">
 				<div className="max-w-3xl">
 					<div className="mb-7 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-red-400 uppercase animate-fade-in backdrop-blur-md">
 						Race Intelligence Platform
