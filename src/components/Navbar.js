@@ -294,7 +294,7 @@ export default function Navbar() {
 				<div className="flex items-center gap-3">
 					<Link
 						href="/"
-						className="text-2xl md:text-3xl font-bold tracking-wide text-white hover:text-red-200 transition-colors duration-300 cursor-pointer"
+						className="text-2xl md:text-3xl font-bold tracking-wide text-white hover:text-red-200 transition-colors duration-200 cursor-pointer"
 					>
 						FormulaHub
 					</Link>
