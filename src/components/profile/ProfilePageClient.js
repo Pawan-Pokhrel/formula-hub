@@ -235,23 +235,26 @@ function FavoriteMultiSelect({
 	return (
 		<div
 			ref={containerRef}
-			className={`relative ${open ? 'z-90' : 'z-20'}`}
+			className={`relative ${open ? 'z-50' : 'z-10'}`}
 		>
-			<p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-300">
+			<label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-white/30">
 				{label}
-			</p>
+			</label>
 			<button
 				type="button"
 				onClick={() => setOpen((prev) => !prev)}
-				className="flex w-full items-center justify-between rounded-xl border border-white/20 bg-linear-to-r from-white/10 via-white/5 to-black/45 px-4 py-3 text-left text-sm text-white shadow-[0_14px_24px_rgba(0,0,0,0.24)] transition hover:border-red-300/45"
+				aria-expanded={open}
+				aria-haspopup="listbox"
+				className="w-full flex items-center justify-between rounded-xl border border-white/6 bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/10 disabled:opacity-40"
 			>
-				<span className="truncate font-semibold">
+				<span className="truncate flex-1 text-left">
 					{selectedValues.length > 0 ?
 						`${selectedValues.length}/${limit} selected`
 					:	placeholder}
 				</span>
 				<FaChevronDown
-					className={`text-xs text-gray-300 transition-transform ${open ? 'rotate-180' : ''}`}
+					size={9}
+					className={`shrink-0 text-white/20 transition-transform ${open ? 'rotate-180' : ''}`}
 				/>
 			</button>
 
@@ -302,126 +305,105 @@ function FavoriteMultiSelect({
 			)}
 
 			{open && (
-				<div className="absolute left-0 right-0 top-full z-100 mt-2 rounded-xl border border-white/15 bg-linear-to-b from-black/92 via-black/94 to-black/98 p-2 shadow-[0_18px_44px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
-					<div className="px-1.5 pb-2">
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
+					<div className="px-2 py-2 border-b border-white/[0.04]">
 						<input
 							type="text"
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder="Search..."
-							className="w-full rounded-lg border border-white/14 bg-black/60 px-3 py-2.5 text-sm text-white outline-none transition focus:border-red-400/45"
+							className="w-full rounded-lg border border-white/6 bg-white/5 py-1.5 px-3 text-xs text-white outline-none transition focus:border-white/15"
 						/>
 					</div>
-					<div className="max-h-80 overflow-y-auto pr-1">
-						<div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-							{visibleOptions.map((option) => {
-								const checked = selectedSet.has(option.value);
-								const disabled = !checked && selectedValues.length >= limit;
-								const accent = option.accentColor || '#9ca3af';
+					<div className="max-h-72 overflow-y-auto py-1">
+						{visibleOptions.map((option) => {
+							const checked = selectedSet.has(option.value);
+							const disabled = !checked && selectedValues.length >= limit;
+							const accent = option.accentColor || '#9ca3af';
 
-								return (
-									<button
-										key={`${label}-${option.value}`}
-										type="button"
-										onClick={() => {
-											if (disabled) return;
-											onToggle(option.value);
-										}}
-										disabled={disabled}
-										className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left transition-colors ${
-											disabled ?
-												'cursor-not-allowed opacity-45'
-											:	'border-white/12 hover:border-white/30'
-										}`}
-										style={{
-											background: `linear-gradient(135deg, ${hexToRgba(accent, 0.28)} 0%, rgba(12,12,14,0.88) 62%)`,
-											boxShadow:
-												checked ?
-													`inset 0 0 0 1px ${hexToRgba(accent, 0.62)}`
-												:	'none',
-										}}
+							return (
+								<button
+									key={`${label}-${option.value}`}
+									type="button"
+									onClick={() => {
+										if (disabled) return;
+										onToggle(option.value);
+										// Auto close dropdown when limit is reached
+										if (!checked && selectedValues.length + 1 >= limit) {
+											setOpen(false);
+										}
+									}}
+									disabled={disabled}
+									className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm transition-colors ${
+										disabled ?
+											'cursor-not-allowed opacity-40'
+										:	'hover:bg-white/3'
+									} ${checked ? 'text-white' : 'text-white/72'}`}
+									style={
+										checked ? { backgroundColor: hexToRgba(accent, 0.4) } : {}
+									}
+								>
+									<div
+										className={`relative shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/3 flex items-center justify-center ${!isDriverList ? 'h-8 w-12' : 'h-8 w-8'}`}
 									>
-										<div
-											className="pointer-events-none absolute inset-0 opacity-[0.22]"
-											style={{
-												backgroundImage:
-													'repeating-linear-gradient(110deg, rgba(255,255,255,0.18) 0px, rgba(255,255,255,0.18) 1px, transparent 1px, transparent 14px)',
-											}}
-										/>
-										<div
-											className="absolute left-0 top-0 bottom-0 w-[3px]"
-											style={{
-												backgroundColor: hexToRgba(
-													accent,
-													checked ? 0.9 : 0.45
-												),
-											}}
-										/>
-										<span
-											className={`relative z-10 inline-flex h-4 w-4 items-center justify-center rounded border ${
-												checked ?
-													'border-red-400 bg-red-500/20'
-												:	'border-white/25 bg-black/35'
-											}`}
-										>
-											{checked && (
-												<span className="h-2 w-2 rounded-[3px] bg-red-300" />
-											)}
-										</span>
 										{option.imageSrc && (
-											<div
-												className={`relative z-10 shrink-0 overflow-hidden rounded-lg border border-white/20 ${
-													isDriverList ? 'h-14 w-14' : 'h-12 w-12'
-												}`}
-												style={{ backgroundColor: hexToRgba(accent, 0.26) }}
-											>
-												<Image
-													src={option.imageSrc}
-													alt={option.label}
-													fill
-													className="object-cover object-top"
-													onError={(event) => {
-														event.currentTarget.style.display = 'none';
-													}}
-												/>
-											</div>
-										)}
-										{option.logoSrc && (
-											<div
-												className={`relative z-10 shrink-0 overflow-hidden rounded-md border border-white/20 bg-black/45 p-1.5 ${
-													isDriverList ? 'h-10 w-10' : 'h-12 w-12'
-												}`}
-												style={{
-													boxShadow: `0 0 0 1px ${hexToRgba(accent, 0.38)}`,
+											<Image
+												src={option.imageSrc}
+												alt=""
+												fill
+												sizes={!isDriverList ? '48px' : '32px'}
+												className={
+													!isDriverList ?
+														'object-contain p-1.5'
+													:	'object-cover object-top'
+												}
+												onError={(event) => {
+													event.currentTarget.style.display = 'none';
 												}}
-											>
-												<Image
-													src={option.logoSrc}
-													alt={option.label}
-													fill
-													className="object-contain"
-													onError={(event) => {
-														event.currentTarget.style.display = 'none';
-													}}
-												/>
-											</div>
+											/>
 										)}
-										<div className="relative z-10 min-w-0 flex-1">
-											<p className="truncate text-sm font-bold text-white">
-												{option.label}
-											</p>
-											{option.subLabel && (
-												<p className="truncate text-xs text-gray-200/85">
-													{option.subLabel}
-												</p>
-											)}
+									</div>
+									{isDriverList && option.logoSrc && (
+										<div className="relative h-5 w-5 shrink-0">
+											<Image
+												src={option.logoSrc}
+												alt=""
+												fill
+												sizes="20px"
+												className="object-contain"
+												onError={(event) => {
+													event.currentTarget.style.display = 'none';
+												}}
+											/>
 										</div>
-									</button>
-								);
-							})}
-						</div>
+									)}
+									<div className="flex-1 text-left min-w-0">
+										<p
+											className="font-medium truncate text-sm"
+											style={checked ? { color: 'white' } : {}}
+										>
+											{option.label}
+										</p>
+										{isDriverList && option.subLabel && (
+											<p
+												className="text-[10px] text-white/40 truncate"
+												style={
+													checked ? { color: 'rgba(255,255,255,0.7)' } : {}
+												}
+											>
+												{option.subLabel}
+											</p>
+										)}
+									</div>
+									<div
+										className="w-1 h-6 rounded-full shrink-0"
+										style={{ backgroundColor: accent }}
+									/>
+								</button>
+							);
+						})}
 						{visibleOptions.length === 0 && (
-							<p className="px-3 py-2 text-xs text-gray-400">
+							<p className="px-3 py-2 text-xs text-white/40 text-center">
 								No matches found.
 							</p>
 						)}
