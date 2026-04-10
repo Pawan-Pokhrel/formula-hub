@@ -1,5 +1,5 @@
-export const FAVORITE_DRIVER_LIMIT = 5;
-export const FAVORITE_TEAM_LIMIT = 3;
+export const FAVORITE_DRIVER_LIMIT = 4;
+export const FAVORITE_TEAM_LIMIT = 2;
 export const DASHBOARD_PREFS_STORAGE_KEY =
 	'formulahub.dashboard.preferences.v1';
 

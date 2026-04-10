@@ -15,7 +15,11 @@ import {
 	UpcomingSessionsWidget,
 	WeekendStatusWidget,
 } from '@/components/dashboard/widgets';
-import { parseRaceDateTime } from '@/components/schedule/scheduleHelpers';
+import {
+	getDriverImagePath,
+	getTeamLogoPath,
+	parseRaceDateTime,
+} from '@/components/schedule/scheduleHelpers';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
 	getCurrentWeekendBrief,
@@ -42,9 +46,12 @@ import {
 	WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
 import { useAuth } from '@/providers/AuthProvider';
+import { getCarImage } from '@/utils/f1_images';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+	FaArrowRight,
 	FaBroadcastTower,
 	FaCalendarAlt,
 	FaChartLine,
@@ -53,20 +60,6 @@ import {
 	FaStar,
 	FaTrophy,
 } from 'react-icons/fa';
-import {
-	Area,
-	AreaChart,
-	Bar,
-	BarChart,
-	CartesianGrid,
-	Cell,
-	LabelList,
-	Legend,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
-} from 'recharts';
 
 const DASHBOARD_ASPECTS = [
 	{
@@ -205,7 +198,6 @@ export default function DashboardPage() {
 	const [weekendBrief, setWeekendBrief] = useState(null);
 	const [f1News, setF1News] = useState([]);
 
-	// Derived: generated races from the track schedule
 	const generatedRaces = useMemo(
 		() =>
 			trackSchedule
@@ -356,7 +348,7 @@ export default function DashboardPage() {
 		const completed = src.filter((r) => r.is_past).length;
 		const totalRounds = src.length;
 		const dataReady = trackSchedule.filter((r) => r.has_data).length;
-		const upcomingRound = nextRace?.round || '—';
+		const upcomingRound = nextRace?.round || '-';
 		const upcomingRoundNum = Number(nextRace?.round) || 0;
 		const leaderPoints = Number(driverStandings[0]?.points || 0);
 		const runnerUpPoints = Number(driverStandings[1]?.points || 0);
@@ -754,7 +746,6 @@ export default function DashboardPage() {
 				<div className="fixed inset-0 z-0 bg-black/90" />
 				<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_14%,rgba(239,68,68,0.14),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(39,244,210,0.11),transparent_33%),radial-gradient(circle_at_78%_76%,rgba(255,128,0,0.10),transparent_36%),radial-gradient(circle_at_18%_82%,rgba(54,113,198,0.10),transparent_34%)]" />
 				<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 pb-12 animate-fade-in">
-					{/* Hero Banner */}
 					<div className="relative overflow-hidden rounded-2xl border border-white/12 bg-black/60 p-7 backdrop-blur-xl md:p-10">
 						<div
 							className="pointer-events-none absolute inset-0 opacity-30"
@@ -774,7 +765,7 @@ export default function DashboardPage() {
 							</h1>
 							<p className="mt-4 max-w-2xl text-sm leading-7 text-gray-300 md:text-base">
 								Live championship standings, upcoming race countdowns, and
-								personalized driver favorites — all in one place. Sign in to
+								personalized driver favorites - all in one place. Sign in to
 								unlock saved track replays, strategy tools, and telemetry
 								insights.
 							</p>
@@ -804,7 +795,6 @@ export default function DashboardPage() {
 						</div>
 					</div>
 
-					{/* KPI Cards */}
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
 						{kpis.slice(0, 6).map((item) => (
 							<div
@@ -827,15 +817,13 @@ export default function DashboardPage() {
 						))}
 					</div>
 
-					{/* Championship Preview + Next Race */}
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-						{/* Championship leaders */}
 						<div className="rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-xl">
 							<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">
 								Championship Leaders
 							</p>
 							<p className="mb-5 text-xs text-gray-500">
-								Live standings preview — sign in to set favorites
+								Live standings preview - sign in to set favorites
 							</p>
 							<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 								{headlineDriver && (
@@ -845,19 +833,12 @@ export default function DashboardPage() {
 											background: `linear-gradient(120deg,${getTeamColorHex(headlineDriver?.team_name)}CC 0%,${getTeamColorHex(headlineDriver?.team_name)}66 55%,rgba(8,8,10,0.90) 100%)`,
 										}}
 									>
-										<div
-											className="pointer-events-none absolute inset-0 opacity-35"
-											style={{
-												backgroundImage:
-													'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0px,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 14px),repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 16px)',
-											}}
-										/>
 										<div className="relative z-10">
 											<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
 												P1 · Drivers
 											</p>
 											<p className="mt-1 text-xl font-black text-white">
-												{headlineDriver?.driver_name || '—'}
+												{headlineDriver?.driver_name || '-'}
 											</p>
 											<p className="text-xs text-white/70">
 												{headlineDriver?.team_name}
@@ -878,19 +859,12 @@ export default function DashboardPage() {
 											background: `linear-gradient(120deg,${getTeamColorHex(headlineTeam?.team_name)}CC 0%,${getTeamColorHex(headlineTeam?.team_name)}66 55%,rgba(8,8,10,0.90) 100%)`,
 										}}
 									>
-										<div
-											className="pointer-events-none absolute inset-0 opacity-35"
-											style={{
-												backgroundImage:
-													'repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0px,rgba(255,255,255,0.07) 1px,transparent 1px,transparent 14px),repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 16px)',
-											}}
-										/>
 										<div className="relative z-10">
 											<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
 												P1 · Constructors
 											</p>
 											<p className="mt-1 text-xl font-black text-white">
-												{headlineTeam?.team_name || '—'}
+												{headlineTeam?.team_name || '-'}
 											</p>
 											<p className="text-xs text-white/70">
 												Wins: {headlineTeam?.wins || 0}
@@ -932,7 +906,6 @@ export default function DashboardPage() {
 							</div>
 						</div>
 
-						{/* Next Race + CTA */}
 						<div className="flex flex-col gap-4">
 							<div className="flex-1 rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-xl">
 								<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">
@@ -942,7 +915,7 @@ export default function DashboardPage() {
 									{nextRace?.race_name || nextRace?.event || 'Coming soon'}
 								</h2>
 								<p className="mt-1 text-xs text-gray-400">
-									{nextRace?.circuit?.circuit_name || nextRace?.circuit || '—'}
+									{nextRace?.circuit?.circuit_name || nextRace?.circuit || '-'}
 									{' · '}
 									{nextRace?.country || nextRace?.circuit?.country || 'TBA'}
 								</p>
@@ -988,7 +961,6 @@ export default function DashboardPage() {
 			<div className="fixed inset-0 z-0 bg-black/90" />
 			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_10%_14%,rgba(239,68,68,0.14),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(39,244,210,0.11),transparent_33%),radial-gradient(circle_at_78%_76%,rgba(255,128,0,0.10),transparent_36%),radial-gradient(circle_at_18%_82%,rgba(54,113,198,0.10),transparent_34%)]" />
 			<div className="relative z-10 mx-auto w-full max-w-[1700px] space-y-4 pb-12 animate-fade-in">
-				{/* ── Premium Header ── */}
 				<div className="flex flex-col gap-2 pt-6 md:flex-row md:items-end md:justify-between">
 					<div>
 						<p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-400/80">
@@ -1025,7 +997,6 @@ export default function DashboardPage() {
 					</div>
 				</div>
 
-				{/* ── Aspect Tabs ── */}
 				<div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-xl">
 					{DASHBOARD_ASPECTS.filter(
 						(aspect) => aspect.id !== 'saved' || isAuthenticated
@@ -1045,13 +1016,19 @@ export default function DashboardPage() {
 							>
 								{isSaved && (
 									<FaStar
-										className={`text-[9px] ${active ? 'text-red-300' : 'text-red-600'}`}
+										className={`text-[9px] ${
+											active ? 'text-red-300' : 'text-red-600'
+										}`}
 									/>
 								)}
 								{aspect.label}
 								{isSaved && generatedRaces.length > 0 && (
 									<span
-										className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${active ? 'bg-red-500/30 text-red-100' : 'bg-white/10 text-gray-500'}`}
+										className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+											active ?
+												'bg-red-500/30 text-red-100'
+											:	'bg-white/10 text-gray-500'
+										}`}
 									>
 										{generatedRaces.length}
 									</span>
@@ -1062,8 +1039,8 @@ export default function DashboardPage() {
 				</div>
 
 				{activeAspect === 'overview' && (
-					<>
-						<div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-4">
+					<div className="space-y-6">
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
 							{actionRail.map((action) => {
 								const Icon = action.icon;
 								return (
@@ -1071,180 +1048,323 @@ export default function DashboardPage() {
 										key={action.label}
 										href={action.href}
 										prefetch={true}
-										className="rounded-xl border border-white/15 bg-black/38 p-4 text-zinc-100 transition-all hover:-translate-y-px hover:border-red-400/35 hover:bg-red-500/10"
+										className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/45 p-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-red-500/40 hover:bg-black/62 hover:shadow-lg hover:shadow-red-500/10"
 									>
-										<div className="flex items-center justify-between gap-3">
-											<p className="text-sm font-bold tracking-wide text-zinc-100">
-												{action.label}
-											</p>
-											<Icon className="text-lg text-red-300" />
+										<div
+											className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+											style={{
+												backgroundImage:
+													'linear-gradient(135deg, rgba(239,68,68,0.14), rgba(0,0,0,0) 60%)',
+											}}
+										/>
+										<div className="relative z-10 flex items-center justify-between gap-3">
+											<div className="inline-flex min-w-0 items-center gap-3">
+												<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-red-400 transition-colors group-hover:border-red-500/30 group-hover:bg-red-500/15 group-hover:text-red-200">
+													<Icon size={16} />
+												</div>
+												<div className="min-w-0">
+													<p className="truncate text-xs font-black uppercase tracking-[0.14em] text-zinc-100 group-hover:text-white">
+														{action.label}
+													</p>
+													<p className="truncate text-[11px] text-zinc-400 group-hover:text-zinc-300">
+														{action.detail}
+													</p>
+												</div>
+											</div>
+											<div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500 transition-colors group-hover:text-red-300">
+												Open <FaArrowRight className="text-[10px]" />
+											</div>
 										</div>
-										<p className="mt-2 text-xs text-zinc-300">
-											{action.detail}
-										</p>
 									</Link>
 								);
 							})}
 						</div>
 
-						<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-							<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-								<div className="mb-3">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-										Driver Performance Matrix
-									</p>
-									<p className="text-sm font-semibold text-white">
-										Points and wins (top 8)
-									</p>
-								</div>
-								<div className="h-72">
-									<ResponsiveContainer>
-										<BarChart
-											data={driverPointsChartData}
-											layout="vertical"
-											margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
-										>
-											<CartesianGrid
-												stroke="rgba(255,255,255,0.09)"
-												horizontal={false}
-											/>
-											<XAxis
-												type="number"
-												stroke="#a1a1aa"
-											/>
-											<YAxis
-												type="category"
-												dataKey="name"
-												stroke="#d4d4d8"
-												width={46}
-											/>
-											<Tooltip contentStyle={chartTooltipStyle} />
-											<Legend wrapperStyle={{ fontSize: 11 }} />
-											<Bar
-												dataKey="points"
-												name="Points"
-												radius={[4, 4, 4, 4]}
-											>
-												{driverPointsChartData.map((entry, index) => (
-													<Cell
-														key={`driver-cell-${entry.name}-${index}`}
-														fill={entry.teamColor}
-													/>
-												))}
-												<LabelList
-													dataKey="points"
-													position="right"
-													fill="#f4f4f5"
-													fontSize={11}
-												/>
-											</Bar>
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
-							</div>
+						{favoriteDrivers.length > 0 || favoriteTeams.length > 0 ?
+							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+								{favoriteDrivers.slice(0, 3).map((code) => {
+									const drv = driverStandings.find(
+										(d) => d.driver_code === code
+									);
+									if (!drv) return null;
+									const leaderPoints = Number(driverStandings[0]?.points || 0);
+									const gap = leaderPoints - Number(drv.points);
+									const isLeader = driverStandings[0]?.driver_code === code;
+									const driverRankIndex = driverStandings.findIndex(
+										(d) => d.driver_code === code
+									);
+									const driverRank = Number(
+										drv.position ||
+											(driverRankIndex >= 0 ? driverRankIndex + 1 : 0)
+									);
+									const runnerUpPoints = Number(
+										driverStandings[1]?.points || 0
+									);
+									const displayGap =
+										isLeader ?
+											`+${Math.max(0, Number(drv.points) - runnerUpPoints)} PTS CLEAR`
+										:	`-${Math.max(0, gap)} PTS TO LEADER`;
 
-							<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-								<div className="mb-3">
-									<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-										Constructor Scorecard
-									</p>
-									<p className="text-sm font-semibold text-white">
-										Team points vs wins
-									</p>
-								</div>
-								<div className="h-72">
-									<ResponsiveContainer>
-										<BarChart
-											data={constructorPointsChartData}
-											margin={{ top: 8, right: 8, left: 8, bottom: 12 }}
-										>
-											<CartesianGrid
-												stroke="rgba(255,255,255,0.09)"
-												vertical={false}
-											/>
-											<XAxis
-												dataKey="shortTeam"
-												stroke="#d4d4d8"
-											/>
-											<YAxis stroke="#a1a1aa" />
-											<Tooltip contentStyle={chartTooltipStyle} />
-											<Legend wrapperStyle={{ fontSize: 11 }} />
-											<Bar
-												dataKey="points"
-												name="Points"
-												radius={[6, 6, 0, 0]}
-											>
-												{constructorPointsChartData.map((entry, index) => (
-													<Cell
-														key={`constructor-cell-${entry.shortTeam}-${index}`}
-														fill={entry.teamColor}
-													/>
-												))}
-												<LabelList
-													dataKey="points"
-													position="top"
-													fill="#f4f4f5"
-													fontSize={11}
-												/>
-											</Bar>
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
-							</div>
-						</div>
+									const teamColor = getTeamColorHex(drv.team_name);
+									const driverImg = getDriverImagePath(code);
+									const teamLogo = getTeamLogoPath(drv.team_name);
+									const carImg = getCarImage(drv.team_name);
 
-						<div className="rounded-2xl border border-white/12 bg-black/35 p-4 backdrop-blur-md">
-							<div className="mb-3">
-								<p className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-									Operational Readiness Trend
-								</p>
-								<p className="text-sm font-semibold text-white">
-									Completed rounds vs track data readiness
-								</p>
+									return (
+										<div
+											key={code}
+											className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20"
+											style={{
+												backgroundImage: `radial-gradient(circle at top right, ${teamColor}33 0%, rgba(0,0,0,0) 65%)`,
+											}}
+										>
+											<div
+												className="pointer-events-none absolute inset-0 opacity-20"
+												style={{
+													backgroundImage:
+														'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 15px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 18px)',
+												}}
+											/>
+											<div className="absolute right-0 top-0 h-full w-3/4 opacity-20 transition-opacity duration-500 hover:opacity-40">
+												{carImg && (
+													<Image
+														src={carImg}
+														alt="Car"
+														fill
+														className="object-contain object-right mix-blend-screen scale-125 translate-x-12 translate-y-8"
+													/>
+												)}
+											</div>
+											<div className="relative z-10 flex items-start justify-between">
+												<div className="flex items-center gap-4">
+													{driverImg ?
+														<div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white/10 bg-black/50 shadow-xl">
+															<Image
+																src={driverImg}
+																alt={code}
+																fill
+																className="object-cover object-top"
+															/>
+														</div>
+													:	<div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-xl font-black shadow-xl">
+															{code}
+														</div>
+													}
+													<div>
+														<p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+															Favorite Driver
+														</p>
+														<h3 className="text-xl font-black leading-none text-white">
+															{drv.driver_name}
+														</h3>
+														<p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-gray-400">
+															{teamLogo && (
+																<span className="relative inline-block h-3.5 w-3.5 opacity-80">
+																	<Image
+																		src={teamLogo}
+																		alt=""
+																		fill
+																		className="object-contain"
+																	/>
+																</span>
+															)}
+															{drv.team_name}
+														</p>
+													</div>
+												</div>
+												<div className="flex flex-col items-end gap-2">
+													<span className="rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/85">
+														P{driverRank || '-'}
+													</span>
+													{isLeader && (
+														<span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">
+															Leader
+														</span>
+													)}
+												</div>
+											</div>
+											<div className="relative z-10 mt-6 grid grid-cols-2 gap-3">
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Championship Rank
+													</p>
+													<p className="text-lg font-black text-white">
+														P{driverRank || '-'}
+													</p>
+												</div>
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Championship
+													</p>
+													<p className="text-2xl font-black text-white">
+														{drv.points}{' '}
+														<span className="text-xs text-gray-500 font-bold">
+															PTS
+														</span>
+													</p>
+												</div>
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3 col-span-2">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Title Focus
+													</p>
+													<p
+														className="text-lg font-black leading-tight"
+														style={{ color: isLeader ? '#22c55e' : '#f87171' }}
+													>
+														{displayGap}
+													</p>
+												</div>
+											</div>
+										</div>
+									);
+								})}
+
+								{favoriteTeams.slice(0, 3).map((teamName) => {
+									const tm = constructorStandings.find(
+										(t) => t.team_name === teamName
+									);
+									if (!tm) return null;
+									const leaderPoints = Number(
+										constructorStandings[0]?.points || 0
+									);
+									const gap = leaderPoints - Number(tm.points);
+									const isLeader =
+										constructorStandings[0]?.team_name === teamName;
+									const teamRankIndex = constructorStandings.findIndex(
+										(t) => t.team_name === teamName
+									);
+									const teamRank = Number(
+										tm.position || (teamRankIndex >= 0 ? teamRankIndex + 1 : 0)
+									);
+									const runnerUpPoints = Number(
+										constructorStandings[1]?.points || 0
+									);
+									const displayGap =
+										isLeader ?
+											`+${Math.max(0, Number(tm.points) - runnerUpPoints)} PTS CLEAR`
+										:	`-${Math.max(0, gap)} PTS TO LEADER`;
+
+									const teamColor = getTeamColorHex(teamName);
+									const teamLogo = getTeamLogoPath(teamName);
+									const carImg = getCarImage(teamName);
+
+									return (
+										<div
+											key={teamName}
+											className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20"
+											style={{
+												backgroundImage: `radial-gradient(circle at top right, ${teamColor}33 0%, rgba(0,0,0,0) 65%)`,
+											}}
+										>
+											<div
+												className="pointer-events-none absolute inset-0 opacity-20"
+												style={{
+													backgroundImage:
+														'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 15px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 18px)',
+												}}
+											/>
+											<div className="absolute right-0 top-0 h-full w-3/4 opacity-30 transition-opacity duration-500 hover:opacity-50">
+												{carImg && (
+													<Image
+														src={carImg}
+														alt="Car"
+														fill
+														className="object-contain object-right mix-blend-screen scale-125 translate-x-8 translate-y-6"
+													/>
+												)}
+											</div>
+											<div className="relative z-10 flex items-start justify-between">
+												<div className="flex items-center gap-4">
+													{teamLogo ?
+														<div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/50 p-2.5 shadow-xl">
+															<Image
+																src={teamLogo}
+																alt={teamName}
+																fill
+																className="object-contain"
+															/>
+														</div>
+													:	<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/5 text-sm font-black shadow-xl">
+															{teamName.substring(0, 3).toUpperCase()}
+														</div>
+													}
+													<div>
+														<p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+															Favorite Team
+														</p>
+														<h3 className="text-xl font-black leading-none text-white">
+															{teamName}
+														</h3>
+														<p className="mt-1.5 text-xs font-semibold text-gray-400">
+															Wins: {tm.wins} in {currentYear}
+														</p>
+													</div>
+												</div>
+												<div className="flex flex-col items-end gap-2">
+													<span className="rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/85">
+														P{teamRank || '-'}
+													</span>
+													{isLeader && (
+														<span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">
+															Leader
+														</span>
+													)}
+												</div>
+											</div>
+											<div className="relative z-10 mt-6 grid grid-cols-2 gap-3">
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Championship Rank
+													</p>
+													<p className="text-lg font-black text-white">
+														P{teamRank || '-'}
+													</p>
+												</div>
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Championship
+													</p>
+													<p className="text-2xl font-black text-white">
+														{tm.points}{' '}
+														<span className="text-xs text-gray-500 font-bold">
+															PTS
+														</span>
+													</p>
+												</div>
+												<div className="rounded-xl border border-white/5 bg-black/40 p-3 col-span-2">
+													<p className="text-[10px] uppercase tracking-wider text-gray-500">
+														Title Focus
+													</p>
+													<p
+														className="text-lg font-black leading-tight"
+														style={{ color: isLeader ? '#22c55e' : '#f87171' }}
+													>
+														{displayGap}
+													</p>
+												</div>
+											</div>
+										</div>
+									);
+								})}
 							</div>
-							<div className="h-72">
-								<ResponsiveContainer>
-									<AreaChart
-										data={readinessByRoundChartData}
-										margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
-									>
-										<CartesianGrid stroke="rgba(255,255,255,0.09)" />
-										<XAxis
-											dataKey="round"
-											stroke="#d4d4d8"
-										/>
-										<YAxis stroke="#a1a1aa" />
-										<Tooltip contentStyle={chartTooltipStyle} />
-										<Legend wrapperStyle={{ fontSize: 11 }} />
-										<Area
-											type="monotone"
-											dataKey="completed"
-											name="Completed Rounds"
-											stroke="#f87171"
-											fill="#f87171"
-											fillOpacity={0.18}
-										/>
-										<Area
-											type="monotone"
-											dataKey="dataReady"
-											name="Data Ready"
-											stroke="#22d3ee"
-											fill="#22d3ee"
-											fillOpacity={0.16}
-										/>
-										<Area
-											type="monotone"
-											dataKey="backlog"
-											name="Data Gap"
-											stroke="#ef4444"
-											fill="#ef4444"
-											fillOpacity={0.13}
-										/>
-									</AreaChart>
-								</ResponsiveContainer>
+						:	<div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md">
+								<FaStar className="mb-4 text-3xl text-gray-600" />
+								<h3 className="text-lg font-bold text-white">
+									No Favorites Selected
+								</h3>
+								<p className="mt-2 max-w-sm text-center text-sm text-gray-400">
+									Select your favorite drivers and teams from your profile or
+									the standing hub to unlock personalized stats here.
+								</p>
+								<Link
+									href="/profile"
+									className="mt-4 rounded-xl bg-red-600 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-500 transition-colors"
+								>
+									Update Preferences
+								</Link>
 							</div>
-						</div>
-					</>
+						}
+					</div>
 				)}
 
 				<div
