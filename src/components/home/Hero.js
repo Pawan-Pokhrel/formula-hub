@@ -17,7 +17,7 @@ export default function Hero() {
 					fill
 					sizes="100vw"
 					priority
-					className="h-full w-full object-cover object-center opacity-40 brightness-75 mix-blend-lighten"
+					className="h-full w-full object-cover object-center opacity-40 brightness-100 mix-blend-lighten"
 				/>
 				{/* Gradient Overlays for Readability and Blending */}
 				<div className="absolute inset-0 bg-linear-to-b from-[#050507]/20 via-[#050507]/60 to-[#050507]" />
