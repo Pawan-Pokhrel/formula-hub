@@ -1,6 +1,7 @@
 'use client';
 
 import authApi from '@/lib/api/authApi';
+import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -13,9 +14,11 @@ import { FcGoogle } from 'react-icons/fc';
 import {
 	FiArrowLeft,
 	FiCheck,
+	FiImage,
 	FiLock,
 	FiMail,
 	FiPhone,
+	FiUpload,
 	FiUser,
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
@@ -32,6 +35,7 @@ const schema = yup.object().shape({
 		.email('Invalid email format'),
 	phoneNumber: yup.string().required('Phone number is required'),
 	username: yup.string().optional(),
+	avatarUrl: yup.string().nullable().optional(),
 	password: yup
 		.string()
 		.required('Password is required')
@@ -96,7 +100,10 @@ function VerificationCodeInput({ value, onChange, disabled }) {
 
 	const handlePaste = (e) => {
 		e.preventDefault();
-		const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
+		const pasted = e.clipboardData
+			.getData('text')
+			.replace(/\D/g, '')
+			.slice(0, CODE_LENGTH);
 		if (pasted.length === 0) return;
 		const padded = pasted.padEnd(CODE_LENGTH, ' ');
 		onChange(padded);
@@ -126,11 +133,7 @@ function VerificationCodeInput({ value, onChange, disabled }) {
 						bg-white/5 text-white outline-none
 						transition-all duration-200
 						focus:border-red-500 focus:ring-2 focus:ring-red-500/25 focus:bg-white/8
-						${
-							value[i]?.trim()
-								? 'border-red-500/50 bg-red-900/8'
-								: 'border-white/20'
-						}
+						${value[i]?.trim() ? 'border-red-500/50 bg-red-900/8' : 'border-white/20'}
 						${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-text'}
 					`}
 					autoComplete="one-time-code"
@@ -175,11 +178,7 @@ function VerificationStep({ email, onVerified, onBack }) {
 				onVerified(response.token);
 			}
 		} catch (err) {
-			const msg =
-				err.response?.data?.detail ||
-				err.message ||
-				'Verification failed.';
-			toast.error(msg);
+			toast.error(getApiErrorMessage(err, 'Verification failed.'));
 		} finally {
 			setIsVerifying(false);
 		}
@@ -202,11 +201,7 @@ function VerificationStep({ email, onVerified, onBack }) {
 			setResendCooldown(60);
 			setCode('      ');
 		} catch (err) {
-			const msg =
-				err.response?.data?.detail ||
-				err.message ||
-				'Failed to resend code.';
-			toast.error(msg);
+			toast.error(getApiErrorMessage(err, 'Failed to resend code.'));
 		} finally {
 			setIsResending(false);
 		}
@@ -243,22 +238,21 @@ function VerificationStep({ email, onVerified, onBack }) {
 				onClick={handleVerify}
 				disabled={!isCodeComplete || isVerifying}
 				className={`w-full py-4 rounded-xl font-semibold text-white transition cursor-pointer flex items-center justify-center gap-2 ${
-					isCodeComplete && !isVerifying
-						? 'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
-						: 'bg-white/15 cursor-not-allowed'
+					isCodeComplete && !isVerifying ?
+						'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
+					:	'bg-white/15 cursor-not-allowed'
 				}`}
 			>
-				{isVerifying ? (
+				{isVerifying ?
 					<>
 						<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
 						Verifying...
 					</>
-				) : (
-					<>
+				:	<>
 						<FiCheck className="text-lg" />
 						Verify Email
 					</>
-				)}
+				}
 			</button>
 
 			{/* Resend & Timer */}
@@ -271,16 +265,16 @@ function VerificationStep({ email, onVerified, onBack }) {
 					onClick={handleResend}
 					disabled={isResending || resendCooldown > 0}
 					className={`text-sm font-semibold transition ${
-						resendCooldown > 0 || isResending
-							? 'text-white/30 cursor-not-allowed'
-							: 'text-red-400 hover:text-red-300 cursor-pointer'
+						resendCooldown > 0 || isResending ?
+							'text-white/30 cursor-not-allowed'
+						:	'text-red-400 hover:text-red-300 cursor-pointer'
 					}`}
 				>
-					{isResending
-						? 'Sending...'
-						: resendCooldown > 0
-						? `Resend code in ${resendCooldown}s`
-						: 'Resend code'}
+					{isResending ?
+						'Sending...'
+					: resendCooldown > 0 ?
+						`Resend code in ${resendCooldown}s`
+					:	'Resend code'}
 				</button>
 			</div>
 
@@ -305,6 +299,8 @@ export default function RegisterPage() {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+	const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+	const [avatarPreview, setAvatarPreview] = useState('');
 
 	// Verification step state
 	const [showVerification, setShowVerification] = useState(false);
@@ -316,10 +312,60 @@ export default function RegisterPage() {
 		formState: { errors, isValid, isDirty },
 		getValues,
 		reset,
+		setValue,
+		watch,
 	} = useForm({
 		resolver: yupResolver(schema),
 		mode: 'onChange',
 	});
+
+	const avatarUrl = watch('avatarUrl');
+
+	useEffect(() => {
+		if (!avatarUrl) {
+			setAvatarPreview('');
+			return;
+		}
+		setAvatarPreview(avatarUrl);
+	}, [avatarUrl]);
+
+	const handleAvatarUpload = async (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		if (!file.type?.startsWith('image/')) {
+			toast.error('Please choose an image file.');
+			event.target.value = '';
+			return;
+		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			toast.error('Image must be 5MB or smaller.');
+			event.target.value = '';
+			return;
+		}
+
+		setIsAvatarUploading(true);
+		try {
+			const response = await authApi.uploadAvatar(file);
+			const uploadedUrl = response?.avatarUrl || '';
+			if (!uploadedUrl) {
+				throw new Error('Upload finished but no image URL was returned.');
+			}
+
+			setValue('avatarUrl', uploadedUrl, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+			setAvatarPreview(uploadedUrl);
+			toast.success('Driver profile image uploaded.');
+		} catch (err) {
+			toast.error(getApiErrorMessage(err, 'Failed to upload image.'));
+		} finally {
+			setIsAvatarUploading(false);
+			event.target.value = '';
+		}
+	};
 
 	const handleRegister = async (data) => {
 		setIsSubmitting(true);
@@ -334,11 +380,9 @@ export default function RegisterPage() {
 				setShowVerification(true);
 			}
 		} catch (err) {
-			const msg =
-				err.response?.data?.detail ||
-				err.message ||
-				'Registration failed. Please try again.';
-			toast.error(msg);
+			toast.error(
+				getApiErrorMessage(err, 'Registration failed. Please try again.')
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -353,6 +397,7 @@ export default function RegisterPage() {
 	};
 
 	const loginWithGoogle = useGoogleLogin({
+		scope: 'openid profile email',
 		onSuccess: async (tokenResponse) => {
 			setIsGoogleLoading(true);
 			try {
@@ -362,9 +407,7 @@ export default function RegisterPage() {
 					router.push('/dashboard');
 				}
 			} catch (err) {
-				toast.error(
-					err.response?.data?.detail || err.message || 'Google signup failed.'
-				);
+				toast.error(getApiErrorMessage(err, 'Google signup failed.'));
 			} finally {
 				setIsGoogleLoading(false);
 			}
@@ -408,21 +451,20 @@ export default function RegisterPage() {
 							Formula<span className="text-red-500">Hub</span>
 						</h1>
 						<p className="text-white/70 text-lg">
-							{showVerification
-								? 'Almost there — verify your email'
-								: 'Join the ultimate F1 community'}
+							{showVerification ?
+								'Almost there — verify your email'
+							:	'Join the ultimate F1 community'}
 						</p>
 					</div>
 
 					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-10 py-8 shadow-2xl">
-						{showVerification ? (
+						{showVerification ?
 							<VerificationStep
 								email={registeredEmail}
 								onVerified={handleVerified}
 								onBack={handleBackToRegister}
 							/>
-						) : (
-							<>
+						:	<>
 								<div className="text-center mb-6">
 									<h2 className="text-3xl font-bold text-white">
 										Create Account
@@ -436,6 +478,10 @@ export default function RegisterPage() {
 									onSubmit={handleSubmit(handleRegister)}
 									className="space-y-5.5"
 								>
+									<input
+										type="hidden"
+										{...register('avatarUrl')}
+									/>
 									{/* Full Name */}
 									<div>
 										<label className="block text-sm font-medium text-white mb-2">
@@ -443,11 +489,10 @@ export default function RegisterPage() {
 										</label>
 										<div
 											className={`flex gap-4 items-center rounded-xl border transition ${
-												errors.fullName
-													? 'border-red-500'
-													: getValues('fullName') && !errors.fullName
-													? 'border-red-600'
-													: 'border-white/30'
+												errors.fullName ? 'border-red-500'
+												: getValues('fullName') && !errors.fullName ?
+													'border-red-600'
+												:	'border-white/30'
 											} ${isDirty && getValues('fullName') ? 'bg-red-900/10' : ''}`}
 										>
 											<FiUser className="ml-4 text-white/60" />
@@ -473,11 +518,10 @@ export default function RegisterPage() {
 											</label>
 											<div
 												className={`flex gap-4 items-center rounded-xl border transition ${
-													errors.email
-														? 'border-red-500'
-														: getValues('email') && !errors.email
-														? 'border-red-600'
-														: 'border-white/30'
+													errors.email ? 'border-red-500'
+													: getValues('email') && !errors.email ?
+														'border-red-600'
+													:	'border-white/30'
 												} ${isDirty && getValues('email') ? 'bg-red-900/10' : ''}`}
 											>
 												<FiMail className="ml-4 text-white/60" />
@@ -502,13 +546,13 @@ export default function RegisterPage() {
 											</label>
 											<div
 												className={`flex gap-4 items-center rounded-xl border transition ${
-													errors.phoneNumber
-														? 'border-red-500'
-														: getValues('phoneNumber') && !errors.phoneNumber
-														? 'border-red-600'
-														: 'border-white/30'
+													errors.phoneNumber ? 'border-red-500'
+													: getValues('phoneNumber') && !errors.phoneNumber ?
+														'border-red-600'
+													:	'border-white/30'
 												} ${
-													isDirty && getValues('phoneNumber') ? 'bg-red-900/10' : ''
+													isDirty && getValues('phoneNumber') ? 'bg-red-900/10'
+													:	''
 												}`}
 											>
 												<FiPhone className="ml-4 text-white/60" />
@@ -531,7 +575,9 @@ export default function RegisterPage() {
 									<div>
 										<label className="block text-sm font-medium text-white mb-2">
 											Username{' '}
-											<span className="text-white/50 font-normal">(optional)</span>
+											<span className="text-white/50 font-normal">
+												(optional)
+											</span>
 										</label>
 										<div
 											className={`flex gap-4 items-center rounded-xl border border-white/30 transition ${
@@ -548,6 +594,80 @@ export default function RegisterPage() {
 										</div>
 									</div>
 
+									{/* Driver Profile Image (Optional) */}
+									<div>
+										<label className="block text-sm font-medium text-white mb-2">
+											Driver Badge Image{' '}
+											<span className="text-white/50 font-normal">
+												(optional)
+											</span>
+										</label>
+										<div className="rounded-xl border border-white/20 bg-black/35 p-4">
+											<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+												<div className="flex items-center gap-3">
+													<div className="flex h-11 w-11 items-center justify-center rounded-full border border-red-500/40 bg-red-900/20 text-red-300">
+														<FiImage className="text-lg" />
+													</div>
+													<div>
+														<p className="text-sm font-semibold text-white">
+															Grid Photo Upload
+														</p>
+														<p className="text-xs text-white/55">
+															JPG, PNG, WEBP, or GIF up to 5MB.
+														</p>
+													</div>
+												</div>
+												<label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-500/35 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-red-200 hover:bg-red-900/30">
+													<FiUpload className="text-sm" />
+													{isAvatarUploading ? 'Uploading...' : 'Select Image'}
+													<input
+														type="file"
+														accept="image/*"
+														onChange={handleAvatarUpload}
+														disabled={isAvatarUploading}
+														className="hidden"
+													/>
+												</label>
+											</div>
+
+											{avatarPreview && (
+												<div className="mt-4 flex items-center gap-3">
+													<div className="h-14 w-14 overflow-hidden rounded-full border border-white/20 bg-black/40">
+														<Image
+															src={avatarPreview}
+															alt="Driver badge preview"
+															width={56}
+															height={56}
+															unoptimized
+															className="h-full w-full object-cover"
+														/>
+													</div>
+													<div className="flex-1">
+														<p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">
+															Ready On Grid
+														</p>
+														<p className="text-xs text-white/50">
+															Your image will appear after signup and in your
+															profile menu.
+														</p>
+													</div>
+													<button
+														type="button"
+														onClick={() =>
+															setValue('avatarUrl', '', {
+																shouldDirty: true,
+																shouldValidate: true,
+															})
+														}
+														className="text-xs text-white/70 hover:text-white"
+													>
+														Remove
+													</button>
+												</div>
+											)}
+										</div>
+									</div>
+
 									{/* Passwords */}
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 										<div>
@@ -556,11 +676,10 @@ export default function RegisterPage() {
 											</label>
 											<div
 												className={`flex gap-4 items-center rounded-xl border transition ${
-													errors.password
-														? 'border-red-500'
-														: getValues('password') && !errors.password
-														? 'border-red-600'
-														: 'border-white/30'
+													errors.password ? 'border-red-500'
+													: getValues('password') && !errors.password ?
+														'border-red-600'
+													:	'border-white/30'
 												}`}
 											>
 												<FiLock className="ml-4 text-white/60" />
@@ -576,11 +695,9 @@ export default function RegisterPage() {
 													onClick={() => setShowPassword(!showPassword)}
 													className="px-4 text-white/60 hover:text-white transition cursor-pointer"
 												>
-													{showPassword ? (
+													{showPassword ?
 														<LuEyeOff size={20} />
-													) : (
-														<LuEye size={20} />
-													)}
+													:	<LuEye size={20} />}
 												</button>
 											</div>
 											{errors.password && (
@@ -596,12 +713,13 @@ export default function RegisterPage() {
 											</label>
 											<div
 												className={`flex items-center rounded-xl border transition ${
-													errors.confirmPassword
-														? 'border-red-500'
-														: getValues('confirmPassword') &&
-														  !errors.confirmPassword
-														? 'border-red-600'
-														: 'border-white/30'
+													errors.confirmPassword ? 'border-red-500'
+													: (
+														getValues('confirmPassword') &&
+														!errors.confirmPassword
+													) ?
+														'border-red-600'
+													:	'border-white/30'
 												}`}
 											>
 												<FiLock className="ml-4 text-white/60" />
@@ -621,11 +739,9 @@ export default function RegisterPage() {
 													}
 													className="px-4 text-white/60 hover:text-white transition cursor-pointer"
 												>
-													{showConfirmPassword ? (
+													{showConfirmPassword ?
 														<LuEyeOff size={20} />
-													) : (
-														<LuEye size={20} />
-													)}
+													:	<LuEye size={20} />}
 												</button>
 											</div>
 											{errors.confirmPassword && (
@@ -669,14 +785,18 @@ export default function RegisterPage() {
 									{/* Submit Button */}
 									<button
 										type="submit"
-										disabled={!isValid || isSubmitting}
+										disabled={!isValid || isSubmitting || isAvatarUploading}
 										className={`w-full py-5 rounded-xl font-semibold text-white transition cursor-pointer ${
-											isValid && !isSubmitting
-												? 'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
-												: 'bg-white/20 cursor-not-allowed'
+											isValid && !isSubmitting && !isAvatarUploading ?
+												'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
+											:	'bg-white/20 cursor-not-allowed'
 										}`}
 									>
-										{isSubmitting ? 'Creating Account...' : 'Create Account'}
+										{isAvatarUploading ?
+											'Uploading Image...'
+										: isSubmitting ?
+											'Creating Account...'
+										:	'Create Account'}
 									</button>
 
 									{/* Divider */}
@@ -695,11 +815,9 @@ export default function RegisterPage() {
 											isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''
 										}`}
 									>
-										{isGoogleLoading ? (
+										{isGoogleLoading ?
 											<span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-										) : (
-											<FcGoogle size={22} />
-										)}
+										:	<FcGoogle size={22} />}
 										{isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
 									</button>
 
@@ -715,7 +833,7 @@ export default function RegisterPage() {
 									</p>
 								</form>
 							</>
-						)}
+						}
 					</div>
 				</div>
 			</div>

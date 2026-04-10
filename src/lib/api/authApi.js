@@ -43,6 +43,17 @@ const authApi = {
 		return data;
 	},
 
+	uploadAvatar: async (file) => {
+		const formData = new FormData();
+		formData.append('file', file);
+		const { data } = await api.post('/auth/avatar/upload', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
+		return data;
+	},
+
 	requestEmailChange: async (payload) => {
 		const { data } = await api.post('/auth/email-change/request', payload);
 		return data;

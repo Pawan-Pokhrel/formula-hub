@@ -1,5 +1,6 @@
 'use client';
 
+import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -23,10 +24,12 @@ const schema = yup.object().shape({
 
 function getSafeNextPath(nextPath) {
 	if (!nextPath || typeof nextPath !== 'string') return '/dashboard';
-	if (!nextPath.startsWith('/') || nextPath.startsWith('//')) return '/dashboard';
+	if (!nextPath.startsWith('/') || nextPath.startsWith('//'))
+		return '/dashboard';
 	const lower = nextPath.toLowerCase();
 	if (lower === '/login' || lower.startsWith('/login?')) return '/dashboard';
-	if (lower === '/register' || lower.startsWith('/register?')) return '/dashboard';
+	if (lower === '/register' || lower.startsWith('/register?'))
+		return '/dashboard';
 	return nextPath;
 }
 
@@ -59,17 +62,16 @@ export default function LoginPage() {
 				router.replace(nextPath);
 			}
 		} catch (err) {
-			const msg =
-				err.response?.data?.detail ||
-				err.message ||
-				'Login failed. Please check your credentials.';
-			toast.error(msg);
+			toast.error(
+				getApiErrorMessage(err, 'Login failed. Please check your credentials.')
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
 	const loginWithGoogle = useGoogleLogin({
+		scope: 'openid profile email',
 		onSuccess: async (tokenResponse) => {
 			setIsGoogleLoading(true);
 			try {
@@ -80,9 +82,7 @@ export default function LoginPage() {
 					router.replace(nextPath);
 				}
 			} catch (err) {
-				toast.error(
-					err.response?.data?.detail || err.message || 'Google sign-in failed.'
-				);
+				toast.error(getApiErrorMessage(err, 'Google sign-in failed.'));
 			} finally {
 				setIsGoogleLoading(false);
 			}
@@ -155,11 +155,9 @@ export default function LoginPage() {
 								</label>
 								<div
 									className={`flex items-center rounded-xl border transition ${
-										errors.email
-											? 'border-red-500'
-											: getValues('email') && !errors.email
-											? 'border-red-600'
-											: 'border-white/30'
+										errors.email ? 'border-red-500'
+										: getValues('email') && !errors.email ? 'border-red-600'
+										: 'border-white/30'
 									} ${isDirty && getValues('email') ? 'bg-white/5' : ''}`}
 								>
 									<FiMail className="ml-4 text-white/60" />
@@ -184,11 +182,10 @@ export default function LoginPage() {
 								</label>
 								<div
 									className={`flex items-center rounded-xl border transition ${
-										errors.password
-											? 'border-red-500'
-											: getValues('password') && !errors.password
-											? 'border-red-600'
-											: 'border-white/30'
+										errors.password ? 'border-red-500'
+										: getValues('password') && !errors.password ?
+											'border-red-600'
+										:	'border-white/30'
 									}`}
 								>
 									<FiLock className="ml-4 text-white/60" />
@@ -203,11 +200,9 @@ export default function LoginPage() {
 										onClick={() => setShowPassword(!showPassword)}
 										className="px-4 text-white/60 hover:text-white transition cursor-pointer"
 									>
-										{showPassword ? (
+										{showPassword ?
 											<LuEyeOff size={20} />
-										) : (
-											<LuEye size={20} />
-										)}
+										:	<LuEye size={20} />}
 									</button>
 								</div>
 								{errors.password && (
@@ -232,9 +227,9 @@ export default function LoginPage() {
 								type="submit"
 								disabled={!isValid || isSubmitting}
 								className={`w-full py-5 rounded-xl font-semibold text-white transition cursor-pointer ${
-									isValid && !isSubmitting
-										? 'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
-										: 'bg-white/20 cursor-not-allowed'
+									isValid && !isSubmitting ?
+										'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
+									:	'bg-white/20 cursor-not-allowed'
 								}`}
 							>
 								{isSubmitting ? 'Signing In...' : 'Sign In'}
@@ -256,11 +251,9 @@ export default function LoginPage() {
 									isGoogleLoading ? 'opacity-70 cursor-not-allowed' : ''
 								}`}
 							>
-								{isGoogleLoading ? (
+								{isGoogleLoading ?
 									<span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-								) : (
-									<FcGoogle size={22} />
-								)}
+								:	<FcGoogle size={22} />}
 								{isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
 							</button>
 

@@ -15,33 +15,26 @@ import {
 	FAVORITE_DRIVER_LIMIT,
 	FAVORITE_TEAM_LIMIT,
 } from '@/lib/dashboard/preferences';
+import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import {
-	FaBolt,
-	FaCheckCircle,
-	FaChevronDown,
-	FaEnvelope,
-	FaKey,
-	FaSave,
-	FaStar,
-	FaUserCog,
-} from 'react-icons/fa';
+import { FaCheckCircle, FaChevronDown } from 'react-icons/fa';
 
 const FAVORITES_LOCAL_KEY = 'formulahub.profile.favorites.v1';
 
 const TEAM_COLOR_HEX = {
 	mercedes: '#27F4D2',
 	ferrari: '#E8002D',
-	mclaren: '#FF8000',
 	'red bull': '#3671C6',
 	'red bull racing': '#3671C6',
+	mclaren: '#FF8000',
+	aston: '#229971',
+	'aston martin': '#229971',
 	williams: '#64C4FF',
 	alpine: '#FF87BC',
 	'alpine f1 team': '#FF87BC',
-	'aston martin': '#229971',
 	haas: '#B6BABD',
 	'haas f1 team': '#B6BABD',
 	'rb f1 team': '#6692FF',
@@ -53,7 +46,6 @@ const TEAM_COLOR_HEX = {
 };
 
 function getTeamColorHex(teamName) {
-	if (!teamName) return '#9ca3af';
 	const normalized = String(teamName).trim().toLowerCase();
 	if (TEAM_COLOR_HEX[normalized]) return TEAM_COLOR_HEX[normalized];
 	for (const [alias, color] of Object.entries(TEAM_COLOR_HEX)) {
@@ -237,7 +229,7 @@ function FavoriteMultiSelect({
 			ref={containerRef}
 			className={`relative ${open ? 'z-50' : 'z-10'}`}
 		>
-			<label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-white/30">
+			<label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
 				{label}
 			</label>
 			<button
@@ -245,12 +237,15 @@ function FavoriteMultiSelect({
 				onClick={() => setOpen((prev) => !prev)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full flex items-center justify-between rounded-xl border border-white/6 bg-black/50 px-3 py-2 text-sm text-white outline-none transition hover:border-white/10 disabled:opacity-40"
+				className="w-full min-h-[50px] flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40"
 			>
-				<span className="truncate flex-1 text-left">
+				<span className="truncate flex-1 text-left pr-2">
 					{selectedValues.length > 0 ?
 						`${selectedValues.length}/${limit} selected`
 					:	placeholder}
+				</span>
+				<span className="mr-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-white/55">
+					{selectedValues.length}/{limit}
 				</span>
 				<FaChevronDown
 					size={9}
@@ -258,68 +253,33 @@ function FavoriteMultiSelect({
 				/>
 			</button>
 
-			{selectedOptions.length > 0 && (
-				<div className="mt-2 flex flex-wrap gap-2">
-					{selectedOptions.map((option) => {
-						const accent = option.accentColor || '#9ca3af';
-						return (
-							<span
-								key={`chip-${label}-${option.value}`}
-								className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] text-gray-100"
-								style={{
-									borderColor: hexToRgba(accent, 0.62),
-									backgroundColor: hexToRgba(accent, 0.22),
-								}}
-							>
-								{option.imageSrc && (
-									<span className="relative h-5 w-5 overflow-hidden rounded-full border border-white/25 bg-black/40">
-										<Image
-											src={option.imageSrc}
-											alt={option.label}
-											fill
-											className="object-cover object-top"
-											onError={(event) => {
-												event.currentTarget.style.display = 'none';
-											}}
-										/>
-									</span>
-								)}
-								{option.logoSrc && (
-									<span className="relative h-5 w-5 overflow-hidden rounded-sm border border-white/20 bg-black/35 p-0.5">
-										<Image
-											src={option.logoSrc}
-											alt={option.label}
-											fill
-											className="object-contain"
-											onError={(event) => {
-												event.currentTarget.style.display = 'none';
-											}}
-										/>
-									</span>
-								)}
-								<span className="max-w-[180px] truncate">{option.label}</span>
-							</span>
-						);
-					})}
-				</div>
-			)}
+			{/* Selected options block removed as requested (displayed below instead) */}
 
 			{open && (
-				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c0c10] shadow-2xl">
-					<div className="px-2 py-2 border-b border-white/[0.04]">
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c0c10] shadow-2xl">
+					<div className="border-b border-white/[0.04] px-2.5 py-2.5">
 						<input
 							type="text"
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
 							placeholder="Search..."
-							className="w-full rounded-lg border border-white/6 bg-white/5 py-1.5 px-3 text-xs text-white outline-none transition focus:border-white/15"
+							className="w-full rounded-lg border border-white/6 bg-white/5 px-3 py-2 text-xs text-white outline-none transition focus:border-white/20"
 						/>
 					</div>
-					<div className="max-h-72 overflow-y-auto py-1">
+					<div className="max-h-72 overflow-y-auto py-1.5">
 						{visibleOptions.map((option) => {
 							const checked = selectedSet.has(option.value);
 							const disabled = !checked && selectedValues.length >= limit;
 							const accent = option.accentColor || '#9ca3af';
+							const optionImage =
+								option.imageSrc || (!isDriverList ? option.logoSrc : null);
+							const activeStyle =
+								checked ?
+									{
+										backgroundImage: `linear-gradient(90deg, ${hexToRgba(accent, 0.86)} 0%, ${hexToRgba(accent, 0.68)} 62%, ${hexToRgba(accent, 0.28)} 100%)`,
+										boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.95)}, 0 10px 20px ${hexToRgba(accent, 0.36)}`,
+									}
+								:	undefined;
 
 							return (
 								<button
@@ -334,21 +294,19 @@ function FavoriteMultiSelect({
 										}
 									}}
 									disabled={disabled}
-									className={`w-full flex items-center gap-2.5 text-left px-3 py-2 text-sm transition-colors ${
+									className={`w-full flex items-center gap-2.5 text-left px-3 py-2.5 text-sm transition-colors ${
 										disabled ?
 											'cursor-not-allowed opacity-40'
 										:	'hover:bg-white/3'
 									} ${checked ? 'text-white' : 'text-white/72'}`}
-									style={
-										checked ? { backgroundColor: hexToRgba(accent, 0.4) } : {}
-									}
+									style={activeStyle}
 								>
 									<div
 										className={`relative shrink-0 overflow-hidden rounded-lg border border-white/5 bg-white/3 flex items-center justify-center ${!isDriverList ? 'h-8 w-12' : 'h-8 w-8'}`}
 									>
-										{option.imageSrc && (
+										{optionImage && (
 											<Image
-												src={option.imageSrc}
+												src={optionImage}
 												alt=""
 												fill
 												sizes={!isDriverList ? '48px' : '32px'}
@@ -379,7 +337,7 @@ function FavoriteMultiSelect({
 									)}
 									<div className="flex-1 text-left min-w-0">
 										<p
-											className="font-medium truncate text-sm"
+											className="truncate text-sm font-medium"
 											style={checked ? { color: 'white' } : {}}
 										>
 											{option.label}
@@ -388,13 +346,14 @@ function FavoriteMultiSelect({
 											<p
 												className="text-[10px] text-white/40 truncate"
 												style={
-													checked ? { color: 'rgba(255,255,255,0.7)' } : {}
+													checked ? { color: 'rgba(255,255,255,0.88)' } : {}
 												}
 											>
 												{option.subLabel}
 											</p>
 										)}
 									</div>
+									{checked && <FaCheckCircle className="text-white/95" />}
 									<div
 										className="w-1 h-6 rounded-full shrink-0"
 										style={{ backgroundColor: accent }}
@@ -411,15 +370,6 @@ function FavoriteMultiSelect({
 				</div>
 			)}
 		</div>
-	);
-}
-
-function getApiErrorMessage(error, fallback) {
-	return (
-		error?.response?.data?.detail ||
-		error?.response?.data?.message ||
-		error?.message ||
-		fallback
 	);
 }
 
@@ -450,8 +400,10 @@ export default function ProfilePage() {
 		fullName: '',
 		phoneNumber: '',
 		username: '',
+		avatarUrl: '',
 	});
 	const [profileSaving, setProfileSaving] = useState(false);
+	const [profileAvatarUploading, setProfileAvatarUploading] = useState(false);
 
 	const [emailChangeForm, setEmailChangeForm] = useState({
 		newEmail: '',
@@ -475,6 +427,7 @@ export default function ProfilePage() {
 			fullName: user?.fullName || '',
 			phoneNumber: user?.phoneNumber || '',
 			username: user?.username || '',
+			avatarUrl: user?.avatarUrl || '',
 		});
 	}, [user]);
 
@@ -554,8 +507,8 @@ export default function ProfilePage() {
 		return () => clearTimeout(timer);
 	}, [favoriteDrivers, favoriteTeams, isAuthenticated, prefsHydrated]);
 
-	const topDrivers = driverStandings.slice(0, 10);
-	const topTeams = constructorStandings.slice(0, 10);
+	const allDrivers = driverStandings;
+	const allTeams = constructorStandings;
 
 	const handleToggleFavoriteDriver = (driverCode) => {
 		setFavoriteDrivers((prev) => {
@@ -582,6 +535,7 @@ export default function ProfilePage() {
 				fullName: profileForm.fullName.trim(),
 				phoneNumber: profileForm.phoneNumber.trim(),
 				username: profileForm.username.trim() || null,
+				avatarUrl: profileForm.avatarUrl || null,
 			};
 			const response = await authApi.updateProfile(payload);
 			await refreshUser();
@@ -591,6 +545,69 @@ export default function ProfilePage() {
 		} finally {
 			setProfileSaving(false);
 		}
+	};
+
+	const persistAvatarChange = async (nextAvatarUrl, successMessage) => {
+		setProfileAvatarUploading(true);
+		try {
+			const response = await authApi.updateProfile({
+				avatarUrl: nextAvatarUrl,
+			});
+
+			const savedAvatar = response?.data?.avatarUrl || '';
+			setProfileForm((prev) => ({ ...prev, avatarUrl: savedAvatar }));
+			await refreshUser();
+			toast.success(successMessage);
+		} catch (error) {
+			toast.error(getApiErrorMessage(error, 'Failed to update profile image.'));
+		} finally {
+			setProfileAvatarUploading(false);
+		}
+	};
+
+	const uploadProfileAvatar = async (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		if (!file.type?.startsWith('image/')) {
+			toast.error('Please choose an image file.');
+			event.target.value = '';
+			return;
+		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			toast.error('Image must be 5MB or smaller.');
+			event.target.value = '';
+			return;
+		}
+
+		try {
+			const response = await authApi.uploadAvatar(file);
+			const uploadedUrl = response?.avatarUrl || '';
+			if (!uploadedUrl) {
+				throw new Error('Upload finished but no image URL was returned.');
+			}
+
+			setProfileForm((prev) => ({ ...prev, avatarUrl: uploadedUrl }));
+			await persistAvatarChange(
+				uploadedUrl,
+				'Profile image updated successfully.'
+			);
+		} catch (error) {
+			toast.error(getApiErrorMessage(error, 'Failed to upload profile image.'));
+		} finally {
+			event.target.value = '';
+		}
+	};
+
+	const removeProfileAvatar = async () => {
+		if (!profileForm.avatarUrl) {
+			toast.error('No profile image to remove.');
+			return;
+		}
+
+		setProfileForm((prev) => ({ ...prev, avatarUrl: '' }));
+		await persistAvatarChange(null, 'Profile image removed.');
 	};
 
 	const requestEmailChange = async () => {
@@ -683,7 +700,7 @@ export default function ProfilePage() {
 
 	const driverOptions = useMemo(
 		() =>
-			topDrivers.map((driver) => ({
+			allDrivers.map((driver) => ({
 				value: driver.driver_code,
 				label: driver.driver_name,
 				subLabel:
@@ -694,25 +711,26 @@ export default function ProfilePage() {
 				logoSrc: getTeamLogoPath(driver.team_name),
 				accentColor: getTeamColorHex(driver.team_name),
 			})),
-		[topDrivers]
+		[allDrivers]
 	);
 
 	const teamOptions = useMemo(
 		() =>
-			topTeams.map((team) => ({
+			allTeams.map((team) => ({
 				value: team.team_name,
 				label: team.team_name,
 				subLabel: `${team.wins ?? 0} wins • ${team.points ?? 0} pts`,
+				imageSrc: getTeamLogoPath(team.team_name),
 				logoSrc: getTeamLogoPath(team.team_name),
 				accentColor: getTeamColorHex(team.team_name),
 			})),
-		[topTeams]
+		[allTeams]
 	);
 
 	const favoriteDriverCards = useMemo(
 		() =>
 			favoriteDrivers.map((driverCode) => {
-				const found = topDrivers.find(
+				const found = allDrivers.find(
 					(driver) => driver.driver_code === driverCode
 				);
 				if (found) return found;
@@ -722,435 +740,587 @@ export default function ProfilePage() {
 					team_name: '',
 				};
 			}),
-		[favoriteDrivers, topDrivers]
+		[favoriteDrivers, allDrivers]
 	);
 
 	const favoriteTeamCards = useMemo(
 		() =>
 			favoriteTeams.map((teamName) => {
-				const found = topTeams.find((team) => team.team_name === teamName);
+				const found = allTeams.find((team) => team.team_name === teamName);
 				if (found) return found;
 				return { team_name: teamName, points: 0, wins: 0 };
 			}),
-		[favoriteTeams, topTeams]
+		[favoriteTeams, allTeams]
 	);
 
 	return (
-		<div className="min-h-screen overflow-x-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
-			<div className="fixed inset-0 z-0 bg-black/88" />
-			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_16%,rgba(239,68,68,0.12),transparent_34%),linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.62))]" />
+		<div className="min-h-screen bg-[#09090b] text-gray-200">
+			{/* Core background texture */}
+			<div className="fixed inset-0 z-0 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center opacity-30 mix-blend-luminosity" />
+			<div className="fixed inset-0 z-0 bg-black/60 backdrop-blur-[2px]" />
 			<div
-				className="pointer-events-none fixed inset-0 z-0 opacity-[0.14]"
+				className="pointer-events-none fixed inset-0 z-0 opacity-10"
 				style={{
-					backgroundImage:
-						'repeating-linear-gradient(0deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 22px)',
+					backgroundImage: `repeating-linear-gradient(45deg, #111 0, #111 1px, transparent 0, transparent 50%),
+									  repeating-linear-gradient(-45deg, #111 0, #111 1px, transparent 0, transparent 50%)`,
+					backgroundSize: '12px 12px',
 				}}
 			/>
-			<div className="relative z-10 mx-auto max-w-7xl space-y-6 pb-12 animate-fade-in">
-				<div className="relative overflow-hidden rounded-3xl border border-white/14 bg-[radial-gradient(circle_at_15%_18%,rgba(239,68,68,0.26),transparent_34%),radial-gradient(circle_at_88%_8%,rgba(34,211,238,0.22),transparent_36%),linear-gradient(165deg,rgba(12,12,14,0.96),rgba(6,7,9,0.98))] p-6 backdrop-blur-2xl md:p-7">
-					<div className="pointer-events-none absolute -right-16 -top-12 h-44 w-44 rounded-full bg-red-500/18 blur-3xl" />
-					<div className="pointer-events-none absolute -left-12 bottom-0 h-40 w-40 rounded-full bg-cyan-400/18 blur-3xl" />
-					<p className="mb-1 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400">
-						Account Command Deck
-					</p>
-					<h1 className="text-3xl font-black tracking-wide md:text-4xl">
-						Profile Settings
+
+			<div className="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-16 md:px-14 lg:px-24">
+				{/* Sleek F1 Style Header */}
+				<div className="mb-10 animate-fade-in">
+					<div className="flex items-center gap-4 mb-2">
+						<div className="h-[2px] w-8 bg-red-600"></div>
+						<p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
+							FormulaHub Settings
+						</p>
+					</div>
+					<h1 className="text-4xl font-black uppercase tracking-tight text-white md:text-5xl">
+						Driver Profile
 					</h1>
-					<p className="mt-2 max-w-3xl text-sm text-gray-300">
-						Personalize your account identity, lock in dual-email verification,
-						and curate your favorite drivers and teams with rich visuals across
-						the dashboard.
+					<p className="mt-3 max-w-2xl text-sm font-medium tracking-wide text-gray-500">
+						CONFIGURE YOUR PERSONAL DETAILS, IDENTITY, AND TRACK PREFERENCES FOR
+						A TAILORED EXPERIENCE AND DASHBOARD.
 					</p>
 				</div>
 
-				<div className="relative z-30 overflow-visible rounded-3xl border border-white/14 bg-[radial-gradient(circle_at_86%_14%,rgba(239,68,68,0.2),transparent_38%),linear-gradient(160deg,rgba(17,17,24,0.95),rgba(8,8,12,0.94))] p-5 shadow-[0_20px_46px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:p-6">
-					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-						<div>
-							<div className="inline-flex items-center gap-2 text-yellow-300">
-								<FaStar className="text-[11px]" />
-								<h2 className="text-lg font-black tracking-wide text-white">
-									Favorites Personalization
-								</h2>
-							</div>
-							<p className="mt-1 text-xs text-gray-300">
-								Set your pit-wall heroes. Colors, portraits, and logos are now
-								fully visual.
-							</p>
-						</div>
-						<div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/45 px-3 py-1 text-xs text-gray-200">
-							<FaBolt className="text-yellow-300" />
-							{savingFavorites ? 'Syncing favorites...' : 'Favorites auto-sync'}
-						</div>
-					</div>
-
-					<div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-						<div className="rounded-2xl border border-white/12 bg-black/40 p-3">
-							<p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-300">
-								Drivers Grid ({favoriteDriverCards.length}/
-								{FAVORITE_DRIVER_LIMIT})
-							</p>
-							<div className="flex flex-wrap gap-2">
-								{favoriteDriverCards.length === 0 && (
-									<p className="text-xs text-gray-400">
-										No favorite drivers selected yet.
+				<div className="flex flex-col gap-10 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
+					{/* ROW 1: Favorites (Full Width, Higher Z-index for dropdown) */}
+					<div className="flex flex-col gap-6 w-full relative z-50">
+						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 relative z-50">
+							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+								<div>
+									<h2 className="text-lg font-black uppercase tracking-widest text-white">
+										Grid Favorites
+									</h2>
+									<p className="mt-1 text-xs text-gray-400 uppercase tracking-wider">
+										Select your lineup (up to {FAVORITE_DRIVER_LIMIT} drivers &{' '}
+										{FAVORITE_TEAM_LIMIT} constructors)
 									</p>
+								</div>
+								{savingFavorites && (
+									<div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
+										<div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></div>
+										<span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
+											Syncing
+										</span>
+									</div>
 								)}
-								{favoriteDriverCards.map((driver) => {
-									const accent = getTeamColorHex(driver.team_name);
-									return (
-										<span
-											key={`favorite-driver-${driver.driver_code}`}
-											className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs"
-											style={{
-												borderColor: hexToRgba(accent, 0.62),
-												backgroundColor: hexToRgba(accent, 0.2),
-											}}
-										>
-											<span className="relative h-6 w-6 overflow-hidden rounded-full border border-white/20 bg-black/40">
-												<Image
-													src={getDriverImagePath(driver.driver_code)}
-													alt={driver.driver_name}
-													fill
-													className="object-cover object-top"
-													onError={(event) => {
-														event.currentTarget.style.display = 'none';
+							</div>
+
+							<div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2 relative z-50">
+								<div className="relative z-50">
+									<FavoriteMultiSelect
+										label={`Selected Drivers (${favoriteDrivers.length}/${FAVORITE_DRIVER_LIMIT})`}
+										placeholder="Choose your drivers"
+										options={driverOptions}
+										selectedValues={favoriteDrivers}
+										onToggle={handleToggleFavoriteDriver}
+										limit={FAVORITE_DRIVER_LIMIT}
+										optionType="drivers"
+									/>
+								</div>
+								<div className="relative z-40">
+									<FavoriteMultiSelect
+										label={`Selected Teams (${favoriteTeams.length}/${FAVORITE_TEAM_LIMIT})`}
+										placeholder="Choose your constructors"
+										options={teamOptions}
+										selectedValues={favoriteTeams}
+										onToggle={handleToggleFavoriteTeam}
+										limit={FAVORITE_TEAM_LIMIT}
+										optionType="teams"
+									/>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
+									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
+										Active Driver Roster
+									</p>
+									<div className="flex flex-wrap gap-2">
+										{favoriteDriverCards.length === 0 && (
+											<p className="text-xs text-gray-600 uppercase tracking-widest">
+												Empty Roster
+											</p>
+										)}
+										{favoriteDriverCards.map((driver) => {
+											const accent = getTeamColorHex(driver.team_name);
+											const driverImg = getDriverImagePath(driver.driver_code);
+											return (
+												<span
+													key={`favorite-driver-${driver.driver_code}`}
+													className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors duration-300"
+													style={{
+														backgroundColor: hexToRgba(accent, 0.15),
+														color: '#FFF',
 													}}
-												/>
-											</span>
-											<span className="font-semibold text-white">
-												{driver.driver_code}
-											</span>
-										</span>
-									);
-								})}
-							</div>
-						</div>
+												>
+													{driverImg ?
+														<span className="relative h-6 w-6 overflow-hidden rounded-full bg-black/40 border border-white/10">
+															<Image
+																src={driverImg}
+																alt={driver.driver_code}
+																fill
+																className="object-cover object-top"
+															/>
+														</span>
+													:	<div
+															className="h-1.5 w-1.5 rounded-full"
+															style={{ backgroundColor: accent }}
+														></div>
+													}
+													{driver.driver_code}
+												</span>
+											);
+										})}
+									</div>
+								</div>
 
-						<div className="rounded-2xl border border-white/12 bg-black/40 p-3">
-							<p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-300">
-								Teams Garage ({favoriteTeamCards.length}/{FAVORITE_TEAM_LIMIT})
-							</p>
-							<div className="flex flex-wrap gap-2">
-								{favoriteTeamCards.length === 0 && (
-									<p className="text-xs text-gray-400">
-										No favorite teams selected yet.
+								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
+									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
+										Active Team Garage
 									</p>
-								)}
-								{favoriteTeamCards.map((team) => {
-									const accent = getTeamColorHex(team.team_name);
-									return (
-										<span
-											key={`favorite-team-${team.team_name}`}
-											className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs"
-											style={{
-												borderColor: hexToRgba(accent, 0.62),
-												backgroundColor: hexToRgba(accent, 0.2),
-											}}
-										>
-											{getTeamLogoPath(team.team_name) && (
-												<span className="relative h-5 w-5 overflow-hidden rounded-sm border border-white/20 bg-black/45 p-0.5">
-													<Image
-														src={getTeamLogoPath(team.team_name)}
-														alt={team.team_name}
-														fill
-														className="object-contain"
-														onError={(event) => {
-															event.currentTarget.style.display = 'none';
-														}}
+									<div className="flex flex-wrap gap-2">
+										{favoriteTeamCards.length === 0 && (
+											<p className="text-xs text-gray-600 uppercase tracking-widest">
+												Empty Garage
+											</p>
+										)}
+										{favoriteTeamCards.map((team) => {
+											const accent = getTeamColorHex(team.team_name);
+											const logoImg = getTeamLogoPath(team.team_name);
+											return (
+												<span
+													key={`favorite-team-${team.team_name}`}
+													className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors duration-300"
+													style={{
+														backgroundColor: hexToRgba(accent, 0.15),
+														color: '#FFF',
+													}}
+												>
+													{logoImg ?
+														<span className="relative h-4 w-6 overflow-hidden rounded-sm bg-black/40 border border-white/10 p-0.5">
+															<Image
+																src={logoImg}
+																alt={team.team_name}
+																fill
+																className="object-contain"
+															/>
+														</span>
+													:	<div
+															className="h-1.5 w-1.5 rounded-full"
+															style={{ backgroundColor: accent }}
+														></div>
+													}
+													{team.team_name}
+												</span>
+											);
+										})}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* ROW 2: Identity & Contact (Full Width) */}
+					<div className="flex flex-col gap-6 w-full relative z-30">
+						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+							<div className="mb-6 border-b border-white/10 pb-4">
+								<h2 className="text-lg font-black uppercase tracking-widest text-white">
+									Identity & Contact
+								</h2>
+								<p className="mt-1 text-xs text-gray-400 uppercase tracking-widest">
+									User Information Profile
+								</p>
+							</div>
+							<div className="mb-6 rounded-2xl border border-white/12 bg-black/35 p-4">
+								<p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
+									Driver Portrait
+								</p>
+								<div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+									<div className="flex items-center gap-3">
+										<div className="h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-black/45">
+											{profileForm.avatarUrl ?
+												<Image
+													src={profileForm.avatarUrl}
+													alt="Profile avatar preview"
+													width={64}
+													height={64}
+													unoptimized
+													className="h-full w-full object-cover"
+												/>
+											:	<div className="flex h-full w-full items-center justify-center text-lg font-black text-white/55">
+													{(
+														user?.fullName ||
+														user?.username ||
+														user?.email ||
+														'U'
+													)
+														.charAt(0)
+														.toUpperCase()}
+												</div>
+											}
+										</div>
+										<div>
+											<p className="text-sm font-semibold text-white">
+												Profile Image
+											</p>
+											<p className="text-xs text-gray-400">
+												Shown in navigation and account surfaces.
+											</p>
+										</div>
+									</div>
+									<div className="flex flex-wrap items-center gap-2">
+										{user?.isGoogleAuth ?
+											<p className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
+												Google account image is managed by Google Sign-In.
+											</p>
+										:	<>
+												<label className="cursor-pointer rounded-xl border border-red-500/40 bg-red-900/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-200 hover:bg-red-900/30">
+													{profileAvatarUploading ?
+														'Uploading...'
+													:	'Upload New'}
+													<input
+														type="file"
+														accept="image/*"
+														onChange={uploadProfileAvatar}
+														disabled={profileAvatarUploading}
+														className="hidden"
 													/>
-												</span>
-											)}
-											<span className="font-semibold text-white">
-												{team.team_name}
-											</span>
-										</span>
-									);
-								})}
+												</label>
+												<button
+													type="button"
+													onClick={removeProfileAvatar}
+													disabled={profileAvatarUploading || profileSaving}
+													className="rounded-xl border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white/75 hover:text-white hover:bg-white/10"
+												>
+													Remove
+												</button>
+											</>
+										}
+									</div>
+								</div>
 							</div>
-						</div>
-					</div>
-
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-						<FavoriteMultiSelect
-							label={`Favorite Drivers (${favoriteDrivers.length}/${FAVORITE_DRIVER_LIMIT})`}
-							placeholder="Select favorite drivers"
-							options={driverOptions}
-							selectedValues={favoriteDrivers}
-							onToggle={handleToggleFavoriteDriver}
-							limit={FAVORITE_DRIVER_LIMIT}
-							optionType="drivers"
-						/>
-						<FavoriteMultiSelect
-							label={`Favorite Teams (${favoriteTeams.length}/${FAVORITE_TEAM_LIMIT})`}
-							placeholder="Select favorite teams"
-							options={teamOptions}
-							selectedValues={favoriteTeams}
-							onToggle={handleToggleFavoriteTeam}
-							limit={FAVORITE_TEAM_LIMIT}
-							optionType="teams"
-						/>
-					</div>
-				</div>
-
-				<div className="relative z-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<div className="rounded-2xl border border-white/14 bg-[linear-gradient(155deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03))] p-5 backdrop-blur-xl shadow-[0_16px_34px_rgba(0,0,0,0.3)]">
-						<div className="mb-4 inline-flex items-center gap-2 text-red-200">
-							<FaUserCog />
-							<h2 className="text-lg font-bold">Personal Information</h2>
-						</div>
-						<div className="space-y-3">
-							<input
-								type="text"
-								value={profileForm.fullName}
-								onChange={(e) =>
-									setProfileForm((prev) => ({
-										...prev,
-										fullName: e.target.value,
-									}))
-								}
-								placeholder="Full name"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<input
-								type="text"
-								value={profileForm.phoneNumber}
-								onChange={(e) =>
-									setProfileForm((prev) => ({
-										...prev,
-										phoneNumber: e.target.value,
-									}))
-								}
-								placeholder="Phone number"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<input
-								type="text"
-								value={profileForm.username}
-								onChange={(e) =>
-									setProfileForm((prev) => ({
-										...prev,
-										username: e.target.value,
-									}))
-								}
-								placeholder="Username"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<div className="rounded-xl border border-white/10 bg-black/30 px-4 py-2.5 text-sm text-gray-300">
-								Current email:{' '}
-								<span className="font-semibold text-white">{user?.email}</span>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div className="flex flex-col gap-2">
+									<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+										Full Name
+									</label>
+									<input
+										type="text"
+										value={profileForm.fullName}
+										onChange={(e) =>
+											setProfileForm((prev) => ({
+												...prev,
+												fullName: e.target.value,
+											}))
+										}
+										placeholder="e.g. Lewis Hamilton"
+										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+									/>
+								</div>
+								<div className="flex flex-col gap-2">
+									<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+										Username
+									</label>
+									<input
+										type="text"
+										value={profileForm.username}
+										onChange={(e) =>
+											setProfileForm((prev) => ({
+												...prev,
+												username: e.target.value,
+											}))
+										}
+										placeholder="e.g. LH44"
+										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+									/>
+								</div>
+								<div className="flex flex-col gap-2">
+									<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+										Comms Link (Phone)
+									</label>
+									<input
+										type="tel"
+										value={profileForm.phoneNumber}
+										onChange={(e) =>
+											setProfileForm((prev) => ({
+												...prev,
+												phoneNumber: e.target.value,
+											}))
+										}
+										placeholder="+1 234 567 890"
+										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+									/>
+								</div>
+								<div className="flex flex-col gap-2">
+									<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+										Primary Email (Active)
+									</label>
+									<input
+										type="email"
+										disabled
+										value={user?.email || ''}
+										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
+									/>
+								</div>
 							</div>
-							<button
-								type="button"
-								onClick={saveProfile}
-								disabled={profileSaving}
-								className="inline-flex items-center gap-2 rounded-full border border-red-500/35 bg-red-500/12 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/22 hover:shadow-[0_0_14px_rgba(248,113,113,0.35)] disabled:opacity-60"
-							>
-								<FaSave />
-								{profileSaving ? 'Saving...' : 'Save Profile'}
-							</button>
-						</div>
-					</div>
-
-					<div className="rounded-2xl border border-white/14 bg-[linear-gradient(155deg,rgba(255,255,255,0.1),rgba(255,255,255,0.03))] p-5 backdrop-blur-xl shadow-[0_16px_34px_rgba(0,0,0,0.3)]">
-						<div className="mb-4 inline-flex items-center gap-2 text-red-200">
-							<FaEnvelope />
-							<h2 className="text-lg font-bold">
-								Change Email (Dual Verification)
-							</h2>
-						</div>
-						<p className="mb-3 text-xs text-gray-400">
-							Codes will be sent to both your current and new email. Both must
-							be verified.
-						</p>
-						<div className="space-y-3">
-							<input
-								type="email"
-								value={emailChangeForm.newEmail}
-								onChange={(e) =>
-									setEmailChangeForm((prev) => ({
-										...prev,
-										newEmail: e.target.value,
-									}))
-								}
-								placeholder="New email"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<button
-								type="button"
-								onClick={requestEmailChange}
-								disabled={emailChangeLoading}
-								className="inline-flex items-center gap-2 rounded-full border border-white/18 bg-black/35 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-red-300/45 disabled:opacity-60"
-							>
-								{emailChangeLoading ?
-									'Processing...'
-								:	'Send Verification Codes'}
-							</button>
-
-							{emailChangeForm.requested && (
-								<>
-									<div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-										<div className="flex items-center justify-between gap-3">
-											<p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-300">
-												Verify current email
-											</p>
-											{emailChangeForm.oldVerified && (
-												<span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-emerald-200">
-													<FaCheckCircle /> Verified
-												</span>
-											)}
-										</div>
-										<VerificationCodeInput
-											value={emailChangeForm.oldCode}
-											onChange={(nextCode) =>
-												setEmailChangeForm((prev) => ({
-													...prev,
-													oldCode: nextCode,
-												}))
-											}
-											disabled={
-												emailChangeLoading || emailChangeForm.oldVerified
-											}
-											label="6-digit code"
-										/>
-										<button
-											type="button"
-											onClick={() => verifyEmailChannel('old')}
-											disabled={
-												emailChangeLoading || emailChangeForm.oldVerified
-											}
-											className="rounded-full border border-white/18 bg-black/35 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-red-300/45 disabled:opacity-60"
-										>
-											{emailChangeForm.oldVerified ?
-												'Verified'
-											:	'Verify Current Email'}
-										</button>
-									</div>
-									<div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
-										<div className="flex items-center justify-between gap-3">
-											<p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-300">
-												Verify new email
-											</p>
-											{emailChangeForm.newVerified && (
-												<span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-emerald-200">
-													<FaCheckCircle /> Verified
-												</span>
-											)}
-										</div>
-										<VerificationCodeInput
-											value={emailChangeForm.newCode}
-											onChange={(nextCode) =>
-												setEmailChangeForm((prev) => ({
-													...prev,
-													newCode: nextCode,
-												}))
-											}
-											disabled={
-												emailChangeLoading || emailChangeForm.newVerified
-											}
-											label="6-digit code"
-										/>
-										<button
-											type="button"
-											onClick={() => verifyEmailChannel('new')}
-											disabled={
-												emailChangeLoading || emailChangeForm.newVerified
-											}
-											className="rounded-full border border-white/18 bg-black/35 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-red-300/45 disabled:opacity-60"
-										>
-											{emailChangeForm.newVerified ?
-												'Verified'
-											:	'Verify New Email'}
-										</button>
-									</div>
-									<div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
-										<span
-											className={`h-2.5 w-2.5 rounded-full ${
-												emailChangeForm.oldVerified ? 'bg-emerald-400' : (
-													'bg-gray-500'
-												)
-											}`}
-										/>
-										<span>
-											Current email:{' '}
-											{emailChangeForm.oldVerified ? 'verified' : 'pending'}
-										</span>
-										<span className="mx-1 text-gray-500">•</span>
-										<span
-											className={`h-2.5 w-2.5 rounded-full ${
-												emailChangeForm.newVerified ? 'bg-emerald-400' : (
-													'bg-gray-500'
-												)
-											}`}
-										/>
-										<span>
-											New email:{' '}
-											{emailChangeForm.newVerified ? 'verified' : 'pending'}
-										</span>
-									</div>
-								</>
-							)}
-						</div>
-					</div>
-				</div>
-
-				<div className="rounded-2xl border border-white/14 bg-[linear-gradient(155deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))] p-5 backdrop-blur-xl">
-					<div className="mb-4 inline-flex items-center gap-2 text-red-200">
-						<FaKey />
-						<h2 className="text-lg font-bold">Password Security</h2>
-					</div>
-					{user?.isGoogleAuth ?
-						<p className="text-sm text-gray-400">
-							This account uses Google Sign-In. Password change is unavailable.
-						</p>
-					:	<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-							<input
-								type="password"
-								value={passwordForm.currentPassword}
-								onChange={(e) =>
-									setPasswordForm((prev) => ({
-										...prev,
-										currentPassword: e.target.value,
-									}))
-								}
-								placeholder="Current password"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<input
-								type="password"
-								value={passwordForm.newPassword}
-								onChange={(e) =>
-									setPasswordForm((prev) => ({
-										...prev,
-										newPassword: e.target.value,
-									}))
-								}
-								placeholder="New password"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<input
-								type="password"
-								value={passwordForm.confirmPassword}
-								onChange={(e) =>
-									setPasswordForm((prev) => ({
-										...prev,
-										confirmPassword: e.target.value,
-									}))
-								}
-								placeholder="Confirm new password"
-								className="w-full min-h-[52px] rounded-xl border border-white/20 bg-black/35 px-4 py-3 text-base outline-none transition focus:border-red-400/50 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.2)]"
-							/>
-							<div className="md:col-span-3">
+							<div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
 								<button
 									type="button"
-									onClick={changePassword}
-									disabled={passwordSaving}
-									className="inline-flex items-center gap-2 rounded-full border border-red-500/35 bg-red-500/12 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/22 hover:shadow-[0_0_14px_rgba(248,113,113,0.35)] disabled:opacity-60"
+									onClick={saveProfile}
+									disabled={profileSaving || profileAvatarUploading}
+									className="group flex items-center justify-center rounded-2xl bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)]"
 								>
-									{passwordSaving ? 'Updating...' : 'Change Password'}
+									{profileAvatarUploading ?
+										<span className="flex items-center gap-2">
+											<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+											Uploading image...
+										</span>
+									: profileSaving ?
+										<span className="flex items-center gap-2">
+											<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+											Saving...
+										</span>
+									:	'Save Details'}
 								</button>
 							</div>
 						</div>
-					}
+					</div>
+
+					{/* ROW 3: Email Shift (Full Width) */}
+					<div className="flex flex-col gap-6 w-full">
+						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+							<div className="mb-6 border-b border-white/10 pb-4">
+								<h2 className="text-lg font-black uppercase tracking-widest text-white">
+									Communications Shift
+								</h2>
+								<p className="mt-1 text-xs text-gray-400 uppercase tracking-[0.12em]">
+									Update your primary destination email via dual-auth.
+								</p>
+							</div>
+
+							{user?.isGoogleAuth ?
+								<div className="bg-black/40 p-6 rounded-2xl border border-white/10 flex items-center justify-center">
+									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+										Account secured via Google SSO. Email modifications
+										unavailable.
+									</p>
+								</div>
+							:	<div className="space-y-6 max-w-2xl">
+									<div className="flex flex-col gap-2">
+										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+											New Destination Email
+										</label>
+										<input
+											type="email"
+											value={emailChangeForm.newEmail}
+											onChange={(e) =>
+												setEmailChangeForm((prev) => ({
+													...prev,
+													newEmail: e.target.value,
+												}))
+											}
+											placeholder="e.g. future.champion@example.com"
+											disabled={emailChangeForm.requested}
+											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+										/>
+									</div>
+
+									{!emailChangeForm.requested && (
+										<button
+											type="button"
+											onClick={requestEmailChange}
+											disabled={emailChangeLoading}
+											className="w-auto border border-white/20 bg-transparent hover:bg-white/10 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] flex justify-center items-center rounded-2xl hover:border-white/30"
+										>
+											{emailChangeLoading ?
+												<span className="flex items-center gap-2">
+													<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+													Initiating...
+												</span>
+											:	'Request Change'}
+										</button>
+									)}
+
+									{emailChangeForm.requested && (
+										<div className="mt-6 space-y-6 border-t border-white/10 pt-6 bg-black/20 p-6 rounded-2xl border border-white/5">
+											{!emailChangeForm.oldVerified ?
+												<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+													<div className="mb-3 flex items-center justify-between">
+														<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+															Current Inbox Code (AUTH-1)
+														</label>
+														<span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-xl border bg-white/5 border-white/10 text-gray-500">
+															Pending
+														</span>
+													</div>
+													<VerificationCodeInput
+														value={emailChangeForm.oldCode}
+														onChange={(nextCode) =>
+															setEmailChangeForm((prev) => ({
+																...prev,
+																oldCode: nextCode,
+															}))
+														}
+														disabled={emailChangeLoading}
+														label="Enter 6-Digit Code sent to old email"
+													/>
+													<button
+														type="button"
+														onClick={() => verifyEmailChannel('old')}
+														disabled={
+															emailChangeLoading ||
+															emailChangeForm.oldCode.length < 6
+														}
+														className="mt-6 w-full border border-red-500/30 bg-red-600/10 hover:bg-red-600/20 text-red-500 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 flex justify-center items-center rounded-xl hover:border-red-500/50 disabled:opacity-50"
+													>
+														{emailChangeLoading ?
+															'Verifying...'
+														:	'Verify First Auth'}
+													</button>
+												</div>
+											:	<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+													<div className="mb-3 flex items-center justify-between">
+														<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+															New Inbox Code (AUTH-2)
+														</label>
+														<span
+															className={`text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-xl border ${emailChangeForm.newVerified ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-500'}`}
+														>
+															{emailChangeForm.newVerified ?
+																'Verified'
+															:	'Pending'}
+														</span>
+													</div>
+													<VerificationCodeInput
+														value={emailChangeForm.newCode}
+														onChange={(nextCode) =>
+															setEmailChangeForm((prev) => ({
+																...prev,
+																newCode: nextCode,
+															}))
+														}
+														disabled={
+															emailChangeLoading || emailChangeForm.newVerified
+														}
+														label="Enter 6-Digit Code sent to new email"
+													/>
+													{!emailChangeForm.newVerified && (
+														<button
+															type="button"
+															onClick={() => verifyEmailChannel('new')}
+															disabled={
+																emailChangeLoading ||
+																emailChangeForm.newCode.length < 6
+															}
+															className="mt-6 w-full border border-red-500/30 bg-red-600/10 hover:bg-red-600/20 text-red-500 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 flex justify-center items-center rounded-xl hover:border-red-500/50 disabled:opacity-50"
+														>
+															{emailChangeLoading ?
+																'Verifying...'
+															:	'Verify Second Auth'}
+														</button>
+													)}
+												</div>
+											}
+										</div>
+									)}
+								</div>
+							}
+						</div>
+					</div>
+
+					{/* ROW 4: Security (Full Width) */}
+					<div className="flex flex-col gap-6 w-full">
+						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+							<div className="mb-6 border-b border-white/10 pb-4">
+								<h2 className="text-lg font-black uppercase tracking-widest text-white">
+									Access & Security
+								</h2>
+								<p className="mt-1 text-xs text-gray-400 uppercase tracking-widest">
+									Password Management
+								</p>
+							</div>
+							{user?.isGoogleAuth ?
+								<div className="bg-black/40 p-6 rounded-2xl border border-white/10 flex items-center justify-center">
+									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
+										Account secured via Google SSO. Password modifications
+										unavailable.
+									</p>
+								</div>
+							:	<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+									<div className="flex flex-col gap-2">
+										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+											Current Password
+										</label>
+										<input
+											type="password"
+											value={passwordForm.currentPassword}
+											onChange={(e) =>
+												setPasswordForm((prev) => ({
+													...prev,
+													currentPassword: e.target.value,
+												}))
+											}
+											placeholder="••••••••"
+											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										/>
+									</div>
+									<div className="flex flex-col gap-2">
+										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+											New Password
+										</label>
+										<input
+											type="password"
+											value={passwordForm.newPassword}
+											onChange={(e) =>
+												setPasswordForm((prev) => ({
+													...prev,
+													newPassword: e.target.value,
+												}))
+											}
+											placeholder="••••••••"
+											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										/>
+									</div>
+									<div className="flex flex-col gap-2">
+										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
+											Confirm Password
+										</label>
+										<input
+											type="password"
+											value={passwordForm.confirmPassword}
+											onChange={(e) =>
+												setPasswordForm((prev) => ({
+													...prev,
+													confirmPassword: e.target.value,
+												}))
+											}
+											placeholder="••••••••"
+											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										/>
+									</div>
+									<div className="md:col-span-3 mt-4 pt-6 border-t border-white/10 flex justify-end">
+										<button
+											type="button"
+											onClick={changePassword}
+											disabled={passwordSaving}
+											className="group bg-white text-black hover:bg-gray-200 px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] flex justify-center items-center rounded-2xl hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+										>
+											{passwordSaving ?
+												<span className="flex items-center gap-2">
+													<div className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
+													Updating...
+												</span>
+											:	'Update Password'}
+										</button>
+									</div>
+								</div>
+							}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
