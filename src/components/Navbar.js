@@ -247,6 +247,7 @@ export default function Navbar() {
 		.trim()
 		.charAt(0)
 		.toUpperCase();
+	const userAvatarUrl = user?.avatarUrl || null;
 
 	const handleProtectedNavigation = (event, item) => {
 		if (isAuthenticated || !item.requiresAuth) return;
@@ -541,7 +542,18 @@ export default function Navbar() {
 								className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white transition hover:bg-white/12"
 								aria-label="Open profile menu"
 							>
-								{user?.fullName || user?.username ?
+								{userAvatarUrl ?
+									<span className="relative h-10 w-10 overflow-hidden rounded-full">
+										<Image
+											src={userAvatarUrl}
+											alt="Profile avatar"
+											fill
+											sizes="40px"
+											unoptimized
+											className="object-cover"
+										/>
+									</span>
+								: user?.fullName || user?.username ?
 									<span className="text-sm font-bold">{userInitial}</span>
 								:	<FaUserCircle className="text-lg" />}
 							</button>
