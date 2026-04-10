@@ -1228,6 +1228,13 @@ export default function TrackPage() {
 			})
 			.catch((err) => {
 				if (err.name !== 'AbortError') {
+					if (err?.response?.status === 401 || err?.response?.status === 403) {
+						setGenStatus({
+							status: 'error',
+							message: 'Please sign in to load this track session.',
+						});
+						return;
+					}
 					console.error(err);
 					setGenStatus({ status: 'error', message: err.message });
 				}
