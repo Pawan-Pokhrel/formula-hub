@@ -45,8 +45,42 @@ import {
 	DEFAULT_WIDGET_ORDER,
 	WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
+import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
+import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage } from '@/utils/f1_images';
+import { toast } from 'react-hot-toast';
+
+const USER_HISTORY_MOCK = [
+	{
+		id: 'hist_1',
+		type: 'Comparison',
+		title: 'Verstappen vs. Norris',
+		subtitle: 'Miami Grand Prix 2026 · Telemetry Delta',
+		timestamp: '2 hours ago',
+		image: '/images/f1-cars/redbull-racing.png',
+		color: '#3671C6',
+	},
+	{
+		id: 'hist_2',
+		type: 'Prediction',
+		title: 'Silverstone Pace Forecast',
+		subtitle: 'British Grand Prix · Lap Time Neural Net',
+		timestamp: 'Yesterday',
+		image: '/images/f1-cars/mclaren.png',
+		color: '#FF8000',
+	},
+	{
+		id: 'hist_3',
+		type: 'Simulation',
+		title: 'Monaco Overcut Scenario',
+		subtitle: 'Monte Carlo · Pit Strategy Engine',
+		timestamp: '3 days ago',
+		image: '/images/f1-cars/ferrari.png',
+		color: '#E8002D',
+	}
+];
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -55,7 +89,9 @@ import {
 	FaBroadcastTower,
 	FaCalendarAlt,
 	FaChartLine,
+	FaClock,
 	FaExchangeAlt,
+	FaHistory,
 	FaProjectDiagram,
 	FaStar,
 	FaTrophy,
@@ -1081,272 +1117,222 @@ export default function DashboardPage() {
 						</div>
 
 						{favoriteDrivers.length > 0 || favoriteTeams.length > 0 ?
-							<div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-								{favoriteDrivers.slice(0, FAVORITE_DRIVER_LIMIT).map((code) => {
-									const drv = driverStandings.find(
-										(d) => d.driver_code === code
-									);
-									if (!drv) return null;
-									const leaderPoints = Number(driverStandings[0]?.points || 0);
-									const gap = leaderPoints - Number(drv.points);
-									const isLeader = driverStandings[0]?.driver_code === code;
-									const driverRankIndex = driverStandings.findIndex(
-										(d) => d.driver_code === code
-									);
-									const driverRank = Number(
-										drv.position ||
-											(driverRankIndex >= 0 ? driverRankIndex + 1 : 0)
-									);
-									const runnerUpPoints = Number(
-										driverStandings[1]?.points || 0
-									);
-									const displayGap =
-										isLeader ?
-											`+${Math.max(0, Number(drv.points) - runnerUpPoints)} PTS CLEAR`
-										:	`-${Math.max(0, gap)} PTS TO LEADER`;
+							<>
+								<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+									{favoriteDrivers.slice(0, FAVORITE_DRIVER_LIMIT).map((code) => {
+										const drv = driverStandings.find(
+											(d) => d.driver_code === code
+										);
+										if (!drv) return null;
+										const leaderPoints = Number(driverStandings[0]?.points || 0);
+										const gap = leaderPoints - Number(drv.points);
+										const isLeader = driverStandings[0]?.driver_code === code;
+										const driverRankIndex = driverStandings.findIndex(
+											(d) => d.driver_code === code
+										);
+										const driverRank = Number(
+											drv.position ||
+												(driverRankIndex >= 0 ? driverRankIndex + 1 : 0)
+										);
+										const runnerUpPoints = Number(
+											driverStandings[1]?.points || 0
+										);
+										const displayGap =
+											isLeader ?
+												`+${Math.max(0, Number(drv.points) - runnerUpPoints)} PTS CLEAR`
+											:	`-${Math.max(0, gap)} PTS TO LEADER`;
 
-									const teamColor = getTeamColorHex(drv.team_name);
-									const driverImg = getDriverImagePath(code);
-									const teamLogo = getTeamLogoPath(drv.team_name);
-									const carImg = getCarImage(drv.team_name);
+										const teamColor = getTeamColorHex(drv.team_name);
+										const driverImg = getDriverImagePath(code);
+										const teamLogo = getTeamLogoPath(drv.team_name);
+										const carImg = getCarImage(drv.team_name);
 
-									return (
-										<div
-											key={code}
-											className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20"
-											style={{
-												backgroundImage: `radial-gradient(circle at top right, ${teamColor}33 0%, rgba(0,0,0,0) 65%)`,
-											}}
-										>
+										return (
 											<div
-												className="pointer-events-none absolute inset-0 opacity-20"
-												style={{
-													backgroundImage:
-														'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 15px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 18px)',
-												}}
-											/>
-											<div className="absolute right-0 top-0 h-full w-3/4 opacity-20 transition-opacity duration-500 hover:opacity-40">
-												{carImg && (
-													<Image
-														src={carImg}
-														alt="Car"
-														fill
-														className="object-contain object-right mix-blend-screen scale-125 translate-x-12 translate-y-8"
-													/>
-												)}
-											</div>
-											<div className="relative z-10 flex items-start justify-between">
-												<div className="flex items-center gap-4">
-													{driverImg ?
-														<div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white/10 bg-black/50 shadow-xl">
-															<Image
-																src={driverImg}
-																alt={code}
-																fill
-																className="object-cover object-top"
-															/>
+												key={code}
+												className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
+											>
+												{/* Top section: Team Color Gradient & Driver Info */}
+												<div 
+													className="relative p-6 px-7 pb-20"
+													style={{
+														background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`
+													}}
+												>
+													<div className="relative z-10 flex items-start justify-between">
+														<div className="flex items-center gap-4">
+															{driverImg ?
+																<div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+																	<Image src={driverImg} alt={code} fill className="object-cover object-top" />
+																</div>
+															:	<div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 text-xl font-black text-white shadow-xl">{code}</div>}
+															<div>
+																<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">Favorite Driver</p>
+																<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">{drv.driver_name}</h3>
+																<p className="mt-2 flex items-center gap-2 text-xs font-bold text-white/95 drop-shadow-md">
+																	{teamLogo && <span className="relative inline-block h-4 w-4"><Image src={teamLogo} alt="" fill className="object-contain" /></span>}
+																	{drv.team_name}
+																</p>
+															</div>
 														</div>
-													:	<div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-xl font-black shadow-xl">
-															{code}
+														<div className="flex flex-col items-end gap-2">
+															<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">P{driverRank || '-'}</span>
+															{isLeader && <span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">Leader</span>}
 														</div>
-													}
-													<div>
-														<p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
-															Favorite Driver
-														</p>
-														<h3 className="text-xl font-black leading-none text-white">
-															{drv.driver_name}
-														</h3>
-														<p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-gray-400">
-															{teamLogo && (
-																<span className="relative inline-block h-3.5 w-3.5 opacity-80">
-																	<Image
-																		src={teamLogo}
-																		alt=""
-																		fill
-																		className="object-contain"
-																	/>
-																</span>
-															)}
-															{drv.team_name}
-														</p>
+													</div>
+
+													{/* Unobstructed Car Image sitting perfectly on the dividing line */}
+													<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														{carImg && <Image src={carImg} alt="Car" fill className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]" />}
 													</div>
 												</div>
-												<div className="flex flex-col items-end gap-2">
-													<span className="rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/85">
-														P{driverRank || '-'}
-													</span>
-													{isLeader && (
-														<span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">
-															Leader
-														</span>
-													)}
-												</div>
-											</div>
-											<div className="relative z-10 mt-6 grid grid-cols-2 gap-3">
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Championship Rank
-													</p>
-													<p className="text-lg font-black text-white">
-														P{driverRank || '-'}
-													</p>
-												</div>
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Championship
-													</p>
-													<p className="text-2xl font-black text-white">
-														{drv.points}{' '}
-														<span className="text-xs text-gray-500 font-bold">
-															PTS
-														</span>
-													</p>
-												</div>
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3 col-span-2">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Title Focus
-													</p>
-													<p
-														className="text-lg font-black leading-tight"
-														style={{ color: isLeader ? '#22c55e' : '#f87171' }}
-													>
-														{displayGap}
-													</p>
-												</div>
-											</div>
-										</div>
-									);
-								})}
 
-								{favoriteTeams.slice(0, FAVORITE_TEAM_LIMIT).map((teamName) => {
-									const tm = constructorStandings.find(
-										(t) => t.team_name === teamName
-									);
-									if (!tm) return null;
-									const leaderPoints = Number(
-										constructorStandings[0]?.points || 0
-									);
-									const gap = leaderPoints - Number(tm.points);
-									const isLeader =
-										constructorStandings[0]?.team_name === teamName;
-									const teamRankIndex = constructorStandings.findIndex(
-										(t) => t.team_name === teamName
-									);
-									const teamRank = Number(
-										tm.position || (teamRankIndex >= 0 ? teamRankIndex + 1 : 0)
-									);
-									const runnerUpPoints = Number(
-										constructorStandings[1]?.points || 0
-									);
-									const displayGap =
-										isLeader ?
-											`+${Math.max(0, Number(tm.points) - runnerUpPoints)} PTS CLEAR`
-										:	`-${Math.max(0, gap)} PTS TO LEADER`;
-
-									const teamColor = getTeamColorHex(teamName);
-									const teamLogo = getTeamLogoPath(teamName);
-									const carImg = getCarImage(teamName);
-
-									return (
-										<div
-											key={teamName}
-											className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/20"
-											style={{
-												backgroundImage: `radial-gradient(circle at top right, ${teamColor}33 0%, rgba(0,0,0,0) 65%)`,
-											}}
-										>
-											<div
-												className="pointer-events-none absolute inset-0 opacity-20"
-												style={{
-													backgroundImage:
-														'repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 15px), repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 18px)',
-												}}
-											/>
-											<div className="absolute right-0 top-0 h-full w-3/4 opacity-30 transition-opacity duration-500 hover:opacity-50">
-												{carImg && (
-													<Image
-														src={carImg}
-														alt="Car"
-														fill
-														className="object-contain object-right mix-blend-screen scale-125 translate-x-8 translate-y-6"
-													/>
-												)}
-											</div>
-											<div className="relative z-10 flex items-start justify-between">
-												<div className="flex items-center gap-4">
-													{teamLogo ?
-														<div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/50 p-2.5 shadow-xl">
-															<Image
-																src={teamLogo}
-																alt={teamName}
-																fill
-																className="object-contain"
-															/>
-														</div>
-													:	<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/5 text-sm font-black shadow-xl">
-															{teamName.substring(0, 3).toUpperCase()}
-														</div>
-													}
+												{/* Bottom section: Stats in a clean, dark grid avoiding the car mapping */}
+												<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
 													<div>
-														<p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
-															Favorite Team
-														</p>
-														<h3 className="text-xl font-black leading-none text-white">
-															{teamName}
-														</h3>
-														<p className="mt-1.5 text-xs font-semibold text-gray-400">
-															Wins: {tm.wins} in {currentYear}
-														</p>
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship Rank</p>
+														<p className="text-xl font-black text-white">P{driverRank || '-'}</p>
+													</div>
+													<div className="pl-6">
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship</p>
+														<p className="text-[22px] font-black text-white leading-none">{drv.points} <span className="text-xs font-bold text-gray-500">PTS</span></p>
+													</div>
+													<div className="col-span-2 pt-2 border-t border-white/5">
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Title Focus</p>
+														<p className="text-[15px] font-black tracking-wide" style={{ color: isLeader ? '#34d399' : '#f87171' }}>{displayGap}</p>
 													</div>
 												</div>
-												<div className="flex flex-col items-end gap-2">
-													<span className="rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/85">
-														P{teamRank || '-'}
-													</span>
-													{isLeader && (
-														<span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">
-															Leader
-														</span>
-													)}
+											</div>
+										);
+									})}
+
+									{favoriteTeams.slice(0, FAVORITE_TEAM_LIMIT).map((teamName) => {
+										const tm = constructorStandings.find(
+											(t) => t.team_name === teamName
+										);
+										if (!tm) return null;
+										const leaderPoints = Number(
+											constructorStandings[0]?.points || 0
+										);
+										const gap = leaderPoints - Number(tm.points);
+										const isLeader =
+											constructorStandings[0]?.team_name === teamName;
+										const teamRankIndex = constructorStandings.findIndex(
+											(t) => t.team_name === teamName
+										);
+										const teamRank = Number(
+											tm.position || (teamRankIndex >= 0 ? teamRankIndex + 1 : 0)
+										);
+										const runnerUpPoints = Number(
+											constructorStandings[1]?.points || 0
+										);
+										const displayGap =
+											isLeader ?
+												`+${Math.max(0, Number(tm.points) - runnerUpPoints)} PTS CLEAR`
+											:	`-${Math.max(0, gap)} PTS TO LEADER`;
+
+										const teamColor = getTeamColorHex(teamName);
+										const teamLogo = getTeamLogoPath(teamName);
+										const carImg = getCarImage(teamName);
+
+										return (
+											<div
+												key={teamName}
+												className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
+											>
+												{/* Top section */}
+												<div 
+													className="relative p-6 px-7 pb-20"
+													style={{
+														background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`
+													}}
+												>
+													<div className="relative z-10 flex items-start justify-between">
+														<div className="flex items-center gap-4">
+															{teamLogo ?
+																<div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-white border-2 border-transparent shadow-[0_4px_15px_rgba(0,0,0,0.5)] p-2">
+																	<Image src={teamLogo} alt={teamName} fill className="object-contain" />
+																</div>
+															:	<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-black/40 text-lg font-black shadow-xl">{teamName.substring(0,3).toUpperCase()}</div>}
+															<div>
+																<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">Favorite Team</p>
+																<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">{teamName}</h3>
+																<p className="mt-2 text-xs font-bold text-white/95 drop-shadow-md">
+																	Constructor
+																</p>
+															</div>
+														</div>
+														<div className="flex flex-col items-end gap-2">
+															<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">P{teamRank || '-'}</span>
+															{isLeader && <span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">Leader</span>}
+														</div>
+													</div>
+													
+													{/* Separated Car Image */}
+													<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														{carImg && <Image src={carImg} alt="Car" fill className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]" />}
+													</div>
+												</div>
+
+												{/* Bottom section */}
+												<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
+													<div>
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship Rank</p>
+														<p className="text-xl font-black text-white">P{teamRank || '-'}</p>
+													</div>
+													<div className="pl-6">
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship</p>
+														<p className="text-[22px] font-black text-white leading-none">{tm.points} <span className="text-xs font-bold text-gray-500">PTS</span></p>
+													</div>
+													<div className="col-span-2 pt-2 border-t border-white/5">
+														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Title Focus</p>
+														<p className="text-[15px] font-black tracking-wide" style={{ color: isLeader ? '#34d399' : '#f87171' }}>{displayGap}</p>
+													</div>
 												</div>
 											</div>
-											<div className="relative z-10 mt-6 grid grid-cols-2 gap-3">
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Championship Rank
-													</p>
-													<p className="text-lg font-black text-white">
-														P{teamRank || '-'}
-													</p>
-												</div>
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Championship
-													</p>
-													<p className="text-2xl font-black text-white">
-														{tm.points}{' '}
-														<span className="text-xs text-gray-500 font-bold">
-															PTS
-														</span>
-													</p>
-												</div>
-												<div className="rounded-xl border border-white/5 bg-black/40 p-3 col-span-2">
-													<p className="text-[10px] uppercase tracking-wider text-gray-500">
-														Title Focus
-													</p>
-													<p
-														className="text-lg font-black leading-tight"
-														style={{ color: isLeader ? '#22c55e' : '#f87171' }}
-													>
-														{displayGap}
-													</p>
-												</div>
-											</div>
+										);
+									})}
+								</div>
+
+								{/* NEW: Platform History Section */}
+								<div className="pt-8">
+									<div className="mb-6 flex items-end justify-between">
+										<div>
+											<p className="text-[11px] font-bold uppercase tracking-[0.24em] text-red-400">Analysis History</p>
+											<h2 className="text-2xl font-black uppercase tracking-wide text-white mt-1">Recent Activity</h2>
 										</div>
-									);
-								})}
-							</div>
+										<Link href="/profile" className="text-xs font-bold text-gray-400 hover:text-white transition uppercase tracking-wider flex items-center gap-2">
+											View All <FaArrowRight />
+										</Link>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+										{USER_HISTORY_MOCK.map((item) => (
+											<div key={item.id} className="group cursor-pointer rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden hover:border-white/20 transition-all duration-300 hover:-translate-y-1">
+												{/* Header / Timestamp */}
+												<div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+													<div className="flex items-center gap-2">
+														<span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+														<span className="text-[10px] font-bold uppercase tracking-wider text-white/70">{item.type}</span>
+													</div>
+													<span className="text-[10px] flex items-center gap-1.5 text-gray-500 uppercase tracking-wider font-semibold">
+														<FaClock /> {item.timestamp}
+													</span>
+												</div>
+												{/* Body */}
+												<div className="p-6 pb-2">
+													<h3 className="text-lg font-black text-white group-hover:text-white line-clamp-1">{item.title}</h3>
+													<p className="text-xs text-gray-400 mt-1 pb-4 border-b border-white/5">{item.subtitle}</p>
+												</div>
+												{/* Visual / Image */}
+												<div className="relative h-28 w-full px-6 overflow-hidden">
+													<div className="absolute inset-0 opacity-10 bg-linear-to-b from-transparent to-white/5" />
+													<Image src={item.image} alt={item.type} fill className="object-contain object-bottom scale-110 translate-y-2 opacity-50 group-hover:opacity-90 group-hover:scale-125 transition-all duration-500 mix-blend-screen" />
+												</div>
+											</div>
+										))}
+									</div>
+								</div>
+							</>
 						:	<div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md">
 								<FaStar className="mb-4 text-3xl text-gray-600" />
 								<h3 className="text-lg font-bold text-white">

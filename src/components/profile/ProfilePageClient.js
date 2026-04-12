@@ -1,26 +1,35 @@
 'use client';
 
 import {
-	getDriverImagePath,
-	getTeamLogoPath,
+  getDriverImagePath,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import authApi from '@/lib/api/authApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-	getConstructorStandings,
-	getDriverStandings,
+  getConstructorStandings,
+  getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-	FAVORITE_DRIVER_LIMIT,
-	FAVORITE_TEAM_LIMIT,
+  FAVORITE_DRIVER_LIMIT,
+  FAVORITE_TEAM_LIMIT,
 } from '@/lib/dashboard/preferences';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaCheckCircle, FaChevronDown } from 'react-icons/fa';
+import {
+  FiCamera,
+  FiCheck,
+  FiLock,
+  FiMail,
+  FiTrash2,
+  FiUser,
+  FiX,
+} from 'react-icons/fi';
 
 const FAVORITES_LOCAL_KEY = 'formulahub.profile.favorites.v1';
 
@@ -57,12 +66,12 @@ function getTeamColorHex(teamName) {
 function hexToRgba(hex, alpha) {
 	const clean = String(hex).replace('#', '').trim();
 	const full =
-		clean.length === 3 ?
-			clean
-				.split('')
-				.map((ch) => ch + ch)
-				.join('')
-		:	clean;
+		clean.length === 3
+			? clean
+					.split('')
+					.map((ch) => ch + ch)
+					.join('')
+			: clean;
 	const r = parseInt(full.slice(0, 2), 16);
 	const g = parseInt(full.slice(2, 4), 16);
 	const b = parseInt(full.slice(4, 6), 16);
@@ -105,6 +114,23 @@ function writeLocalFavorites(favorites) {
 	}
 }
 
+/* ─── Spinner (uses <span> to avoid hydration errors with div-in-span) ─── */
+function Spinner({ className = '' }) {
+	return (
+		<span
+			className={`inline-block animate-spin rounded-full border-2 border-current border-t-transparent ${className}`}
+		/>
+	);
+}
+
+/* ─── Section Stripe accent ─── */
+function SectionStripe() {
+	return (
+		<div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-600 via-red-500/60 to-transparent" />
+	);
+}
+
+/* ─── Premium Verification Code Input ─── */
 function VerificationCodeInput({ value, onChange, disabled = false, label }) {
 	const inputRefs = useRef([]);
 	const digits = String(value || '')
@@ -143,11 +169,11 @@ function VerificationCodeInput({ value, onChange, disabled = false, label }) {
 	};
 
 	return (
-		<div className="rounded-xl border border-white/12 bg-black/35 p-3">
-			<p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-300">
+		<div>
+			<p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400">
 				{label}
 			</p>
-			<div className="flex items-center gap-2">
+			<div className="flex items-center justify-center gap-2.5">
 				{digits.map((digit, index) => (
 					<input
 						key={`${label}-digit-${index}`}
@@ -166,17 +192,264 @@ function VerificationCodeInput({ value, onChange, disabled = false, label }) {
 								inputRefs.current[index - 1]?.focus();
 							}
 						}}
-						className="h-11 w-11 rounded-lg border border-white/22 bg-linear-to-b from-white/10 to-black/45 text-center text-lg font-black text-white outline-none transition focus:border-red-400/70 focus:shadow-[0_0_0_2px_rgba(248,113,113,0.22)] disabled:opacity-60"
+						className="h-14 w-12 rounded-xl border border-white/15 bg-gradient-to-b from-white/8 to-black/50 text-center text-xl font-black text-white outline-none transition-all duration-200 focus:border-red-500/70 focus:shadow-[0_0_16px_rgba(239,68,68,0.25)] focus:scale-105 disabled:opacity-40 placeholder-white/15"
 					/>
 				))}
 			</div>
-			<p className="mt-2 text-[11px] text-gray-400">
-				Tip: paste the full 6-digit code directly.
+			<p className="mt-2.5 text-center text-[10px] text-gray-500 tracking-wider uppercase">
+				Paste full code or type digit-by-digit
 			</p>
 		</div>
 	);
 }
 
+/* ─── Premium Email Verification Modal ─── */
+function EmailVerificationModal({
+	open,
+	onClose,
+	emailChangeForm,
+	setEmailChangeForm,
+	emailChangeLoading,
+	onVerify,
+	userEmail,
+}) {
+	if (!open) return null;
+
+	const step = !emailChangeForm.oldVerified ? 1 : 2;
+	const bothDone = emailChangeForm.oldVerified && emailChangeForm.newVerified;
+
+	return (
+		<div className="fixed inset-0 z-[9999] flex items-center justify-center">
+			{/* Backdrop with smooth fade */}
+			<div
+				className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+				style={{ animation: 'evmFadeIn 0.3s ease-out' }}
+				onClick={onClose}
+			/>
+
+			{/* Modal with scale entrance */}
+			<div
+				className="relative w-full max-w-[420px] mx-4 rounded-[28px] bg-[#111114] shadow-[0_32px_80px_rgba(0,0,0,0.8)]"
+				style={{ animation: 'evmSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)' }}
+			>
+				{/* Top accent — subtle gradient glow */}
+				<div className="absolute -top-px left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
+
+				{/* Close */}
+				<button
+					type="button"
+					onClick={onClose}
+					className="absolute top-5 right-5 h-7 w-7 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-all cursor-pointer z-10"
+				>
+					<FiX size={15} />
+				</button>
+
+				<div className="px-8 pt-8 pb-9">
+					{/* Header */}
+					<div className="text-center mb-7">
+						<p
+							className="text-[22px] font-black tracking-tight mb-1"
+							style={{
+								background: 'linear-gradient(135deg, #fff 30%, #e11d48 100%)',
+								WebkitBackgroundClip: 'text',
+								WebkitTextFillColor: 'transparent',
+								backgroundClip: 'text',
+							}}
+						>
+							Verify Email
+						</p>
+						<p className="text-[13px] text-white/35 font-medium">
+							Dual-factor confirmation required
+						</p>
+					</div>
+
+					{/* Elegant stepper */}
+					<div className="flex items-center justify-center mb-8">
+						{/* Step 1 */}
+						<div className="flex flex-col items-center gap-1.5">
+							<div
+								className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black transition-all duration-500 ${
+									emailChangeForm.oldVerified
+										? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
+										: step === 1
+											? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+											: 'bg-white/5 text-white/25 ring-1 ring-white/8'
+								}`}
+							>
+								{emailChangeForm.oldVerified ? (
+									<FiCheck size={16} strokeWidth={3} />
+								) : (
+									'1'
+								)}
+							</div>
+							<span
+								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${emailChangeForm.oldVerified ? 'text-emerald-400/70' : step === 1 ? 'text-white/60' : 'text-white/20'}`}
+							>
+								Current
+							</span>
+						</div>
+
+						{/* Connector */}
+						<div className="relative w-16 h-[1px] mx-3 mb-5">
+							<div className="absolute inset-0 bg-white/8 rounded" />
+							<div
+								className={`absolute inset-y-0 left-0 rounded transition-all duration-700 ease-out ${emailChangeForm.oldVerified ? 'w-full bg-emerald-500/50' : 'w-0'}`}
+							/>
+						</div>
+
+						{/* Step 2 */}
+						<div className="flex flex-col items-center gap-1.5">
+							<div
+								className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black transition-all duration-500 ${
+									emailChangeForm.newVerified
+										? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
+										: step === 2
+											? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+											: 'bg-white/5 text-white/25 ring-1 ring-white/8'
+								}`}
+							>
+								{emailChangeForm.newVerified ? (
+									<FiCheck size={16} strokeWidth={3} />
+								) : (
+									'2'
+								)}
+							</div>
+							<span
+								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${emailChangeForm.newVerified ? 'text-emerald-400/70' : step === 2 ? 'text-white/60' : 'text-white/20'}`}
+							>
+								New
+							</span>
+						</div>
+					</div>
+
+					{/* Step content */}
+					{bothDone ? (
+						<div className="text-center py-4" style={{ animation: 'evmFadeIn 0.4s ease-out' }}>
+							<div className="mx-auto mb-4 h-14 w-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
+								<FiCheck className="text-emerald-400 text-xl" strokeWidth={3} />
+							</div>
+							<p
+								className="text-lg font-black tracking-tight mb-1"
+								style={{
+									background: 'linear-gradient(135deg, #fff 30%, #10b981 100%)',
+									WebkitBackgroundClip: 'text',
+									WebkitTextFillColor: 'transparent',
+									backgroundClip: 'text',
+								}}
+							>
+								Email Updated
+							</p>
+							<p className="text-white/35 text-[13px]">
+								Your account email has been changed.
+							</p>
+						</div>
+					) : step === 1 ? (
+						<div style={{ animation: 'evmFadeIn 0.3s ease-out' }}>
+							<div className="mb-6 rounded-2xl bg-white/[0.03] px-4 py-3.5">
+								<p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/25 mb-1">
+									Verification sent to
+								</p>
+								<p className="text-sm text-white/70 font-semibold truncate">
+									{userEmail}
+								</p>
+							</div>
+
+							<VerificationCodeInput
+								value={emailChangeForm.oldCode}
+								onChange={(nextCode) =>
+									setEmailChangeForm((prev) => ({
+										...prev,
+										oldCode: nextCode,
+									}))
+								}
+								disabled={emailChangeLoading}
+								label="Current email code"
+							/>
+
+							<button
+								type="button"
+								onClick={() => onVerify('old')}
+								disabled={
+									emailChangeLoading ||
+									emailChangeForm.oldCode.length < 6
+								}
+								className="mt-7 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-black px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)] cursor-pointer"
+							>
+								{emailChangeLoading ? (
+									<>
+										<Spinner className="h-3.5 w-3.5 border-black/40 border-t-black" />
+										Verifying...
+									</>
+								) : (
+									'Continue'
+								)}
+							</button>
+						</div>
+					) : (
+						<div style={{ animation: 'evmFadeIn 0.3s ease-out' }}>
+							<div className="mb-6 rounded-2xl bg-white/[0.03] px-4 py-3.5">
+								<p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/25 mb-1">
+									Verification sent to
+								</p>
+								<p className="text-sm text-white/70 font-semibold truncate">
+									{emailChangeForm.newEmail}
+								</p>
+							</div>
+
+							<VerificationCodeInput
+								value={emailChangeForm.newCode}
+								onChange={(nextCode) =>
+									setEmailChangeForm((prev) => ({
+										...prev,
+										newCode: nextCode,
+									}))
+								}
+								disabled={
+									emailChangeLoading || emailChangeForm.newVerified
+								}
+								label="New email code"
+							/>
+
+							{!emailChangeForm.newVerified && (
+								<button
+									type="button"
+									onClick={() => onVerify('new')}
+									disabled={
+										emailChangeLoading ||
+										emailChangeForm.newCode.length < 6
+									}
+									className="mt-7 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-black px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)] cursor-pointer"
+								>
+									{emailChangeLoading ? (
+										<>
+											<Spinner className="h-3.5 w-3.5 border-black/40 border-t-black" />
+											Verifying...
+										</>
+									) : (
+										'Confirm Change'
+									)}
+								</button>
+							)}
+						</div>
+					)}
+				</div>
+			</div>
+
+			<style>{`
+				@keyframes evmFadeIn {
+					from { opacity: 0; }
+					to { opacity: 1; }
+				}
+				@keyframes evmSlideUp {
+					from { opacity: 0; transform: translateY(16px) scale(0.97); }
+					to { opacity: 1; transform: translateY(0) scale(1); }
+				}
+			`}</style>
+		</div>
+	);
+}
+
+/* ─── Favorite Multi-Select Dropdown ─── */
 function FavoriteMultiSelect({
 	label,
 	placeholder,
@@ -215,13 +488,6 @@ function FavoriteMultiSelect({
 			return haystack.includes(normalized);
 		});
 	}, [options, query]);
-	const selectedOptions = useMemo(
-		() =>
-			selectedValues
-				.map((value) => options.find((item) => item.value === value))
-				.filter(Boolean),
-		[selectedValues, options]
-	);
 	const isDriverList = optionType === 'drivers';
 
 	return (
@@ -237,12 +503,12 @@ function FavoriteMultiSelect({
 				onClick={() => setOpen((prev) => !prev)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full min-h-[50px] flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40"
+				className="w-full min-h-[50px] flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40 cursor-pointer"
 			>
 				<span className="truncate flex-1 text-left pr-2">
-					{selectedValues.length > 0 ?
-						`${selectedValues.length}/${limit} selected`
-					:	placeholder}
+					{selectedValues.length > 0
+						? `${selectedValues.length}/${limit} selected`
+						: placeholder}
 				</span>
 				<span className="mr-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-white/55">
 					{selectedValues.length}/{limit}
@@ -252,8 +518,6 @@ function FavoriteMultiSelect({
 					className={`shrink-0 text-white/20 transition-transform ${open ? 'rotate-180' : ''}`}
 				/>
 			</button>
-
-			{/* Selected options block removed as requested (displayed below instead) */}
 
 			{open && (
 				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c0c10] shadow-2xl">
@@ -274,12 +538,12 @@ function FavoriteMultiSelect({
 							const optionImage =
 								option.imageSrc || (!isDriverList ? option.logoSrc : null);
 							const activeStyle =
-								checked ?
-									{
-										backgroundImage: `linear-gradient(90deg, ${hexToRgba(accent, 0.86)} 0%, ${hexToRgba(accent, 0.68)} 62%, ${hexToRgba(accent, 0.28)} 100%)`,
-										boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.95)}, 0 10px 20px ${hexToRgba(accent, 0.36)}`,
-									}
-								:	undefined;
+								checked
+									? {
+											backgroundImage: `linear-gradient(90deg, ${hexToRgba(accent, 0.86)} 0%, ${hexToRgba(accent, 0.68)} 62%, ${hexToRgba(accent, 0.28)} 100%)`,
+											boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.95)}, 0 10px 20px ${hexToRgba(accent, 0.36)}`,
+										}
+									: undefined;
 
 							return (
 								<button
@@ -288,16 +552,15 @@ function FavoriteMultiSelect({
 									onClick={() => {
 										if (disabled) return;
 										onToggle(option.value);
-										// Auto close dropdown when limit is reached
 										if (!checked && selectedValues.length + 1 >= limit) {
 											setOpen(false);
 										}
 									}}
 									disabled={disabled}
 									className={`w-full flex items-center gap-2.5 text-left px-3 py-2.5 text-sm transition-colors ${
-										disabled ?
-											'cursor-not-allowed opacity-40'
-										:	'hover:bg-white/3'
+										disabled
+											? 'cursor-not-allowed opacity-40'
+											: 'hover:bg-white/3'
 									} ${checked ? 'text-white' : 'text-white/72'}`}
 									style={activeStyle}
 								>
@@ -311,9 +574,9 @@ function FavoriteMultiSelect({
 												fill
 												sizes={!isDriverList ? '48px' : '32px'}
 												className={
-													!isDriverList ?
-														'object-contain p-1.5'
-													:	'object-cover object-top'
+													!isDriverList
+														? 'object-contain p-1.5'
+														: 'object-cover object-top'
 												}
 												onError={(event) => {
 													event.currentTarget.style.display = 'none';
@@ -384,6 +647,7 @@ function normalizeFavoriteSelection(values, limit) {
 	return deduped.slice(0, limit);
 }
 
+/* ─── Main Profile Page ─── */
 export default function ProfilePage() {
 	const currentYear = new Date().getFullYear();
 
@@ -414,6 +678,7 @@ export default function ProfilePage() {
 		newVerified: false,
 	});
 	const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+	const [emailModalOpen, setEmailModalOpen] = useState(false);
 
 	const [passwordForm, setPasswordForm] = useState({
 		currentPassword: '',
@@ -628,6 +893,7 @@ export default function ProfilePage() {
 				oldCode: '',
 				newCode: '',
 			}));
+			setEmailModalOpen(true);
 			toast.success(response?.message || 'Codes sent to both emails.');
 		} catch (error) {
 			toast.error(getApiErrorMessage(error, 'Failed to request email change.'));
@@ -636,43 +902,52 @@ export default function ProfilePage() {
 		}
 	};
 
-	const verifyEmailChannel = async (channel) => {
-		const code =
-			channel === 'old' ? emailChangeForm.oldCode : emailChangeForm.newCode;
-		if (!emailChangeForm.newEmail.trim() || code.trim().length !== 6) {
-			toast.error('Enter email and verification code first.');
-			return;
-		}
-		setEmailChangeLoading(true);
-		try {
-			const response = await authApi.verifyEmailChange({
-				newEmail: emailChangeForm.newEmail.trim(),
-				code: code.trim(),
-				channel,
-			});
-			setEmailChangeForm((prev) => ({
-				...prev,
-				oldVerified: Boolean(response?.oldEmailVerified),
-				newVerified: Boolean(response?.newEmailVerified),
-			}));
-			if (response?.completed) {
-				await refreshUser();
-				setEmailChangeForm({
-					newEmail: '',
-					oldCode: '',
-					newCode: '',
-					requested: false,
-					oldVerified: false,
-					newVerified: false,
-				});
+	const verifyEmailChannel = useCallback(
+		async (channel) => {
+			const code =
+				channel === 'old' ? emailChangeForm.oldCode : emailChangeForm.newCode;
+			if (!emailChangeForm.newEmail.trim() || code.trim().length !== 6) {
+				toast.error('Enter email and verification code first.');
+				return;
 			}
-			toast.success(response?.message || 'Verification updated.');
-		} catch (error) {
-			toast.error(getApiErrorMessage(error, 'Failed to verify code.'));
-		} finally {
-			setEmailChangeLoading(false);
-		}
-	};
+			setEmailChangeLoading(true);
+			try {
+				const response = await authApi.verifyEmailChange({
+					newEmail: emailChangeForm.newEmail.trim(),
+					code: code.trim(),
+					channel,
+				});
+				setEmailChangeForm((prev) => ({
+					...prev,
+					oldVerified: Boolean(response?.oldEmailVerified),
+					newVerified: Boolean(response?.newEmailVerified),
+				}));
+				if (response?.completed) {
+					await refreshUser();
+					toast.success(response?.message || 'Email changed successfully!');
+					// Auto-close modal after success with a short delay
+					setTimeout(() => {
+						setEmailModalOpen(false);
+						setEmailChangeForm({
+							newEmail: '',
+							oldCode: '',
+							newCode: '',
+							requested: false,
+							oldVerified: false,
+							newVerified: false,
+						});
+					}, 2000);
+				} else {
+					toast.success(response?.message || 'Code verified.');
+				}
+			} catch (error) {
+				toast.error(getApiErrorMessage(error, 'Failed to verify code.'));
+			} finally {
+				setEmailChangeLoading(false);
+			}
+		},
+		[emailChangeForm, refreshUser]
+	);
 
 	const changePassword = async () => {
 		if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -704,9 +979,9 @@ export default function ProfilePage() {
 				value: driver.driver_code,
 				label: driver.driver_name,
 				subLabel:
-					driver.team_name ?
-						`${driver.driver_code} • ${driver.team_name} • ${driver.points ?? 0} pts`
-					:	`${driver.driver_code} • ${driver.points ?? 0} pts`,
+					driver.team_name
+						? `${driver.driver_code} • ${driver.team_name} • ${driver.points ?? 0} pts`
+						: `${driver.driver_code} • ${driver.points ?? 0} pts`,
 				imageSrc: getTelemetryDriverImage(driver.driver_code, 2026),
 				logoSrc: getTeamLogoPath(driver.team_name),
 				accentColor: getTeamColorHex(driver.team_name),
@@ -753,6 +1028,16 @@ export default function ProfilePage() {
 		[favoriteTeams, allTeams]
 	);
 
+	const userInitial = (
+		user?.fullName ||
+		user?.username ||
+		user?.email ||
+		'U'
+	)
+		.trim()
+		.charAt(0)
+		.toUpperCase();
+
 	return (
 		<div className="min-h-screen bg-[#09090b] text-gray-200">
 			{/* Core background texture */}
@@ -768,10 +1053,10 @@ export default function ProfilePage() {
 			/>
 
 			<div className="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-16 md:px-14 lg:px-24">
-				{/* Sleek F1 Style Header */}
+				{/* Header */}
 				<div className="mb-10 animate-fade-in">
 					<div className="flex items-center gap-4 mb-2">
-						<div className="h-[2px] w-8 bg-red-600"></div>
+						<div className="h-[2px] w-8 bg-red-600" />
 						<p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
 							FormulaHub Settings
 						</p>
@@ -785,11 +1070,12 @@ export default function ProfilePage() {
 					</p>
 				</div>
 
-				<div className="flex flex-col gap-10 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
-					{/* ROW 1: Favorites (Full Width, Higher Z-index for dropdown) */}
+				<div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
+					{/* ─── ROW 1: Favorites ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-50">
-						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 relative z-50">
-							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+							<SectionStripe />
+							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
 								<div>
 									<h2 className="text-lg font-black uppercase tracking-widest text-white">
 										Favorite Picks
@@ -801,7 +1087,7 @@ export default function ProfilePage() {
 								</div>
 								{savingFavorites && (
 									<div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10">
-										<div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500"></div>
+										<div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
 										<span className="text-[10px] font-bold uppercase tracking-wider text-red-500">
 											Syncing
 										</span>
@@ -835,7 +1121,7 @@ export default function ProfilePage() {
 							</div>
 
 							<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
+								<div className="rounded-2xl bg-black/40 p-5 border border-white/8">
 									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
 										Favorite Drivers
 									</p>
@@ -857,7 +1143,7 @@ export default function ProfilePage() {
 														color: '#FFF',
 													}}
 												>
-													{driverImg ?
+													{driverImg ? (
 														<span className="relative h-6 w-6 overflow-hidden rounded-full bg-black/40 border border-white/10">
 															<Image
 																src={driverImg}
@@ -866,11 +1152,12 @@ export default function ProfilePage() {
 																className="object-cover object-top"
 															/>
 														</span>
-													:	<div
-															className="h-1.5 w-1.5 rounded-full"
+													) : (
+														<span
+															className="inline-block h-1.5 w-1.5 rounded-full"
 															style={{ backgroundColor: accent }}
-														></div>
-													}
+														/>
+													)}
 													{driver.driver_code}
 												</span>
 											);
@@ -878,7 +1165,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 
-								<div className="rounded-2xl bg-black/40 p-5 border border-white/10">
+								<div className="rounded-2xl bg-black/40 p-5 border border-white/8">
 									<p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">
 										Favorite Teams
 									</p>
@@ -900,7 +1187,7 @@ export default function ProfilePage() {
 														color: '#FFF',
 													}}
 												>
-													{logoImg ?
+													{logoImg ? (
 														<span className="relative h-4 w-6 overflow-hidden rounded-sm bg-black/40 border border-white/10 p-0.5">
 															<Image
 																src={logoImg}
@@ -909,11 +1196,12 @@ export default function ProfilePage() {
 																className="object-contain"
 															/>
 														</span>
-													:	<div
-															className="h-1.5 w-1.5 rounded-full"
+													) : (
+														<span
+															className="inline-block h-1.5 w-1.5 rounded-full"
 															style={{ backgroundColor: accent }}
-														></div>
-													}
+														/>
+													)}
 													{team.team_name}
 												</span>
 											);
@@ -924,64 +1212,88 @@ export default function ProfilePage() {
 						</div>
 					</div>
 
-					{/* ROW 2: Identity & Contact (Full Width) */}
+					{/* ─── ROW 2: Identity & Contact ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-30">
-						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
-							<div className="mb-6 border-b border-white/10 pb-4">
-								<h2 className="text-lg font-black uppercase tracking-widest text-white">
-									Identity & Contact
-								</h2>
-								<p className="mt-1 text-xs text-gray-400 uppercase tracking-widest">
-									User Information Profile
-								</p>
+						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+							<SectionStripe />
+							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
+								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+									<FiUser className="text-red-400 text-sm" />
+								</div>
+								<div>
+									<h2 className="text-lg font-black uppercase tracking-widest text-white">
+										Identity & Contact
+									</h2>
+									<p className="mt-0.5 text-xs text-gray-500 uppercase tracking-widest">
+										User Information Profile
+									</p>
+								</div>
 							</div>
-							<div className="mb-6 rounded-2xl border border-white/12 bg-black/35 p-4">
-								<p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
-									Profile Photo
-								</p>
-								<div className="mt-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-									<div className="flex items-center gap-3">
-										<div className="h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-black/45">
-											{profileForm.avatarUrl ?
-												<Image
-													src={profileForm.avatarUrl}
-													alt="Profile avatar preview"
-													width={64}
-													height={64}
-													unoptimized
-													className="h-full w-full object-cover"
-												/>
-											:	<div className="flex h-full w-full items-center justify-center text-lg font-black text-white/55">
-													{(
-														user?.fullName ||
-														user?.username ||
-														user?.email ||
-														'U'
-													)
-														.charAt(0)
-														.toUpperCase()}
-												</div>
-											}
+
+							{/* Avatar section */}
+							<div className="mb-8 rounded-2xl border border-white/8 bg-black/30 p-5">
+								<div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+									<div className="flex items-center gap-4">
+										<div className="group relative">
+											<div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white/15 bg-black/50 ring-2 ring-red-600/20 ring-offset-2 ring-offset-[#09090b] transition-all duration-300 group-hover:ring-red-600/40">
+												{profileForm.avatarUrl ? (
+													<>
+														{/* eslint-disable-next-line @next/next/no-img-element */}
+														<img
+															src={profileForm.avatarUrl}
+															alt="Profile avatar"
+															referrerPolicy="no-referrer"
+															className="h-full w-full object-cover"
+														/>
+													</>
+												) : (
+													<div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/40">
+														{userInitial}
+													</div>
+												)}
+											</div>
+											{/* Camera overlay on hover (non-Google only) */}
+											{!user?.isGoogleAuth && (
+												<label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+													<FiCamera className="text-white text-lg" />
+													<input
+														type="file"
+														accept="image/*"
+														onChange={uploadProfileAvatar}
+														disabled={profileAvatarUploading}
+														className="hidden"
+													/>
+												</label>
+											)}
 										</div>
 										<div>
 											<p className="text-sm font-semibold text-white">
 												Profile Image
 											</p>
-											<p className="text-xs text-gray-400">
+											<p className="text-xs text-gray-500 mt-0.5">
 												Shown in navigation and account surfaces.
 											</p>
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2">
-										{user?.isGoogleAuth ?
-											<p className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
-												Google account image is managed by Google Sign-In.
+										{user?.isGoogleAuth ? (
+											<p className="rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
+												Managed by Google Sign-In
 											</p>
-										:	<>
-												<label className="cursor-pointer rounded-xl border border-red-500/40 bg-red-900/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-200 hover:bg-red-900/30">
-													{profileAvatarUploading ?
-														'Uploading...'
-													:	'Upload New'}
+										) : (
+											<>
+												<label className="cursor-pointer rounded-xl border border-red-500/30 bg-red-900/15 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-red-300 hover:bg-red-900/25 transition flex items-center gap-2">
+													{profileAvatarUploading ? (
+														<>
+															<Spinner className="h-3 w-3" />
+															Uploading...
+														</>
+													) : (
+														<>
+															<FiCamera size={12} />
+															Upload
+														</>
+													)}
 													<input
 														type="file"
 														accept="image/*"
@@ -993,16 +1305,21 @@ export default function ProfilePage() {
 												<button
 													type="button"
 													onClick={removeProfileAvatar}
-													disabled={profileAvatarUploading || profileSaving}
-													className="rounded-xl border border-white/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white/75 hover:text-white hover:bg-white/10"
+													disabled={
+														profileAvatarUploading || profileSaving
+													}
+													className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white/60 hover:text-white hover:bg-white/8 transition flex items-center gap-2 cursor-pointer"
 												>
+													<FiTrash2 size={12} />
 													Remove
 												</button>
 											</>
-										}
+										)}
 									</div>
 								</div>
 							</div>
+
+							{/* Form fields */}
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div className="flex flex-col gap-2">
 									<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
@@ -1018,7 +1335,7 @@ export default function ProfilePage() {
 											}))
 										}
 										placeholder="e.g. Alex Morgan"
-										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60 focus:shadow-[0_0_12px_rgba(220,38,38,0.1)]"
 									/>
 								</div>
 								<div className="flex flex-col gap-2">
@@ -1035,7 +1352,7 @@ export default function ProfilePage() {
 											}))
 										}
 										placeholder="e.g. LH44"
-										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60 focus:shadow-[0_0_12px_rgba(220,38,38,0.1)]"
 									/>
 								</div>
 								<div className="flex flex-col gap-2">
@@ -1052,7 +1369,7 @@ export default function ProfilePage() {
 											}))
 										}
 										placeholder="+1 234 567 890"
-										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+										className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60 focus:shadow-[0_0_12px_rgba(220,38,38,0.1)]"
 									/>
 								</div>
 								<div className="flex flex-col gap-2">
@@ -1063,194 +1380,150 @@ export default function ProfilePage() {
 										type="email"
 										disabled
 										value={user?.email || ''}
-										className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
+										className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
 									/>
 								</div>
 							</div>
-							<div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+							<div className="mt-8 pt-6 border-t border-white/8 flex justify-end">
 								<button
 									type="button"
 									onClick={saveProfile}
 									disabled={profileSaving || profileAvatarUploading}
-									className="group flex items-center justify-center rounded-2xl bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)]"
+									className="group flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[200px] shadow-[0_0_20px_rgba(220,38,38,0.2)] hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] cursor-pointer"
 								>
-									{profileAvatarUploading ?
-										<span className="flex items-center gap-2">
-											<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+									{profileAvatarUploading ? (
+										<>
+											<Spinner className="h-3 w-3" />
 											Uploading image...
-										</span>
-									: profileSaving ?
-										<span className="flex items-center gap-2">
-											<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+										</>
+									) : profileSaving ? (
+										<>
+											<Spinner className="h-3 w-3" />
 											Saving...
-										</span>
-									:	'Save Details'}
+										</>
+									) : (
+										'Save Details'
+									)}
 								</button>
 							</div>
 						</div>
 					</div>
 
-					{/* ROW 3: Email Shift (Full Width) */}
+					{/* ─── ROW 3: Email Change ─── */}
 					<div className="flex flex-col gap-6 w-full">
-						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
-							<div className="mb-6 border-b border-white/10 pb-4">
-								<h2 className="text-lg font-black uppercase tracking-widest text-white">
-									Communications Shift
-								</h2>
-								<p className="mt-1 text-xs text-gray-400 uppercase tracking-[0.12em]">
-									Update your primary destination email via dual-auth.
-								</p>
+						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+							<SectionStripe />
+							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
+								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+									<FiMail className="text-red-400 text-sm" />
+								</div>
+								<div>
+									<h2 className="text-lg font-black uppercase tracking-widest text-white">
+										Communications Shift
+									</h2>
+									<p className="mt-0.5 text-xs text-gray-500 uppercase tracking-[0.12em]">
+										Update your primary email via dual verification
+									</p>
+								</div>
 							</div>
 
-							{user?.isGoogleAuth ?
-								<div className="bg-black/40 p-6 rounded-2xl border border-white/10 flex items-center justify-center">
+							{user?.isGoogleAuth ? (
+								<div className="bg-black/30 p-6 rounded-2xl border border-white/8 flex items-center justify-center">
 									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
 										Account secured via Google SSO. Email modifications
 										unavailable.
 									</p>
 								</div>
-							:	<div className="space-y-6 max-w-2xl">
-									<div className="flex flex-col gap-2">
-										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
-											New Destination Email
-										</label>
-										<input
-											type="email"
-											value={emailChangeForm.newEmail}
-											onChange={(e) =>
-												setEmailChangeForm((prev) => ({
-													...prev,
-													newEmail: e.target.value,
-												}))
-											}
-											placeholder="e.g. future.champion@example.com"
-											disabled={emailChangeForm.requested}
-											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-										/>
+							) : (
+								<div className="max-w-2xl">
+									<div className="flex flex-col sm:flex-row gap-3">
+										<div className="flex-1 flex flex-col gap-2">
+											<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+												New Destination Email
+											</label>
+											<input
+												type="email"
+												value={emailChangeForm.newEmail}
+												onChange={(e) =>
+													setEmailChangeForm((prev) => ({
+														...prev,
+														newEmail: e.target.value,
+													}))
+												}
+												placeholder="e.g. future.champion@example.com"
+												disabled={emailChangeForm.requested}
+												className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60 disabled:opacity-50 disabled:cursor-not-allowed"
+											/>
+										</div>
+										<div className="flex items-end">
+											<button
+												type="button"
+												onClick={requestEmailChange}
+												disabled={
+													emailChangeLoading || emailChangeForm.requested
+												}
+												className="rounded-xl border border-white/15 bg-transparent hover:bg-white/8 text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[160px] flex justify-center items-center gap-2 hover:border-white/25 cursor-pointer"
+											>
+												{emailChangeLoading ? (
+													<>
+														<Spinner className="h-3 w-3" />
+														Sending...
+													</>
+												) : emailChangeForm.requested ? (
+													<>
+														<FiCheck size={12} />
+														Codes Sent
+													</>
+												) : (
+													'Request Change'
+												)}
+											</button>
+										</div>
 									</div>
 
-									{!emailChangeForm.requested && (
-										<button
-											type="button"
-											onClick={requestEmailChange}
-											disabled={emailChangeLoading}
-											className="w-auto border border-white/20 bg-transparent hover:bg-white/10 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] flex justify-center items-center rounded-2xl hover:border-white/30"
-										>
-											{emailChangeLoading ?
-												<span className="flex items-center gap-2">
-													<div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-													Initiating...
-												</span>
-											:	'Request Change'}
-										</button>
-									)}
-
 									{emailChangeForm.requested && (
-										<div className="mt-6 space-y-6 border-t border-white/10 pt-6 bg-black/20 p-6 rounded-2xl border border-white/5">
-											{!emailChangeForm.oldVerified ?
-												<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-													<div className="mb-3 flex items-center justify-between">
-														<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
-															Current Inbox Code (AUTH-1)
-														</label>
-														<span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-xl border bg-white/5 border-white/10 text-gray-500">
-															Pending
-														</span>
-													</div>
-													<VerificationCodeInput
-														value={emailChangeForm.oldCode}
-														onChange={(nextCode) =>
-															setEmailChangeForm((prev) => ({
-																...prev,
-																oldCode: nextCode,
-															}))
-														}
-														disabled={emailChangeLoading}
-														label="Enter 6-Digit Code sent to old email"
-													/>
-													<button
-														type="button"
-														onClick={() => verifyEmailChannel('old')}
-														disabled={
-															emailChangeLoading ||
-															emailChangeForm.oldCode.length < 6
-														}
-														className="mt-6 w-full border border-red-500/30 bg-red-600/10 hover:bg-red-600/20 text-red-500 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 flex justify-center items-center rounded-xl hover:border-red-500/50 disabled:opacity-50"
-													>
-														{emailChangeLoading ?
-															'Verifying...'
-														:	'Verify First Auth'}
-													</button>
-												</div>
-											:	<div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-													<div className="mb-3 flex items-center justify-between">
-														<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
-															New Inbox Code (AUTH-2)
-														</label>
-														<span
-															className={`text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-xl border ${emailChangeForm.newVerified ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-gray-500'}`}
-														>
-															{emailChangeForm.newVerified ?
-																'Verified'
-															:	'Pending'}
-														</span>
-													</div>
-													<VerificationCodeInput
-														value={emailChangeForm.newCode}
-														onChange={(nextCode) =>
-															setEmailChangeForm((prev) => ({
-																...prev,
-																newCode: nextCode,
-															}))
-														}
-														disabled={
-															emailChangeLoading || emailChangeForm.newVerified
-														}
-														label="Enter 6-Digit Code sent to new email"
-													/>
-													{!emailChangeForm.newVerified && (
-														<button
-															type="button"
-															onClick={() => verifyEmailChannel('new')}
-															disabled={
-																emailChangeLoading ||
-																emailChangeForm.newCode.length < 6
-															}
-															className="mt-6 w-full border border-red-500/30 bg-red-600/10 hover:bg-red-600/20 text-red-500 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 flex justify-center items-center rounded-xl hover:border-red-500/50 disabled:opacity-50"
-														>
-															{emailChangeLoading ?
-																'Verifying...'
-															:	'Verify Second Auth'}
-														</button>
-													)}
-												</div>
-											}
+										<div className="mt-4">
+											<button
+												type="button"
+												onClick={() => setEmailModalOpen(true)}
+												className="rounded-xl border border-red-500/25 bg-red-600/10 hover:bg-red-600/20 text-red-400 px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+											>
+												<FiMail size={13} />
+												Enter Verification Codes
+											</button>
 										</div>
 									)}
 								</div>
-							}
+							)}
 						</div>
 					</div>
 
-					{/* ROW 4: Security (Full Width) */}
+					{/* ─── ROW 4: Security ─── */}
 					<div className="flex flex-col gap-6 w-full">
-						<div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:bg-white/10 hover:border-white/20">
-							<div className="mb-6 border-b border-white/10 pb-4">
-								<h2 className="text-lg font-black uppercase tracking-widest text-white">
-									Access & Security
-								</h2>
-								<p className="mt-1 text-xs text-gray-400 uppercase tracking-widest">
-									Password Management
-								</p>
+						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+							<SectionStripe />
+							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
+								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+									<FiLock className="text-red-400 text-sm" />
+								</div>
+								<div>
+									<h2 className="text-lg font-black uppercase tracking-widest text-white">
+										Access & Security
+									</h2>
+									<p className="mt-0.5 text-xs text-gray-500 uppercase tracking-widest">
+										Password Management
+									</p>
+								</div>
 							</div>
-							{user?.isGoogleAuth ?
-								<div className="bg-black/40 p-6 rounded-2xl border border-white/10 flex items-center justify-center">
+							{user?.isGoogleAuth ? (
+								<div className="bg-black/30 p-6 rounded-2xl border border-white/8 flex items-center justify-center">
 									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
 										Account secured via Google SSO. Password modifications
 										unavailable.
 									</p>
 								</div>
-							:	<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+							) : (
+								<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
 									<div className="flex flex-col gap-2">
 										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
 											Current Password
@@ -1265,7 +1538,7 @@ export default function ProfilePage() {
 												}))
 											}
 											placeholder="••••••••"
-											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+											className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60"
 										/>
 									</div>
 									<div className="flex flex-col gap-2">
@@ -1282,7 +1555,7 @@ export default function ProfilePage() {
 												}))
 											}
 											placeholder="••••••••"
-											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+											className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60"
 										/>
 									</div>
 									<div className="flex flex-col gap-2">
@@ -1299,30 +1572,43 @@ export default function ProfilePage() {
 												}))
 											}
 											placeholder="••••••••"
-											className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/10 focus:border-red-600"
+											className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-gray-600 outline-none transition-all duration-300 focus:bg-white/8 focus:border-red-600/60"
 										/>
 									</div>
-									<div className="md:col-span-3 mt-4 pt-6 border-t border-white/10 flex justify-end">
+									<div className="md:col-span-3 mt-4 pt-6 border-t border-white/8 flex justify-end">
 										<button
 											type="button"
 											onClick={changePassword}
 											disabled={passwordSaving}
-											className="group bg-white text-black hover:bg-gray-200 px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-50 min-w-[200px] flex justify-center items-center rounded-2xl hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+											className="group bg-white text-black hover:bg-gray-200 px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[200px] flex justify-center items-center gap-2 rounded-xl hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer"
 										>
-											{passwordSaving ?
-												<span className="flex items-center gap-2">
-													<div className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
+											{passwordSaving ? (
+												<>
+													<Spinner className="h-3 w-3 border-black/40 border-t-black" />
 													Updating...
-												</span>
-											:	'Update Password'}
+												</>
+											) : (
+												'Update Password'
+											)}
 										</button>
 									</div>
 								</div>
-							}
+							)}
 						</div>
 					</div>
 				</div>
 			</div>
+
+			{/* Email Verification Modal */}
+			<EmailVerificationModal
+				open={emailModalOpen}
+				onClose={() => setEmailModalOpen(false)}
+				emailChangeForm={emailChangeForm}
+				setEmailChangeForm={setEmailChangeForm}
+				emailChangeLoading={emailChangeLoading}
+				onVerify={verifyEmailChannel}
+				userEmail={user?.email || ''}
+			/>
 		</div>
 	);
 }
