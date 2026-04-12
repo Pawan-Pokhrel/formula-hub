@@ -2,9 +2,9 @@
 'use client';
 
 import {
-	getDriverImagePath,
-	getTeamCode,
-	getTeamLogoPath,
+  getDriverImagePath,
+  getTeamCode,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
@@ -16,17 +16,17 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-	FaCalendarAlt,
-	FaChevronDown,
-	FaCog,
-	FaSignOutAlt,
-	FaTrophy,
-	FaUserCircle,
+  FaCalendarAlt,
+  FaChevronDown,
+  FaCog,
+  FaSignOutAlt,
+  FaTrophy,
+  FaUserCircle,
 } from 'react-icons/fa';
 
 const CENTER_LINK_ITEMS = [
-	{ href: '/compare', label: 'Compare' },
-	{ href: '/telemetry', label: 'Telemetry' },
+	{ href: '/compare', label: 'Compare', requiresAuth: true },
+	{ href: '/telemetry', label: 'Telemetry', requiresAuth: true },
 	{ href: '/track', label: 'Track', requiresAuth: true },
 	{ href: '/predict', label: 'Predict', requiresAuth: true },
 	{ href: '/strategy', label: 'Strategy', requiresAuth: true },
@@ -250,11 +250,8 @@ export default function Navbar() {
 
 	const handleProtectedNavigation = (event, item) => {
 		if (isAuthenticated || !item.requiresAuth) return;
-		event.preventDefault();
 		setIsOpen(false);
 		setMegaMenuOpen(null);
-		toast.error(`Please log in to access ${item.label}.`);
-		router.push(`/login?next=${encodeURIComponent(item.href)}`);
 	};
 
 	const clearMenuCloseTimer = () => {
@@ -282,10 +279,12 @@ export default function Navbar() {
 	};
 
 	const desktopLinkClass = (active) =>
-		`relative rounded-xl px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${
+		`group relative rounded-xl px-4 py-2 text-[13px] font-black tracking-widest uppercase whitespace-nowrap transition-all duration-300 ` +
+		`after:absolute after:bottom-1.5 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:transition-all after:duration-300 after:ease-out ` +
+		`${
 			active ?
-				'bg-red-500/12 text-red-100'
-			:	'text-gray-200 hover:bg-white/10 hover:text-white'
+				'text-white bg-[#e10600] shadow-[0_0_15px_rgba(225,6,0,0.4)] hover:after:w-[calc(100%-2rem)] hover:after:bg-white'
+			:	'text-zinc-300 hover:text-white hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.08)] hover:after:w-[calc(100%-2rem)] hover:after:bg-white/50'
 		}`;
 
 	return (
@@ -296,7 +295,7 @@ export default function Navbar() {
 						href="/"
 						className="text-2xl md:text-3xl font-bold tracking-wide text-white hover:text-red-200 transition-colors duration-200 cursor-pointer"
 					>
-						FormulaHub
+						Formula<span className="text-red-500">Hub</span>
 					</Link>
 				</div>
 
@@ -349,10 +348,10 @@ export default function Navbar() {
 												onClick={() => {
 													setMegaMenuOpen(null);
 												}}
-												className="flex items-center gap-2.5 px-3.5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+												className="group flex items-center gap-2.5 px-3.5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
 											>
 												<Icon className="text-red-300" />
-												<span>{item.label}</span>
+												<span className="relative after:absolute after:bottom-[-2px] after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">{item.label}</span>
 												{index === 0 && (
 													<span className="ml-auto rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] text-gray-300">
 														Live
@@ -451,7 +450,7 @@ export default function Navbar() {
 																	className="object-cover object-top scale-[1.12]"
 																/>
 															</div>
-															<p className="truncate text-sm font-semibold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
+															<p className="relative inline-flex whitespace-nowrap text-sm font-semibold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
 																<span>{firstName}</span>
 																{lastName && (
 																	<span className="ml-1 font-black uppercase tracking-wide text-white/95">
@@ -469,14 +468,7 @@ export default function Navbar() {
 
 								{megaMenuOpen === 'teams' && (
 									<div>
-										<div className="mb-3 flex items-end justify-between">
-											<p className="text-[11px] font-bold uppercase tracking-[0.22em] text-red-300/85">
-												Team Grid
-											</p>
-											<p className="text-[11px] text-gray-400">
-												Cars, logos, and full team pages
-											</p>
-										</div>
+
 										<div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
 											{teamCards.map((team) => (
 												<Link
@@ -490,7 +482,7 @@ export default function Navbar() {
 													style={getTeamAccentStyle(team.teamColor)}
 												>
 													<div className="flex items-center justify-between gap-2">
-														<p className="truncate text-xs font-bold text-white group-hover:underline group-hover:decoration-white/80 group-hover:underline-offset-3">
+														<p className="relative inline-block whitespace-nowrap text-xs font-bold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
 															{team.teamName}
 														</p>
 														{team.teamLogo && (
@@ -540,13 +532,12 @@ export default function Navbar() {
 							>
 								{userAvatarUrl ?
 									<span className="relative h-10 w-10 overflow-hidden rounded-full">
-										<Image
+										{/* eslint-disable-next-line @next/next/no-img-element */}
+										<img
 											src={userAvatarUrl}
 											alt="Profile avatar"
-											fill
-											sizes="40px"
-											unoptimized
-											className="object-cover"
+											referrerPolicy="no-referrer"
+											className="h-full w-full object-cover"
 										/>
 									</span>
 								: user?.fullName || user?.username ?
