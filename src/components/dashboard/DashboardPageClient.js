@@ -23,7 +23,11 @@ import {
 	parseRaceDateTime,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
-import { getHistory } from '@/lib/api/historyApi';
+import {
+	clearHistory,
+	deleteHistoryItem,
+	getHistory,
+} from '@/lib/api/historyApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
 	getCurrentWeekendBrief,
@@ -54,6 +58,7 @@ import { getCarImage } from '@/utils/f1_images';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	FaArrowRight,
@@ -67,6 +72,7 @@ import {
 	FaProjectDiagram,
 	FaStar,
 	FaThLarge,
+	FaTrashAlt,
 	FaTrophy,
 } from 'react-icons/fa';
 
@@ -205,7 +211,12 @@ function getHistorySearchParams(referenceUrl) {
 	}
 }
 
+function getHistoryActionErrorMessage(error, fallbackMessage) {
+	return error?.response?.data?.detail || fallbackMessage;
+}
+
 export default function DashboardPage() {
+	const router = useRouter();
 	const currentYear = new Date().getFullYear();
 	const validWidgetIds = useMemo(() => {
 		const fromRegistry = WIDGET_REGISTRY.map((widget) => widget.id);
@@ -247,6 +258,13 @@ export default function DashboardPage() {
 	const [prefsHydrated, setPrefsHydrated] = useState(false);
 	const [userHistory, setUserHistory] = useState([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
+	const [historyDialog, setHistoryDialog] = useState({
+		open: false,
+		mode: 'single',
+		item: null,
+	});
+	const [historyActionLoading, setHistoryActionLoading] = useState(false);
+	const [historyActionError, setHistoryActionError] = useState('');
 	const hasFetchedDashboardDataRef = useRef(false);
 	const { isAuthenticated, user, token } = useAuth();
 	const historyFetchLimit =
@@ -680,6 +698,69 @@ export default function DashboardPage() {
 			);
 		} catch {
 			// Keep current dashboard view if favorite toggle fails.
+		}
+	};
+
+	const openHistoryEntry = (referenceUrl) => {
+		if (!referenceUrl || referenceUrl === '#') return;
+		if (referenceUrl.startsWith('/')) {
+			router.push(referenceUrl);
+			return;
+		}
+		window.location.assign(referenceUrl);
+	};
+
+	const openHistoryDialog = (mode, item = null) => {
+		setHistoryActionError('');
+		setHistoryDialog({
+			open: true,
+			mode,
+			item,
+		});
+	};
+
+	const closeHistoryDialog = () => {
+		if (historyActionLoading) return;
+		setHistoryDialog({
+			open: false,
+			mode: 'single',
+			item: null,
+		});
+		setHistoryActionError('');
+	};
+
+	const confirmHistoryAction = async () => {
+		if (!token || historyActionLoading) return;
+		setHistoryActionLoading(true);
+		setHistoryActionError('');
+
+		try {
+			if (historyDialog.mode === 'single' && historyDialog.item?.id) {
+				await deleteHistoryItem(token, historyDialog.item.id);
+				setUserHistory((prev) =>
+					prev.filter((entry) => entry.id !== historyDialog.item.id)
+				);
+			} else if (historyDialog.mode === 'clear') {
+				await clearHistory(token);
+				setUserHistory([]);
+			}
+
+			setHistoryDialog({
+				open: false,
+				mode: 'single',
+				item: null,
+			});
+		} catch (error) {
+			setHistoryActionError(
+				getHistoryActionErrorMessage(
+					error,
+					historyDialog.mode === 'clear' ?
+						'Unable to clear your activity history right now.'
+					: 	'Unable to delete this activity right now.'
+				)
+			);
+		} finally {
+			setHistoryActionLoading(false);
 		}
 	};
 
@@ -1491,21 +1572,36 @@ export default function DashboardPage() {
 									Your Activity Feed
 								</h2>
 							</div>
-							<div className="inline-flex gap-1 rounded-xl border border-white/10 bg-black/45 p-1 backdrop-blur-xl">
+							<div className="flex items-center gap-2">
+								<button
+									type="button"
+									onClick={() => openHistoryDialog('clear')}
+									disabled={
+										historyLoading ||
+										historyItemsToRender.length === 0 ||
+										historyActionLoading
+									}
+									className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-red-500/25 bg-red-500/12 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-red-100 transition-all hover:bg-red-500/22 disabled:cursor-not-allowed disabled:opacity-45"
+								>
+									<FaTrashAlt className="text-[10px]" />
+									Clear History
+								</button>
+								<div className="inline-flex gap-1 rounded-xl border border-white/10 bg-black/45 p-1 backdrop-blur-xl">
 								<button
 									type="button"
 									onClick={() => setActivityView('cards')}
-									className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'cards' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
+									className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'cards' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
 								>
 									<FaThLarge className="text-[11px]" />
 								</button>
 								<button
 									type="button"
 									onClick={() => setActivityView('list')}
-									className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'list' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
+									className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'list' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
 								>
 									<FaList className="text-[11px]" />
 								</button>
+								</div>
 							</div>
 						</div>
 
@@ -1637,10 +1733,18 @@ export default function DashboardPage() {
 
 									if (activityView === 'list') {
 										return (
-											<Link
+											<div
 												key={item.id}
-												href={item.reference_url || '#'}
-												className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0C] px-4 py-3 transition-all duration-300 hover:border-white/25 hover:shadow-lg"
+												role="button"
+												tabIndex={0}
+												onClick={() => openHistoryEntry(item.reference_url || '#')}
+												onKeyDown={(event) => {
+													if (event.key === 'Enter' || event.key === ' ') {
+														event.preventDefault();
+														openHistoryEntry(item.reference_url || '#');
+													}
+												}}
+												className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0C] px-4 py-3 transition-all duration-300 hover:border-white/25 hover:shadow-lg"
 											>
 												<div
 													className="absolute left-0 top-0 bottom-0 w-1"
@@ -1690,15 +1794,33 @@ export default function DashboardPage() {
 														/>
 													)}
 												</div>
-											</Link>
+												<button
+													type="button"
+													onClick={(event) => {
+														event.stopPropagation();
+														openHistoryDialog('single', item);
+													}}
+													className="shrink-0 rounded-lg border border-red-500/25 bg-red-500/10 px-2.5 py-2 text-[10px] font-bold uppercase tracking-wider text-red-200 transition-all hover:bg-red-500/20 cursor-pointer"
+												>
+													<FaTrashAlt className="text-[10px]" />
+												</button>
+											</div>
 										);
 									}
 
 									return (
-										<Link
+										<div
 											key={item.id}
-											href={item.reference_url || '#'}
-											className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
+											role="button"
+											tabIndex={0}
+											onClick={() => openHistoryEntry(item.reference_url || '#')}
+											onKeyDown={(event) => {
+												if (event.key === 'Enter' || event.key === ' ') {
+													event.preventDefault();
+													openHistoryEntry(item.reference_url || '#');
+												}
+											}}
+											className="group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
 										>
 											{/* Accent bar */}
 											<div
@@ -1730,9 +1852,21 @@ export default function DashboardPage() {
 														{item.activity_type}
 													</span>
 												</div>
-												<span className="text-[10px] flex items-center gap-1.5 text-gray-500 uppercase tracking-wider font-semibold">
-													<FaClock className="text-[8px]" /> {timeAgo}
-												</span>
+												<div className="flex items-center gap-2">
+													<span className="text-[10px] flex items-center gap-1.5 text-gray-500 uppercase tracking-wider font-semibold">
+														<FaClock className="text-[8px]" /> {timeAgo}
+													</span>
+													<button
+														type="button"
+														onClick={(event) => {
+															event.stopPropagation();
+															openHistoryDialog('single', item);
+														}}
+														className="rounded-lg border border-red-500/25 bg-red-500/10 p-2 text-red-200 transition-all hover:bg-red-500/20 cursor-pointer"
+													>
+														<FaTrashAlt className="text-[10px]" />
+													</button>
+												</div>
 											</div>
 
 											{/* Body */}
@@ -1814,7 +1948,7 @@ export default function DashboardPage() {
 													Open <FaArrowRight className="text-[8px]" />
 												</span>
 											</div>
-										</Link>
+										</div>
 									);
 								})}
 							</div>
@@ -1843,6 +1977,79 @@ export default function DashboardPage() {
 						renderWidget={renderWidget}
 					/>
 				</div>
+
+				{historyDialog.open && (
+					<div
+						className="fixed inset-0 z-120 flex items-center justify-center bg-black/70 px-4 backdrop-blur-md"
+						onClick={(event) => {
+							if (event.target === event.currentTarget) closeHistoryDialog();
+						}}
+					>
+						<div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/15 bg-[#09090d]/95 shadow-[0_35px_120px_rgba(0,0,0,0.65)]">
+							<div className="h-1 bg-linear-to-r from-red-500 via-orange-400 to-red-500" />
+							<div className="p-6 md:p-7">
+								<div className="flex items-start gap-4">
+									<div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-red-500/35 bg-red-500/14">
+										<FaTrashAlt className="text-sm text-red-300" />
+									</div>
+									<div className="flex-1">
+										<p className="text-[11px] font-bold uppercase tracking-[0.22em] text-red-300/80">
+											Confirm Action
+										</p>
+										<h3 className="mt-1 text-2xl font-black leading-tight text-white">
+											{historyDialog.mode === 'clear' ?
+												'Clear Entire Activity History?'
+											: 	'Delete This Activity?'}
+										</h3>
+										<p className="mt-3 text-sm leading-6 text-gray-300">
+											{historyDialog.mode === 'clear' ?
+												'You are about to remove every item from your dashboard timeline. This cannot be undone.'
+											: 	'This item will be permanently removed from your dashboard timeline and cannot be recovered.'}
+										</p>
+										{historyDialog.mode === 'single' && historyDialog.item && (
+											<div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+												<p className="truncate text-sm font-bold text-white">
+													{historyDialog.item.title}
+												</p>
+												<p className="mt-1 truncate text-xs text-gray-400">
+													{historyDialog.item.subtitle}
+												</p>
+											</div>
+										)}
+										{historyActionError && (
+											<p className="mt-4 rounded-xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+												{historyActionError}
+											</p>
+										)}
+									</div>
+								</div>
+
+								<div className="mt-6 flex items-center justify-end gap-2.5">
+									<button
+										type="button"
+										onClick={closeHistoryDialog}
+										disabled={historyActionLoading}
+										className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition-all hover:bg-white/12 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+									>
+										Cancel
+									</button>
+									<button
+										type="button"
+										onClick={confirmHistoryAction}
+										disabled={historyActionLoading}
+										className="rounded-xl border border-red-500/35 bg-red-500/85 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white shadow-[0_10px_25px_rgba(239,68,68,0.35)] transition-all hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+									>
+										{historyActionLoading ?
+											'Working...'
+										: historyDialog.mode === 'clear' ?
+											'Clear History'
+										: 	'Delete Activity'}
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

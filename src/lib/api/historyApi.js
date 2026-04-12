@@ -22,7 +22,24 @@ export const logActivity = async (
 	return response.data;
 };
 
-export default {
+export const deleteHistoryItem = async (token, itemId) => {
+	await api.delete(`/history/${itemId}`, {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+};
+
+export const clearHistory = async (token) => {
+	const response = await api.delete('/history/clear', {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	return response.data;
+};
+
+const historyApi = {
 	getHistory,
 	logActivity,
+	deleteHistoryItem,
+	clearHistory,
 };
+
+export default historyApi;
