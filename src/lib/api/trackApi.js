@@ -1,5 +1,23 @@
 import api from './api';
 
+const TRACK_SCHEDULE_CACHE_TTL_MS = 60 * 1000;
+const trackScheduleCache = new Map();
+
+function getCachedTrackSchedule(year) {
+	const key = String(year);
+	const entry = trackScheduleCache.get(key);
+	if (!entry) return null;
+	if (Date.now() - entry.ts > TRACK_SCHEDULE_CACHE_TTL_MS) {
+		trackScheduleCache.delete(key);
+		return null;
+	}
+	return entry.data;
+}
+
+function setCachedTrackSchedule(year, data) {
+	trackScheduleCache.set(String(year), { ts: Date.now(), data });
+}
+
 /**
  * Get list of sessions that already have generated track data.
  */
@@ -15,9 +33,15 @@ export const getTrackSessions = async () => {
  * Get the full race schedule for a year,
  * annotated with has_data / is_past / status for each round.
  */
-export const getYearSchedule = async (year) => {
+export const getYearSchedule = async (year, { forceRefresh = false } = {}) => {
+	if (!forceRefresh) {
+		const cached = getCachedTrackSchedule(year);
+		if (cached) return cached;
+	}
+
 	const response = await api.get(`/track/schedule/${year}`);
 	if (Array.isArray(response.data?.data)) {
+		setCachedTrackSchedule(year, response.data.data);
 		return response.data.data;
 	}
 	throw new Error(response.data.message || 'Failed to fetch schedule');
@@ -61,6 +85,39 @@ export const triggerGeneration = async (year, round) => {
 export const toggleTrackFavorite = async (year, round) => {
 	const res = await api.post(`/track/session/${year}/${round}/favorite`);
 	return res.data?.data || {};
+};
+
+/**
+ * Get runtime overtake probabilities for a specific race state.
+ */
+export const getOvertakeProbabilities = async (
+	year,
+	round,
+	{ lap, timeSec, topN = 12, signal } = {}
+) => {
+	if (!lap || lap < 1) {
+		throw new Error('lap must be >= 1');
+	}
+
+	const res = await api.get(
+		`/track/session/${year}/${round}/overtake-probabilities`,
+		{
+			params: {
+				lap,
+				top_n: topN,
+				time_sec: typeof timeSec === 'number' ? timeSec : undefined,
+			},
+			signal,
+		}
+	);
+
+	if (res.data?.success) {
+		return res.data.data;
+	}
+
+	throw new Error(
+		res.data?.message || 'Failed to fetch overtake probabilities'
+	);
 };
 
 /**

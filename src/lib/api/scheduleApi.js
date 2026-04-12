@@ -1,5 +1,23 @@
 import api from './api';
 
+const SCHEDULE_CACHE_TTL_MS = 60 * 1000;
+const scheduleCache = new Map();
+
+function getCachedSchedule(year) {
+	const key = String(year);
+	const entry = scheduleCache.get(key);
+	if (!entry) return null;
+	if (Date.now() - entry.ts > SCHEDULE_CACHE_TTL_MS) {
+		scheduleCache.delete(key);
+		return null;
+	}
+	return entry.data;
+}
+
+function setCachedSchedule(year, data) {
+	scheduleCache.set(String(year), { ts: Date.now(), data });
+}
+
 function normalizeNumber(value, fallback = null) {
 	const parsed = Number(value);
 	if (!Number.isFinite(parsed)) return fallback;
@@ -179,9 +197,15 @@ function buildTelemetryFromLastRace(lastRace) {
 	};
 }
 
-export const getSchedule = async (year) => {
+export const getSchedule = async (year, { forceRefresh = false } = {}) => {
+	if (!forceRefresh) {
+		const cached = getCachedSchedule(year);
+		if (cached) return cached;
+	}
+
 	const response = await api.get(`/schedule/${year}`);
 	if (Array.isArray(response.data?.data)) {
+		setCachedSchedule(year, response.data.data);
 		return response.data.data;
 	}
 	throw new Error(response.data.message || 'Failed to fetch schedule');
