@@ -68,6 +68,16 @@ const authApi = {
 		const { data } = await api.post('/auth/change-password', payload);
 		return data;
 	},
+
+	forgotPassword: async (payload) => {
+		const { data } = await api.post('/auth/forgot-password/request', payload);
+		return data;
+	},
+
+	resetPassword: async (payload) => {
+		const { data } = await api.post('/auth/forgot-password/reset', payload);
+		return data;
+	},
 };
 
 export default authApi;

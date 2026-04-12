@@ -10,18 +10,69 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-	const [user, setUser] = useState(null);
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+// ── User cache (localStorage) ────────────────────────────────────────
+// Industry-standard pattern: persist the user object locally so the
+// avatar and display name render instantly on page load, then silently
+// refresh from the server in the background.
 
+const USER_CACHE_KEY = 'formulahub_user';
+
+function getCachedUser() {
+	if (typeof window === 'undefined') return null;
+	try {
+		const raw = localStorage.getItem(USER_CACHE_KEY);
+		return raw ? JSON.parse(raw) : null;
+	} catch {
+		return null;
+	}
+}
+
+function setCachedUser(user) {
+	if (typeof window === 'undefined') return;
+	try {
+		if (user) {
+			localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+		} else {
+			localStorage.removeItem(USER_CACHE_KEY);
+		}
+	} catch {
+		// Quota exceeded or private browsing – ignore silently
+	}
+}
+
+function clearCachedUser() {
+	if (typeof window === 'undefined') return;
+	localStorage.removeItem(USER_CACHE_KEY);
+}
+
+// ── Provider ─────────────────────────────────────────────────────────
+
+export function AuthProvider({ children }) {
+	// Hydrate from cache so the UI has user/avatar data on first paint
+	const cached = getCachedUser();
+	const hasToken = typeof window !== 'undefined' && !!getStoredToken();
+
+	const [user, setUser] = useState(cached);
+	const [isAuthenticated, setIsAuthenticated] = useState(!!cached && hasToken);
+	const [isLoading, setIsLoading] = useState(hasToken); // only loading if there's a token to verify
+
+	// Keep cache in sync whenever `user` changes
+	useEffect(() => {
+		setCachedUser(user);
+	}, [user]);
+
+	// On mount: verify token + refresh user from server (background sync)
 	useEffect(() => {
 		const token = getStoredToken();
 		if (!token) {
+			setUser(null);
+			setIsAuthenticated(false);
 			setIsLoading(false);
+			clearCachedUser();
 			return;
 		}
 
+		// Fetch fresh user data from server (background refresh)
 		authApi
 			.me()
 			.then((response) => {
@@ -30,6 +81,7 @@ export function AuthProvider({ children }) {
 			})
 			.catch(() => {
 				clearStoredToken();
+				clearCachedUser();
 				setUser(null);
 				setIsAuthenticated(false);
 			})
@@ -64,6 +116,7 @@ export function AuthProvider({ children }) {
 				const me = await authApi.me(token);
 				setUser(me.data);
 				setIsAuthenticated(true);
+				return me.data;
 			},
 			async googleAuth(credential) {
 				const response = await authApi.googleAuth(credential);
@@ -81,8 +134,12 @@ export function AuthProvider({ children }) {
 					await authApi.logout();
 				} finally {
 					clearStoredToken();
+					clearCachedUser();
 					setUser(null);
 					setIsAuthenticated(false);
+					// Hard-navigate to login immediately so the current page
+					// never re-renders in an unauthenticated state.
+					window.location.href = '/login';
 				}
 			},
 			refreshUser: async () => {
