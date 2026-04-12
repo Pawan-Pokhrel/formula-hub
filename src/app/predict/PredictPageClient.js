@@ -22,6 +22,8 @@ import {
 	FaPlay,
 	FaTachometerAlt,
 } from 'react-icons/fa';
+import { useAuth } from '@/providers/AuthProvider';
+import { logActivity } from '@/lib/api/historyApi';
 
 const TEAM_COLORS = {
 	'Red Bull Racing': '#3671C6',
@@ -57,6 +59,7 @@ function normalizePredictErrorMessage(message) {
 export default function PredictPageClient() {
 	const searchParams = useSearchParams();
 	const [activeTab, setActiveTab] = useState('manual');
+	const { token, isAuthenticated } = useAuth();
 
 	const [meta, setMeta] = useState(null);
 	const [metaLoading, setMetaLoading] = useState(true);
@@ -236,6 +239,17 @@ export default function PredictPageClient() {
 		try {
 			const res = await predictLapTime(payload);
 			setResult(res);
+			
+			if (isAuthenticated && token) {
+				logActivity(token, {
+					activity_type: 'Prediction',
+					title: `${form.driver} Lap Forecast`,
+					subtitle: `${form.circuit} · ML Analysis`,
+					image_url: getCarImage(form.team) || '/images/cars/2026redbullracingcarright.png',
+					color_hex: TEAM_COLORS[form.team] || '#3671C6',
+					reference_url: '/predict'
+				}).catch(console.error);
+			}
 		} catch (err) {
 			const detail = err?.response?.data?.detail;
 			const msg =
@@ -271,6 +285,17 @@ export default function PredictPageClient() {
 					...data.predictions.map((p) => p.predicted_lap || 0)
 				);
 				setReplayLap(minLap || 1);
+			}
+			
+			if (isAuthenticated && token && data.predictions?.length) {
+				logActivity(token, {
+					activity_type: 'Simulation',
+					title: `Simulation: Round ${replayCfg.round}`,
+					subtitle: `${replayCfg.year} Race Replay`,
+					image_url: '/images/cars/2026mercedescarright.png',
+					color_hex: '#27F4D2',
+					reference_url: `/predict?mode=replay&year=${replayCfg.year}&round=${replayCfg.round}`
+				}).catch(console.error);
 			}
 		} catch (e) {
 			const detail = e?.response?.data?.detail;

@@ -21,6 +21,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/providers/AuthProvider';
+import { logActivity } from '@/lib/api/historyApi';
 import {
 	FaCarSide,
 	FaChevronDown,
@@ -2899,6 +2901,36 @@ export default function DriverComparisonPageClient() {
 		() => resolveColors(leftEntity, rightEntity),
 		[leftEntity, rightEntity]
 	);
+
+	const { token, isAuthenticated } = useAuth();
+	const historyLoggedRef = useRef('');
+
+	useEffect(() => {
+		if (isAuthenticated && token && leftEntity && rightEntity) {
+			const hc = comparisonType === 'drivers'
+				? `${leftEntity.driver_code}-vs-${rightEntity.driver_code}`
+				: `${leftEntity.team_name}-vs-${rightEntity.team_name}`;
+				
+			if (historyLoggedRef.current !== hc) {
+				historyLoggedRef.current = hc;
+				
+				const t1 = comparisonType === 'drivers' ? leftEntity.driver_name : leftEntity.team_name;
+				const t2 = comparisonType === 'drivers' ? rightEntity.driver_name : rightEntity.team_name;
+				const image = comparisonType === 'drivers' 
+					? getCarImage(leftEntity.team_name) 
+					: getTeamLogoPath(leftEntity.team_name);
+					
+				logActivity(token, {
+					activity_type: 'Comparison',
+					title: `${t1} vs. ${t2}`,
+					subtitle: comparisonType === 'drivers' ? 'Driver Telemetry' : 'Constructor Delta',
+					image_url: image || '/images/cars/2026redbullracingcarright.png',
+					color_hex: resolveColors(leftEntity, rightEntity).lc || '#3671C6',
+					reference_url: `/compare?type=${comparisonType}&left=${getKey(leftEntity, comparisonType)}&right=${getKey(rightEntity, comparisonType)}`
+				}).catch(console.error);
+			}
+		}
+	}, [leftEntity, rightEntity, comparisonType, isAuthenticated, token]);
 
 	const lName =
 		comparisonType === 'drivers' ?
