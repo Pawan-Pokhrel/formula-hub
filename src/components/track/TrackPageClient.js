@@ -1,15 +1,15 @@
 'use client';
 
+import { logActivity } from '@/lib/api/historyApi';
 import {
 	getSessionData,
 	getYearSchedule,
 	toggleTrackFavorite,
 } from '@/lib/api/trackApi';
+import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@/providers/AuthProvider';
-import { logActivity } from '@/lib/api/historyApi';
 import {
 	FaCalendarAlt,
 	FaChevronLeft,
@@ -1035,7 +1035,7 @@ export default function TrackPage() {
 		initialDeepLinkYear >= 2018 &&
 		Number.isInteger(initialDeepLinkRound) &&
 		initialDeepLinkRound > 0;
-	
+
 	const { token, isAuthenticated } = useAuth();
 
 	/* ── Selection state ── */
@@ -1228,7 +1228,7 @@ export default function TrackPage() {
 							:	r
 						)
 					);
-					
+
 					if (isAuthenticated && token) {
 						logActivity(token, {
 							activity_type: 'Simulation',
@@ -1236,7 +1236,7 @@ export default function TrackPage() {
 							subtitle: `${year} · ${d.circuit_info?.name || 'Grand Prix'}`,
 							image_url: '/images/cars/2026mclarencarright.png',
 							color_hex: '#FF8000',
-							reference_url: `/track?year=${year}&round=${round}`
+							reference_url: `/track?year=${year}&round=${round}`,
 						}).catch(console.error);
 					}
 				}
@@ -1585,10 +1585,21 @@ export default function TrackPage() {
 									const cc = getCountryCode(race.country);
 
 									return (
-										<button
+										<div
 											key={`${race.year}_${race.round}`}
-											onClick={() => handleSelectRace(race)}
-											disabled={!isPast}
+											role="button"
+											tabIndex={isPast ? 0 : -1}
+											aria-disabled={!isPast}
+											onClick={() => {
+												if (isPast) handleSelectRace(race);
+											}}
+											onKeyDown={(event) => {
+												if (!isPast) return;
+												if (event.key === 'Enter' || event.key === ' ') {
+													event.preventDefault();
+													handleSelectRace(race);
+												}
+											}}
 											style={{ animationDelay: `${raceIdx * 30}ms` }}
 											className={`animate-fade-in text-left rounded-xl border transition-all duration-300 group relative overflow-hidden h-[130px] bg-black/90 backdrop-blur-3xl backdrop-brightness-90
 												${
@@ -1702,7 +1713,7 @@ export default function TrackPage() {
 													</div>
 												</div>
 											</div>
-										</button>
+										</div>
 									);
 								})}
 							</div>
