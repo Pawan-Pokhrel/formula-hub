@@ -23,6 +23,8 @@ import {
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '@/lib/utils/cropImage';
 
 const schema = yup.object().shape({
 	fullName: yup
@@ -302,6 +304,12 @@ export default function RegisterPage() {
 	const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 	const [avatarPreview, setAvatarPreview] = useState('');
 
+	// Crop modal states
+	const [cropSrc, setCropSrc] = useState(null);
+	const [crop, setCrop] = useState({ x: 0, y: 0 });
+	const [zoom, setZoom] = useState(1);
+	const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
 	// Verification step state
 	const [showVerification, setShowVerification] = useState(false);
 	const [registeredEmail, setRegisteredEmail] = useState('');
@@ -345,9 +353,27 @@ export default function RegisterPage() {
 			return;
 		}
 
+		setCropSrc(URL.createObjectURL(file));
+		setCrop({ x: 0, y: 0 });
+		setZoom(1);
+		event.target.value = '';
+	};
+
+	const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+		setCroppedAreaPixels(croppedAreaPixels);
+	}, []);
+
+	const handleCropConfirm = async () => {
+		if (!cropSrc || !croppedAreaPixels) return;
 		setIsAvatarUploading(true);
+		
 		try {
-			const response = await authApi.uploadAvatar(file);
+			const croppedBlob = await getCroppedImg(cropSrc, croppedAreaPixels);
+			const fileToUpload = new File([croppedBlob], `avatar.jpg`, {
+				type: 'image/jpeg',
+			});
+
+			const response = await authApi.uploadAvatar(fileToUpload);
 			const uploadedUrl = response?.avatarUrl || '';
 			if (!uploadedUrl) {
 				throw new Error('Upload finished but no image URL was returned.');
@@ -358,13 +384,17 @@ export default function RegisterPage() {
 				shouldValidate: true,
 			});
 			setAvatarPreview(uploadedUrl);
-			toast.success('Driver profile image uploaded.');
+			toast.success('Profile picture uploaded successfully!');
+			setCropSrc(null); // Close the cropper
 		} catch (err) {
-			toast.error(getApiErrorMessage(err, 'Failed to upload image.'));
+			toast.error(getApiErrorMessage(err, 'Failed to crop and upload image.'));
 		} finally {
 			setIsAvatarUploading(false);
-			event.target.value = '';
 		}
+	};
+
+	const handleCropCancel = () => {
+		setCropSrc(null);
 	};
 
 	const handleRegister = async (data) => {
@@ -446,18 +476,18 @@ export default function RegisterPage() {
 
 				<div className="relative z-10 w-full max-w-3xl">
 					{/* Logo & Title */}
-					<div className="flex flex-col items-center mb-6">
+					<div className="flex flex-col items-center mb-4">
 						<h1 className="text-4xl font-bold text-white tracking-wide">
 							Formula<span className="text-red-500">Hub</span>
 						</h1>
-						<p className="text-white/70 text-lg">
+						<p className="text-white/70 text-[15px] mt-1">
 							{showVerification ?
 								'Almost there — verify your email'
 							:	'Join the ultimate F1 community'}
 						</p>
 					</div>
 
-					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-10 py-8 shadow-2xl">
+					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-8 py-5 shadow-2xl">
 						{showVerification ?
 							<VerificationStep
 								email={registeredEmail}
@@ -465,18 +495,18 @@ export default function RegisterPage() {
 								onBack={handleBackToRegister}
 							/>
 						:	<>
-								<div className="text-center mb-6">
-									<h2 className="text-3xl font-bold text-white">
+								<div className="text-center mb-4">
+									<h2 className="text-2xl font-bold text-white">
 										Create Account
 									</h2>
-									<p className="text-white/60 mt-2">
-										Get access to exclusive F1 insights and discussions
+									<p className="text-white/60 text-sm mt-1">
+										Get access to exclusive F1 insights
 									</p>
 								</div>
 
 								<form
 									onSubmit={handleSubmit(handleRegister)}
-									className="space-y-5.5"
+									className="space-y-4"
 								>
 									<input
 										type="hidden"
@@ -571,105 +601,104 @@ export default function RegisterPage() {
 										</div>
 									</div>
 
-									{/* Username (Optional) */}
-									<div>
-										<label className="block text-sm font-medium text-white mb-2">
-											Username{' '}
-											<span className="text-white/50 font-normal">
-												(optional)
-											</span>
-										</label>
-										<div
-											className={`flex gap-4 items-center rounded-xl border border-white/30 transition ${
-												isDirty && getValues('username') ? 'bg-red-900/10' : ''
-											}`}
-										>
-											<FiUser className="ml-4 text-white/60" />
-											<input
-												{...register('username')}
-												placeholder="Choose a username"
-												className="w-full px-4 py-4 bg-transparent rounded-r-xl text-white placeholder-white/40 outline-none"
-												onChange={(e) => register('username').onChange(e)}
-											/>
-										</div>
-									</div>
-
-									{/* Driver Profile Image (Optional) */}
-									<div>
-										<label className="block text-sm font-medium text-white mb-2">
-											Driver Badge Image{' '}
-											<span className="text-white/50 font-normal">
-												(optional)
-											</span>
-										</label>
-										<div className="rounded-xl border border-white/20 bg-black/35 p-4">
-											<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-												<div className="flex items-center gap-3">
-													<div className="flex h-11 w-11 items-center justify-center rounded-full border border-red-500/40 bg-red-900/20 text-red-300">
-														<FiImage className="text-lg" />
-													</div>
-													<div>
-														<p className="text-sm font-semibold text-white">
-															Grid Photo Upload
-														</p>
-														<p className="text-xs text-white/55">
-															JPG, PNG, WEBP, or GIF up to 5MB.
-														</p>
-													</div>
-												</div>
-												<label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-500/35 bg-red-900/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-red-200 hover:bg-red-900/30">
-													<FiUpload className="text-sm" />
-													{isAvatarUploading ? 'Uploading...' : 'Select Image'}
-													<input
-														type="file"
-														accept="image/*"
-														onChange={handleAvatarUpload}
-														disabled={isAvatarUploading}
-														className="hidden"
-													/>
-												</label>
+									{/* Username & Avatar Row */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										{/* Username (Optional) */}
+										<div>
+											<label className="block text-sm font-medium text-white mb-2">
+												Username{' '}
+												<span className="text-white/50 font-normal">
+													(optional)
+												</span>
+											</label>
+											<div
+												className={`flex gap-4 items-center rounded-xl border border-white/30 transition ${
+													isDirty && getValues('username') ? 'bg-red-900/10' : ''
+												}`}
+											>
+												<FiUser className="ml-3 text-white/60 text-lg" />
+												<input
+													{...register('username')}
+													placeholder="Choose a username"
+													className="w-full px-2 py-3.5 bg-transparent rounded-r-xl text-white placeholder-white/40 outline-none"
+													onChange={(e) => register('username').onChange(e)}
+												/>
 											</div>
+										</div>
 
-											{avatarPreview && (
-												<div className="mt-4 flex items-center gap-3">
-													<div className="h-14 w-14 overflow-hidden rounded-full border border-white/20 bg-black/40">
-														<Image
-															src={avatarPreview}
-															alt="Driver badge preview"
-															width={56}
-															height={56}
-															unoptimized
-															className="h-full w-full object-cover"
-														/>
+										{/* Profile Image (Optional) */}
+										<div>
+											<label className="block text-sm font-medium text-white mb-2">
+												Profile Picture{' '}
+												<span className="text-white/50 font-normal">
+													(optional)
+												</span>
+											</label>
+											
+											<label
+												className={`relative flex min-h-[52px] w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed transition-all p-1.5 ${
+													isAvatarUploading
+														? 'border-red-500/50 bg-red-900/10 opacity-70'
+														: 'border-white/30 bg-black/35 hover:border-red-500/50 hover:bg-white/5'
+												}`}
+												onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+												onDrop={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+													if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+														handleAvatarUpload({ target: { files: e.dataTransfer.files } });
+													}
+												}}
+											>
+												<input
+													type="file"
+													accept="image/*"
+													onChange={handleAvatarUpload}
+													disabled={isAvatarUploading}
+													className="hidden"
+												/>
+												
+												{avatarPreview ? (
+													<div className="flex w-full items-center gap-3 pl-1">
+														<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/20 bg-black/40">
+															<Image
+																src={avatarPreview}
+																alt="Profile preview"
+																fill
+																unoptimized
+																className="object-cover"
+															/>
+														</div>
+														<div className="flex-1 truncate">
+															<p className="truncate text-xs font-semibold text-emerald-300">
+																Image Uploaded
+															</p>
+															<p className="truncate text-[10px] text-white/50 leading-tight">
+																Click or drag to change
+															</p>
+														</div>
 													</div>
-													<div className="flex-1">
-														<p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">
-															Ready On Grid
-														</p>
-														<p className="text-xs text-white/50">
-															Your image will appear after signup and in your
-															profile menu.
-														</p>
+												) : (
+													<div className="flex w-full items-center gap-3 pl-1">
+														<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-white/60">
+															<FiUpload className="text-base" />
+														</div>
+														<div className="flex-1 truncate">
+															<p className="truncate text-sm font-medium text-white/80">
+																{isAvatarUploading ? 'Uploading...' : 'Upload Image'}
+															</p>
+															<p className="truncate text-[10px] text-white/40 leading-tight">
+																Drag & drop or browse
+															</p>
+														</div>
 													</div>
-													<button
-														type="button"
-														onClick={() =>
-															setValue('avatarUrl', '', {
-																shouldDirty: true,
-																shouldValidate: true,
-															})
-														}
-														className="text-xs text-white/70 hover:text-white"
-													>
-														Remove
-													</button>
-												</div>
-											)}
+												)}
+											</label>
 										</div>
 									</div>
 
 									{/* Passwords */}
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div>
 											<label className="block text-sm font-medium text-white mb-2">
 												Password
@@ -837,6 +866,69 @@ export default function RegisterPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Crop Modal */}
+			{cropSrc && (
+				<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+					<div className="w-full max-w-md bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative">
+						<div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/50">
+							<h3 className="text-white font-bold text-lg">Crop Profile Picture</h3>
+							<button onClick={handleCropCancel} className="text-white/50 hover:text-white transition cursor-pointer text-2xl font-light leading-none">
+								&times;
+							</button>
+						</div>
+						<div className="relative h-[350px] w-full bg-black">
+							<Cropper
+								image={cropSrc}
+								crop={crop}
+								zoom={zoom}
+								aspect={1}
+								cropShape="round"
+								showGrid={false}
+								onCropChange={setCrop}
+								onCropComplete={onCropComplete}
+								onZoomChange={setZoom}
+							/>
+						</div>
+						<div className="p-5 bg-black/50 space-y-5">
+							<div>
+								<div className="flex justify-between items-center mb-2">
+									<p className="text-xs text-white/50 uppercase tracking-widest font-bold">Zoom</p>
+									<p className="text-xs text-white/50 font-medium">{Math.round(zoom * 100)}%</p>
+								</div>
+								<input
+									type="range"
+									value={zoom}
+									min={1}
+									max={3}
+									step={0.1}
+									aria-label="Zoom"
+									className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+									onChange={(e) => setZoom(Number(e.target.value))}
+								/>
+							</div>
+							<div className="flex gap-3">
+								<button
+									type="button"
+									onClick={handleCropCancel}
+									className="flex-1 py-3 rounded-xl border border-white/20 text-white font-semibold hover:bg-white/5 transition cursor-pointer"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={handleCropConfirm}
+									disabled={isAvatarUploading}
+									className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
+								>
+									{isAvatarUploading && <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
+									{isAvatarUploading ? 'Uploading...' : 'Confirm'}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</>
 	);
 }
