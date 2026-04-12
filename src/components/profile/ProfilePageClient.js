@@ -1,19 +1,19 @@
 'use client';
 
 import {
-  getDriverImagePath,
-  getTeamLogoPath,
+	getDriverImagePath,
+	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import authApi from '@/lib/api/authApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-  getConstructorStandings,
-  getDriverStandings,
+	getConstructorStandings,
+	getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-  FAVORITE_DRIVER_LIMIT,
-  FAVORITE_TEAM_LIMIT,
+	FAVORITE_DRIVER_LIMIT,
+	FAVORITE_TEAM_LIMIT,
 } from '@/lib/dashboard/preferences';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
@@ -22,13 +22,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaCheckCircle, FaChevronDown } from 'react-icons/fa';
 import {
-  FiCamera,
-  FiCheck,
-  FiLock,
-  FiMail,
-  FiTrash2,
-  FiUser,
-  FiX,
+	FiCamera,
+	FiCheck,
+	FiLock,
+	FiMail,
+	FiTrash2,
+	FiUser,
+	FiX,
 } from 'react-icons/fi';
 
 const FAVORITES_LOCAL_KEY = 'formulahub.profile.favorites.v1';
@@ -66,12 +66,12 @@ function getTeamColorHex(teamName) {
 function hexToRgba(hex, alpha) {
 	const clean = String(hex).replace('#', '').trim();
 	const full =
-		clean.length === 3
-			? clean
-					.split('')
-					.map((ch) => ch + ch)
-					.join('')
-			: clean;
+		clean.length === 3 ?
+			clean
+				.split('')
+				.map((ch) => ch + ch)
+				.join('')
+		:	clean;
 	const r = parseInt(full.slice(0, 2), 16);
 	const g = parseInt(full.slice(2, 4), 16);
 	const b = parseInt(full.slice(4, 6), 16);
@@ -126,7 +126,7 @@ function Spinner({ className = '' }) {
 /* ─── Section Stripe accent ─── */
 function SectionStripe() {
 	return (
-		<div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-600 via-red-500/60 to-transparent" />
+		<div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-red-600 via-red-500/60 to-transparent" />
 	);
 }
 
@@ -192,7 +192,7 @@ function VerificationCodeInput({ value, onChange, disabled = false, label }) {
 								inputRefs.current[index - 1]?.focus();
 							}
 						}}
-						className="h-14 w-12 rounded-xl border border-white/15 bg-gradient-to-b from-white/8 to-black/50 text-center text-xl font-black text-white outline-none transition-all duration-200 focus:border-red-500/70 focus:shadow-[0_0_16px_rgba(239,68,68,0.25)] focus:scale-105 disabled:opacity-40 placeholder-white/15"
+						className="h-14 w-12 rounded-xl border border-white/15 bg-linear-to-b from-white/8 to-black/50 text-center text-xl font-black text-white outline-none transition-all duration-200 focus:border-red-500/70 focus:shadow-[0_0_16px_rgba(239,68,68,0.25)] focus:scale-105 disabled:opacity-40 placeholder-white/15"
 					/>
 				))}
 			</div>
@@ -219,7 +219,7 @@ function EmailVerificationModal({
 	const bothDone = emailChangeForm.oldVerified && emailChangeForm.newVerified;
 
 	return (
-		<div className="fixed inset-0 z-[9999] flex items-center justify-center">
+		<div className="fixed inset-0 z-9999 flex items-center justify-center">
 			{/* Backdrop with smooth fade */}
 			<div
 				className="absolute inset-0 bg-black/60 backdrop-blur-xs"
@@ -233,7 +233,7 @@ function EmailVerificationModal({
 				style={{ animation: 'evmSlideUp 0.35s cubic-bezier(0.16,1,0.3,1)' }}
 			>
 				{/* Top accent — subtle gradient glow */}
-				<div className="absolute -top-px left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
+				<div className="absolute -top-px left-8 right-8 h-px bg-linear-to-r from-transparent via-red-500/60 to-transparent" />
 
 				{/* Close */}
 				<button
@@ -269,28 +269,33 @@ function EmailVerificationModal({
 						<div className="flex flex-col items-center gap-1.5">
 							<div
 								className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black transition-all duration-500 ${
-									emailChangeForm.oldVerified
-										? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
-										: step === 1
-											? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
-											: 'bg-white/5 text-white/25 ring-1 ring-white/8'
+									emailChangeForm.oldVerified ?
+										'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
+									: step === 1 ?
+										'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+									:	'bg-white/5 text-white/25 ring-1 ring-white/8'
 								}`}
 							>
-								{emailChangeForm.oldVerified ? (
-									<FiCheck size={16} strokeWidth={3} />
-								) : (
-									'1'
-								)}
+								{emailChangeForm.oldVerified ?
+									<FiCheck
+										size={16}
+										strokeWidth={3}
+									/>
+								:	'1'}
 							</div>
 							<span
-								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${emailChangeForm.oldVerified ? 'text-emerald-400/70' : step === 1 ? 'text-white/60' : 'text-white/20'}`}
+								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${
+									emailChangeForm.oldVerified ? 'text-emerald-400/70'
+									: step === 1 ? 'text-white/60'
+									: 'text-white/20'
+								}`}
 							>
 								Current
 							</span>
 						</div>
 
 						{/* Connector */}
-						<div className="relative w-16 h-[1px] mx-3 mb-5">
+						<div className="relative w-16 h-px mx-3 mb-5">
 							<div className="absolute inset-0 bg-white/8 rounded" />
 							<div
 								className={`absolute inset-y-0 left-0 rounded transition-all duration-700 ease-out ${emailChangeForm.oldVerified ? 'w-full bg-emerald-500/50' : 'w-0'}`}
@@ -301,21 +306,26 @@ function EmailVerificationModal({
 						<div className="flex flex-col items-center gap-1.5">
 							<div
 								className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black transition-all duration-500 ${
-									emailChangeForm.newVerified
-										? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
-										: step === 2
-											? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
-											: 'bg-white/5 text-white/25 ring-1 ring-white/8'
+									emailChangeForm.newVerified ?
+										'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
+									: step === 2 ?
+										'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+									:	'bg-white/5 text-white/25 ring-1 ring-white/8'
 								}`}
 							>
-								{emailChangeForm.newVerified ? (
-									<FiCheck size={16} strokeWidth={3} />
-								) : (
-									'2'
-								)}
+								{emailChangeForm.newVerified ?
+									<FiCheck
+										size={16}
+										strokeWidth={3}
+									/>
+								:	'2'}
 							</div>
 							<span
-								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${emailChangeForm.newVerified ? 'text-emerald-400/70' : step === 2 ? 'text-white/60' : 'text-white/20'}`}
+								className={`text-[9px] font-bold uppercase tracking-[0.15em] ${
+									emailChangeForm.newVerified ? 'text-emerald-400/70'
+									: step === 2 ? 'text-white/60'
+									: 'text-white/20'
+								}`}
 							>
 								New
 							</span>
@@ -323,10 +333,16 @@ function EmailVerificationModal({
 					</div>
 
 					{/* Step content */}
-					{bothDone ? (
-						<div className="text-center py-4" style={{ animation: 'evmFadeIn 0.4s ease-out' }}>
+					{bothDone ?
+						<div
+							className="text-center py-4"
+							style={{ animation: 'evmFadeIn 0.4s ease-out' }}
+						>
 							<div className="mx-auto mb-4 h-14 w-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
-								<FiCheck className="text-emerald-400 text-xl" strokeWidth={3} />
+								<FiCheck
+									className="text-emerald-400 text-xl"
+									strokeWidth={3}
+								/>
 							</div>
 							<p
 								className="text-lg font-black tracking-tight mb-1"
@@ -343,9 +359,9 @@ function EmailVerificationModal({
 								Your account email has been changed.
 							</p>
 						</div>
-					) : step === 1 ? (
+					: step === 1 ?
 						<div style={{ animation: 'evmFadeIn 0.3s ease-out' }}>
-							<div className="mb-6 rounded-2xl bg-white/[0.03] px-4 py-3.5">
+							<div className="mb-6 rounded-2xl bg-white/3 px-4 py-3.5">
 								<p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/25 mb-1">
 									Verification sent to
 								</p>
@@ -370,24 +386,20 @@ function EmailVerificationModal({
 								type="button"
 								onClick={() => onVerify('old')}
 								disabled={
-									emailChangeLoading ||
-									emailChangeForm.oldCode.length < 6
+									emailChangeLoading || emailChangeForm.oldCode.length < 6
 								}
 								className="mt-7 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-black px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)] cursor-pointer"
 							>
-								{emailChangeLoading ? (
+								{emailChangeLoading ?
 									<>
 										<Spinner className="h-3.5 w-3.5 border-black/40 border-t-black" />
 										Verifying...
 									</>
-								) : (
-									'Continue'
-								)}
+								:	'Continue'}
 							</button>
 						</div>
-					) : (
-						<div style={{ animation: 'evmFadeIn 0.3s ease-out' }}>
-							<div className="mb-6 rounded-2xl bg-white/[0.03] px-4 py-3.5">
+					:	<div style={{ animation: 'evmFadeIn 0.3s ease-out' }}>
+							<div className="mb-6 rounded-2xl bg-white/3 px-4 py-3.5">
 								<p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/25 mb-1">
 									Verification sent to
 								</p>
@@ -404,9 +416,7 @@ function EmailVerificationModal({
 										newCode: nextCode,
 									}))
 								}
-								disabled={
-									emailChangeLoading || emailChangeForm.newVerified
-								}
+								disabled={emailChangeLoading || emailChangeForm.newVerified}
 								label="New email code"
 							/>
 
@@ -415,23 +425,20 @@ function EmailVerificationModal({
 									type="button"
 									onClick={() => onVerify('new')}
 									disabled={
-										emailChangeLoading ||
-										emailChangeForm.newCode.length < 6
+										emailChangeLoading || emailChangeForm.newCode.length < 6
 									}
 									className="mt-7 w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-black px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/90 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)] cursor-pointer"
 								>
-									{emailChangeLoading ? (
+									{emailChangeLoading ?
 										<>
 											<Spinner className="h-3.5 w-3.5 border-black/40 border-t-black" />
 											Verifying...
 										</>
-									) : (
-										'Confirm Change'
-									)}
+									:	'Confirm Change'}
 								</button>
 							)}
 						</div>
-					)}
+					}
 				</div>
 			</div>
 
@@ -503,14 +510,14 @@ function FavoriteMultiSelect({
 				onClick={() => setOpen((prev) => !prev)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full min-h-[50px] flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40 cursor-pointer"
+				className="w-full min-h-[50px] flex items-center justify-between rounded-xl border border-white/12 bg-black/50 px-3.5 py-2.5 text-sm text-white outline-none transition hover:border-white/22 disabled:opacity-40 cursor-pointer"
 			>
 				<span className="truncate flex-1 text-left pr-2">
-					{selectedValues.length > 0
-						? `${selectedValues.length}/${limit} selected`
-						: placeholder}
+					{selectedValues.length > 0 ?
+						`${selectedValues.length}/${limit} selected`
+					:	placeholder}
 				</span>
-				<span className="mr-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-white/55">
+				<span className="mr-2 rounded-md border border-white/10 bg-white/4 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-white/55">
 					{selectedValues.length}/{limit}
 				</span>
 				<FaChevronDown
@@ -520,8 +527,8 @@ function FavoriteMultiSelect({
 			</button>
 
 			{open && (
-				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c0c10] shadow-2xl">
-					<div className="border-b border-white/[0.04] px-2.5 py-2.5">
+				<div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 mt-0 w-full overflow-hidden rounded-2xl border border-white/8 bg-[#0c0c10] shadow-2xl">
+					<div className="border-b border-white/4 px-2.5 py-2.5">
 						<input
 							type="text"
 							value={query}
@@ -538,12 +545,12 @@ function FavoriteMultiSelect({
 							const optionImage =
 								option.imageSrc || (!isDriverList ? option.logoSrc : null);
 							const activeStyle =
-								checked
-									? {
-											backgroundImage: `linear-gradient(90deg, ${hexToRgba(accent, 0.86)} 0%, ${hexToRgba(accent, 0.68)} 62%, ${hexToRgba(accent, 0.28)} 100%)`,
-											boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.95)}, 0 10px 20px ${hexToRgba(accent, 0.36)}`,
-										}
-									: undefined;
+								checked ?
+									{
+										backgroundImage: `linear-gradient(90deg, ${hexToRgba(accent, 0.86)} 0%, ${hexToRgba(accent, 0.68)} 62%, ${hexToRgba(accent, 0.28)} 100%)`,
+										boxShadow: `inset 0 0 0 1px ${hexToRgba(accent, 0.95)}, 0 10px 20px ${hexToRgba(accent, 0.36)}`,
+									}
+								:	undefined;
 
 							return (
 								<button
@@ -558,9 +565,9 @@ function FavoriteMultiSelect({
 									}}
 									disabled={disabled}
 									className={`w-full flex items-center gap-2.5 text-left px-3 py-2.5 text-sm transition-colors ${
-										disabled
-											? 'cursor-not-allowed opacity-40'
-											: 'hover:bg-white/3'
+										disabled ?
+											'cursor-not-allowed opacity-40'
+										:	'hover:bg-white/3'
 									} ${checked ? 'text-white' : 'text-white/72'}`}
 									style={activeStyle}
 								>
@@ -574,9 +581,9 @@ function FavoriteMultiSelect({
 												fill
 												sizes={!isDriverList ? '48px' : '32px'}
 												className={
-													!isDriverList
-														? 'object-contain p-1.5'
-														: 'object-cover object-top'
+													!isDriverList ?
+														'object-contain p-1.5'
+													:	'object-cover object-top'
 												}
 												onError={(event) => {
 													event.currentTarget.style.display = 'none';
@@ -979,9 +986,9 @@ export default function ProfilePage() {
 				value: driver.driver_code,
 				label: driver.driver_name,
 				subLabel:
-					driver.team_name
-						? `${driver.driver_code} • ${driver.team_name} • ${driver.points ?? 0} pts`
-						: `${driver.driver_code} • ${driver.points ?? 0} pts`,
+					driver.team_name ?
+						`${driver.driver_code} • ${driver.team_name} • ${driver.points ?? 0} pts`
+					:	`${driver.driver_code} • ${driver.points ?? 0} pts`,
 				imageSrc: getTelemetryDriverImage(driver.driver_code, 2026),
 				logoSrc: getTeamLogoPath(driver.team_name),
 				accentColor: getTeamColorHex(driver.team_name),
@@ -1028,12 +1035,7 @@ export default function ProfilePage() {
 		[favoriteTeams, allTeams]
 	);
 
-	const userInitial = (
-		user?.fullName ||
-		user?.username ||
-		user?.email ||
-		'U'
-	)
+	const userInitial = (user?.fullName || user?.username || user?.email || 'U')
 		.trim()
 		.charAt(0)
 		.toUpperCase();
@@ -1056,7 +1058,7 @@ export default function ProfilePage() {
 				{/* Header */}
 				<div className="mb-10 animate-fade-in">
 					<div className="flex items-center gap-4 mb-2">
-						<div className="h-[2px] w-8 bg-red-600" />
+						<div className="h-0.5 w-8 bg-red-600" />
 						<p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
 							FormulaHub Settings
 						</p>
@@ -1073,7 +1075,7 @@ export default function ProfilePage() {
 				<div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
 					{/* ─── ROW 1: Favorites ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-50">
-						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
 							<SectionStripe />
 							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
 								<div>
@@ -1143,7 +1145,7 @@ export default function ProfilePage() {
 														color: '#FFF',
 													}}
 												>
-													{driverImg ? (
+													{driverImg ?
 														<span className="relative h-6 w-6 overflow-hidden rounded-full bg-black/40 border border-white/10">
 															<Image
 																src={driverImg}
@@ -1152,12 +1154,11 @@ export default function ProfilePage() {
 																className="object-cover object-top"
 															/>
 														</span>
-													) : (
-														<span
+													:	<span
 															className="inline-block h-1.5 w-1.5 rounded-full"
 															style={{ backgroundColor: accent }}
 														/>
-													)}
+													}
 													{driver.driver_code}
 												</span>
 											);
@@ -1187,7 +1188,7 @@ export default function ProfilePage() {
 														color: '#FFF',
 													}}
 												>
-													{logoImg ? (
+													{logoImg ?
 														<span className="relative h-4 w-6 overflow-hidden rounded-sm bg-black/40 border border-white/10 p-0.5">
 															<Image
 																src={logoImg}
@@ -1196,12 +1197,11 @@ export default function ProfilePage() {
 																className="object-contain"
 															/>
 														</span>
-													) : (
-														<span
+													:	<span
 															className="inline-block h-1.5 w-1.5 rounded-full"
 															style={{ backgroundColor: accent }}
 														/>
-													)}
+													}
 													{team.team_name}
 												</span>
 											);
@@ -1214,7 +1214,7 @@ export default function ProfilePage() {
 
 					{/* ─── ROW 2: Identity & Contact ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-30">
-						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
 							<SectionStripe />
 							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
 								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
@@ -1236,7 +1236,7 @@ export default function ProfilePage() {
 									<div className="flex items-center gap-4">
 										<div className="group relative">
 											<div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white/15 bg-black/50 ring-2 ring-red-600/20 ring-offset-2 ring-offset-[#09090b] transition-all duration-300 group-hover:ring-red-600/40">
-												{profileForm.avatarUrl ? (
+												{profileForm.avatarUrl ?
 													<>
 														{/* eslint-disable-next-line @next/next/no-img-element */}
 														<img
@@ -1246,11 +1246,10 @@ export default function ProfilePage() {
 															className="h-full w-full object-cover"
 														/>
 													</>
-												) : (
-													<div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/40">
+												:	<div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/40">
 														{userInitial}
 													</div>
-												)}
+												}
 											</div>
 											{/* Camera overlay on hover (non-Google only) */}
 											{!user?.isGoogleAuth && (
@@ -1276,24 +1275,22 @@ export default function ProfilePage() {
 										</div>
 									</div>
 									<div className="flex flex-wrap items-center gap-2">
-										{user?.isGoogleAuth ? (
+										{user?.isGoogleAuth ?
 											<p className="rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
 												Managed by Google Sign-In
 											</p>
-										) : (
-											<>
+										:	<>
 												<label className="cursor-pointer rounded-xl border border-red-500/30 bg-red-900/15 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-red-300 hover:bg-red-900/25 transition flex items-center gap-2">
-													{profileAvatarUploading ? (
+													{profileAvatarUploading ?
 														<>
 															<Spinner className="h-3 w-3" />
 															Uploading...
 														</>
-													) : (
-														<>
+													:	<>
 															<FiCamera size={12} />
 															Upload
 														</>
-													)}
+													}
 													<input
 														type="file"
 														accept="image/*"
@@ -1305,16 +1302,14 @@ export default function ProfilePage() {
 												<button
 													type="button"
 													onClick={removeProfileAvatar}
-													disabled={
-														profileAvatarUploading || profileSaving
-													}
+													disabled={profileAvatarUploading || profileSaving}
 													className="rounded-xl border border-white/15 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-white/60 hover:text-white hover:bg-white/8 transition flex items-center gap-2 cursor-pointer"
 												>
 													<FiTrash2 size={12} />
 													Remove
 												</button>
 											</>
-										)}
+										}
 									</div>
 								</div>
 							</div>
@@ -1391,19 +1386,17 @@ export default function ProfilePage() {
 									disabled={profileSaving || profileAvatarUploading}
 									className="group flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[200px] shadow-[0_0_20px_rgba(220,38,38,0.2)] hover:shadow-[0_0_30px_rgba(220,38,38,0.4)] cursor-pointer"
 								>
-									{profileAvatarUploading ? (
+									{profileAvatarUploading ?
 										<>
 											<Spinner className="h-3 w-3" />
 											Uploading image...
 										</>
-									) : profileSaving ? (
+									: profileSaving ?
 										<>
 											<Spinner className="h-3 w-3" />
 											Saving...
 										</>
-									) : (
-										'Save Details'
-									)}
+									:	'Save Details'}
 								</button>
 							</div>
 						</div>
@@ -1411,7 +1404,7 @@ export default function ProfilePage() {
 
 					{/* ─── ROW 3: Email Change ─── */}
 					<div className="flex flex-col gap-6 w-full">
-						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
 							<SectionStripe />
 							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
 								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
@@ -1427,15 +1420,14 @@ export default function ProfilePage() {
 								</div>
 							</div>
 
-							{user?.isGoogleAuth ? (
+							{user?.isGoogleAuth ?
 								<div className="bg-black/30 p-6 rounded-2xl border border-white/8 flex items-center justify-center">
 									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
 										Account secured via Google SSO. Email modifications
 										unavailable.
 									</p>
 								</div>
-							) : (
-								<div className="max-w-2xl">
+							:	<div className="max-w-2xl">
 									<div className="flex flex-col sm:flex-row gap-3">
 										<div className="flex-1 flex flex-col gap-2">
 											<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
@@ -1462,21 +1454,19 @@ export default function ProfilePage() {
 												disabled={
 													emailChangeLoading || emailChangeForm.requested
 												}
-												className="rounded-xl border border-white/15 bg-transparent hover:bg-white/8 text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[160px] flex justify-center items-center gap-2 hover:border-white/25 cursor-pointer"
+												className="rounded-xl border border-white/15 bg-transparent hover:bg-white/8 text-white px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-40 flex justify-center items-center gap-2 hover:border-white/25 cursor-pointer"
 											>
-												{emailChangeLoading ? (
+												{emailChangeLoading ?
 													<>
 														<Spinner className="h-3 w-3" />
 														Sending...
 													</>
-												) : emailChangeForm.requested ? (
+												: emailChangeForm.requested ?
 													<>
 														<FiCheck size={12} />
 														Codes Sent
 													</>
-												) : (
-													'Request Change'
-												)}
+												:	'Request Change'}
 											</button>
 										</div>
 									</div>
@@ -1494,13 +1484,13 @@ export default function ProfilePage() {
 										</div>
 									)}
 								</div>
-							)}
+							}
 						</div>
 					</div>
 
 					{/* ─── ROW 4: Security ─── */}
 					<div className="flex flex-col gap-6 w-full">
-						<div className="relative rounded-3xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
 							<SectionStripe />
 							<div className="mb-6 border-b border-white/8 pb-4 flex items-center gap-3">
 								<div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
@@ -1515,15 +1505,14 @@ export default function ProfilePage() {
 									</p>
 								</div>
 							</div>
-							{user?.isGoogleAuth ? (
+							{user?.isGoogleAuth ?
 								<div className="bg-black/30 p-6 rounded-2xl border border-white/8 flex items-center justify-center">
 									<p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
 										Account secured via Google SSO. Password modifications
 										unavailable.
 									</p>
 								</div>
-							) : (
-								<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+							:	<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
 									<div className="flex flex-col gap-2">
 										<label className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 transition-colors focus-within:text-red-500">
 											Current Password
@@ -1582,18 +1571,16 @@ export default function ProfilePage() {
 											disabled={passwordSaving}
 											className="group bg-white text-black hover:bg-gray-200 px-8 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 disabled:opacity-40 min-w-[200px] flex justify-center items-center gap-2 rounded-xl hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer"
 										>
-											{passwordSaving ? (
+											{passwordSaving ?
 												<>
 													<Spinner className="h-3 w-3 border-black/40 border-t-black" />
 													Updating...
 												</>
-											) : (
-												'Update Password'
-											)}
+											:	'Update Password'}
 										</button>
 									</div>
 								</div>
-							)}
+							}
 						</div>
 					</div>
 				</div>

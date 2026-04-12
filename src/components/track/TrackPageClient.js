@@ -8,6 +8,8 @@ import {
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/providers/AuthProvider';
+import { logActivity } from '@/lib/api/historyApi';
 import {
 	FaCalendarAlt,
 	FaChevronLeft,
@@ -1033,6 +1035,8 @@ export default function TrackPage() {
 		initialDeepLinkYear >= 2018 &&
 		Number.isInteger(initialDeepLinkRound) &&
 		initialDeepLinkRound > 0;
+	
+	const { token, isAuthenticated } = useAuth();
 
 	/* ── Selection state ── */
 	const [selectedYear, setSelectedYear] = useState(
@@ -1224,6 +1228,17 @@ export default function TrackPage() {
 							:	r
 						)
 					);
+					
+					if (isAuthenticated && token) {
+						logActivity(token, {
+							activity_type: 'Simulation',
+							title: `Track Visualizer: Round ${round}`,
+							subtitle: `${year} · ${d.circuit_info?.name || 'Grand Prix'}`,
+							image_url: '/images/cars/2026mclarencarright.png',
+							color_hex: '#FF8000',
+							reference_url: `/track?year=${year}&round=${round}`
+						}).catch(console.error);
+					}
 				}
 			})
 			.catch((err) => {
@@ -1244,7 +1259,7 @@ export default function TrackPage() {
 			clearTimeout(resetTimerId);
 			controller.abort();
 		};
-	}, [selectedRace]);
+	}, [selectedRace, isAuthenticated, token]);
 
 	/* ── Canvas animation loop ── */
 	useEffect(() => {

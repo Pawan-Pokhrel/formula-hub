@@ -1365,7 +1365,7 @@ export function GeneratedRacesWidget({
 							>
 								<Link
 									href={trackHref}
-									className="animate-fade-in text-left rounded-xl border transition-all duration-300 group relative overflow-hidden h-[130px] bg-black/90 backdrop-blur-3xl backdrop-brightness-90 bg-linear-to-r from-white/4 to-white/2 border-white/10 hover:border-green-500/40 hover:shadow-lg hover:shadow-green-500/5 cursor-pointer block"
+									className="group/race-card animate-fade-in text-left rounded-xl border transition-all duration-300 relative overflow-hidden h-[130px] bg-black/90 backdrop-blur-3xl backdrop-brightness-90 bg-linear-to-r from-white/4 to-white/2 border-white/10 hover:border-green-500/40 hover:shadow-lg hover:shadow-green-500/5 cursor-pointer block"
 								>
 									{(flagCode || race.country === 'United Kingdom') && (
 										<div className="absolute inset-y-0 right-0 w-[60%] pointer-events-none overflow-hidden rounded-r-xl">
@@ -1374,7 +1374,7 @@ export function GeneratedRacesWidget({
 												alt={race.country || race.circuit?.country || 'Flag'}
 												fill
 												sizes="300px"
-												className="object-cover object-center opacity-[0.12] group-hover:opacity-[0.45] transition-all duration-500 scale-105 group-hover:scale-110 brightness-75 group-hover:brightness-110"
+												className="object-cover object-center opacity-[0.12] group-hover/race-card:opacity-[0.45] transition-all duration-500 scale-105 group-hover/race-card:scale-110 brightness-75 group-hover/race-card:brightness-110"
 												onError={(event) => {
 													event.currentTarget.style.display = 'none';
 												}}
@@ -1383,7 +1383,7 @@ export function GeneratedRacesWidget({
 										</div>
 									)}
 
-									<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl transition-all duration-300 bg-green-500/50 group-hover:bg-green-400" />
+									<div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl transition-all duration-300 bg-green-500/50 group-hover/race-card:bg-green-400" />
 
 									<div className="relative z-10 p-4 pl-5 h-full flex flex-col justify-between">
 										<div>
@@ -1402,7 +1402,7 @@ export function GeneratedRacesWidget({
 													Generated
 												</span>
 											</div>
-											<h3 className="font-bold text-[13px] leading-tight text-white/90 group-hover:text-white transition-colors line-clamp-2">
+											<h3 className="font-bold text-[13px] leading-tight text-white/90 group-hover/race-card:text-white transition-colors line-clamp-2">
 												{race.event}
 											</h3>
 										</div>

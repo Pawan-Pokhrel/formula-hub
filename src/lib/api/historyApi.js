@@ -1,7 +1,8 @@
 import api from './api';
 
-export const getHistory = async (token) => {
+export const getHistory = async (token, limit = 25) => {
 	const response = await api.get('/history/', {
+		params: { limit },
 		headers: { Authorization: `Bearer ${token}` },
 	});
 	return response.data;
