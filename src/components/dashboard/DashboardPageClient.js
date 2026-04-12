@@ -1273,7 +1273,7 @@ export default function DashboardPage() {
 														</div>
 
 														{/* Unobstructed Car Image sitting perfectly on the dividing line */}
-														<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														<div className="absolute -bottom-6 -right-5 h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}
@@ -1408,7 +1408,7 @@ export default function DashboardPage() {
 														</div>
 
 														{/* Separated Car Image */}
-														<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														<div className="absolute -bottom-6 -right-5 h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}
