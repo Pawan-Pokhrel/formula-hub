@@ -9,6 +9,8 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
+import { useAuth } from '@/providers/AuthProvider';
+import { logActivity } from '@/lib/api/historyApi';
 
 import EmptyState from './EmptyState';
 import FlagBanner from './FlagBanner';
@@ -26,6 +28,7 @@ import TrackConditionsCard from './TrackConditionsCard';
 export default function StrategyPageClient() {
 	const searchParams = useSearchParams();
 	const currentYear = new Date().getFullYear();
+	const { token, isAuthenticated } = useAuth();
 
 	const [year, setYear] = useState(currentYear);
 	const [circuits, setCircuits] = useState([]);
@@ -220,6 +223,18 @@ export default function StrategyPageClient() {
 
 			setRaceData(res);
 			setShowConfig(false);
+
+			if (isAuthenticated && token) {
+				const circuitName = circuits.find(c => Number(c.round) === selectedRound)?.event || `Round ${selectedRound}`;
+				logActivity(token, {
+					activity_type: 'Strategy',
+					title: `${circuitName} Strategy`,
+					subtitle: `${year} · Race Replay Engine`,
+					image_url: '/images/cars/2026ferraricarright.png',
+					color_hex: '#E8002D',
+					reference_url: `/strategy?year=${year}&round=${selectedRound}`
+				}).catch(console.error);
+			}
 
 			const drivers = Object.keys(res.drivers || {});
 			if (drivers.length > 0) {
