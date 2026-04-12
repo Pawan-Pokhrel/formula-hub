@@ -2,9 +2,9 @@
 'use client';
 
 import {
-  getDriverImagePath,
-  getTeamCode,
-  getTeamLogoPath,
+	getDriverImagePath,
+	getTeamCode,
+	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
@@ -14,14 +14,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import toast from 'react-hot-toast';
 import {
-  FaCalendarAlt,
-  FaChevronDown,
-  FaCog,
-  FaSignOutAlt,
-  FaTrophy,
-  FaUserCircle,
+	FaCalendarAlt,
+	FaChevronDown,
+	FaCog,
+	FaSignOutAlt,
+	FaTrophy,
+	FaUserCircle,
 } from 'react-icons/fa';
 
 const CENTER_LINK_ITEMS = [
@@ -351,7 +350,9 @@ export default function Navbar() {
 												className="group flex items-center gap-2.5 px-3.5 py-3 text-sm font-medium text-white transition hover:bg-white/10"
 											>
 												<Icon className="text-red-300" />
-												<span className="relative after:absolute after:bottom-[-2px] after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">{item.label}</span>
+												<span className="relative after:absolute after:-bottom-0.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+													{item.label}
+												</span>
 												{index === 0 && (
 													<span className="ml-auto rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] text-gray-300">
 														Live
@@ -450,7 +451,7 @@ export default function Navbar() {
 																	className="object-cover object-top scale-[1.12]"
 																/>
 															</div>
-															<p className="relative inline-flex whitespace-nowrap text-sm font-semibold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+															<p className="relative inline-flex whitespace-nowrap text-sm font-semibold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
 																<span>{firstName}</span>
 																{lastName && (
 																	<span className="ml-1 font-black uppercase tracking-wide text-white/95">
@@ -468,7 +469,6 @@ export default function Navbar() {
 
 								{megaMenuOpen === 'teams' && (
 									<div>
-
 										<div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
 											{teamCards.map((team) => (
 												<Link
@@ -482,7 +482,7 @@ export default function Navbar() {
 													style={getTeamAccentStyle(team.teamColor)}
 												>
 													<div className="flex items-center justify-between gap-2">
-														<p className="relative inline-block whitespace-nowrap text-xs font-bold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-[1px] after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+														<p className="relative inline-block whitespace-nowrap text-xs font-bold text-white after:absolute after:-bottom-0.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
 															{team.teamName}
 														</p>
 														{team.teamLogo && (

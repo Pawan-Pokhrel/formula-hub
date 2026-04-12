@@ -2,19 +2,20 @@
 
 import authApi from '@/lib/api/authApi';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
+import getCroppedImg from '@/lib/utils/cropImage';
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useGoogleLogin } from '@react-oauth/google';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Cropper from 'react-easy-crop';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { FcGoogle } from 'react-icons/fc';
 import {
 	FiArrowLeft,
 	FiCheck,
-	FiImage,
 	FiLock,
 	FiMail,
 	FiPhone,
@@ -23,8 +24,6 @@ import {
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
-import Cropper from 'react-easy-crop';
-import getCroppedImg from '@/lib/utils/cropImage';
 
 const schema = yup.object().shape({
 	fullName: yup
@@ -366,7 +365,7 @@ export default function RegisterPage() {
 	const handleCropConfirm = async () => {
 		if (!cropSrc || !croppedAreaPixels) return;
 		setIsAvatarUploading(true);
-		
+
 		try {
 			const croppedBlob = await getCroppedImg(cropSrc, croppedAreaPixels);
 			const fileToUpload = new File([croppedBlob], `avatar.jpg`, {
@@ -613,7 +612,9 @@ export default function RegisterPage() {
 											</label>
 											<div
 												className={`flex gap-4 items-center rounded-xl border border-white/30 transition ${
-													isDirty && getValues('username') ? 'bg-red-900/10' : ''
+													isDirty && getValues('username') ? 'bg-red-900/10' : (
+														''
+													)
 												}`}
 											>
 												<FiUser className="ml-3 text-white/60 text-lg" />
@@ -634,19 +635,27 @@ export default function RegisterPage() {
 													(optional)
 												</span>
 											</label>
-											
+
 											<label
 												className={`relative flex min-h-[52px] w-full cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed transition-all p-1.5 ${
-													isAvatarUploading
-														? 'border-red-500/50 bg-red-900/10 opacity-70'
-														: 'border-white/30 bg-black/35 hover:border-red-500/50 hover:bg-white/5'
+													isAvatarUploading ?
+														'border-red-500/50 bg-red-900/10 opacity-70'
+													:	'border-white/30 bg-black/35 hover:border-red-500/50 hover:bg-white/5'
 												}`}
-												onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+												onDragOver={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
 												onDrop={(e) => {
 													e.preventDefault();
 													e.stopPropagation();
-													if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-														handleAvatarUpload({ target: { files: e.dataTransfer.files } });
+													if (
+														e.dataTransfer.files &&
+														e.dataTransfer.files.length > 0
+													) {
+														handleAvatarUpload({
+															target: { files: e.dataTransfer.files },
+														});
 													}
 												}}
 											>
@@ -657,8 +666,8 @@ export default function RegisterPage() {
 													disabled={isAvatarUploading}
 													className="hidden"
 												/>
-												
-												{avatarPreview ? (
+
+												{avatarPreview ?
 													<div className="flex w-full items-center gap-3 pl-1">
 														<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/20 bg-black/40">
 															<Image
@@ -678,21 +687,22 @@ export default function RegisterPage() {
 															</p>
 														</div>
 													</div>
-												) : (
-													<div className="flex w-full items-center gap-3 pl-1">
+												:	<div className="flex w-full items-center gap-3 pl-1">
 														<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-white/60">
 															<FiUpload className="text-base" />
 														</div>
 														<div className="flex-1 truncate">
 															<p className="truncate text-sm font-medium text-white/80">
-																{isAvatarUploading ? 'Uploading...' : 'Upload Image'}
+																{isAvatarUploading ?
+																	'Uploading...'
+																:	'Upload Image'}
 															</p>
 															<p className="truncate text-[10px] text-white/40 leading-tight">
 																Drag & drop or browse
 															</p>
 														</div>
 													</div>
-												)}
+												}
 											</label>
 										</div>
 									</div>
@@ -869,11 +879,16 @@ export default function RegisterPage() {
 
 			{/* Crop Modal */}
 			{cropSrc && (
-				<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+				<div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
 					<div className="w-full max-w-md bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative">
 						<div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/50">
-							<h3 className="text-white font-bold text-lg">Crop Profile Picture</h3>
-							<button onClick={handleCropCancel} className="text-white/50 hover:text-white transition cursor-pointer text-2xl font-light leading-none">
+							<h3 className="text-white font-bold text-lg">
+								Crop Profile Picture
+							</h3>
+							<button
+								onClick={handleCropCancel}
+								className="text-white/50 hover:text-white transition cursor-pointer text-2xl font-light leading-none"
+							>
 								&times;
 							</button>
 						</div>
@@ -893,8 +908,12 @@ export default function RegisterPage() {
 						<div className="p-5 bg-black/50 space-y-5">
 							<div>
 								<div className="flex justify-between items-center mb-2">
-									<p className="text-xs text-white/50 uppercase tracking-widest font-bold">Zoom</p>
-									<p className="text-xs text-white/50 font-medium">{Math.round(zoom * 100)}%</p>
+									<p className="text-xs text-white/50 uppercase tracking-widest font-bold">
+										Zoom
+									</p>
+									<p className="text-xs text-white/50 font-medium">
+										{Math.round(zoom * 100)}%
+									</p>
 								</div>
 								<input
 									type="range"
@@ -921,7 +940,9 @@ export default function RegisterPage() {
 									disabled={isAvatarUploading}
 									className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
 								>
-									{isAvatarUploading && <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
+									{isAvatarUploading && (
+										<span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+									)}
 									{isAvatarUploading ? 'Uploading...' : 'Confirm'}
 								</button>
 							</div>

@@ -52,6 +52,9 @@ export function AuthProvider({ children }) {
 	const cached = getCachedUser();
 	const hasToken = typeof window !== 'undefined' && !!getStoredToken();
 
+	const [token, setToken] = useState(() =>
+		typeof window !== 'undefined' ? getStoredToken() : null
+	);
 	const [user, setUser] = useState(cached);
 	const [isAuthenticated, setIsAuthenticated] = useState(!!cached && hasToken);
 	const [isLoading, setIsLoading] = useState(hasToken); // only loading if there's a token to verify
@@ -65,6 +68,7 @@ export function AuthProvider({ children }) {
 	useEffect(() => {
 		const token = getStoredToken();
 		if (!token) {
+			setToken(null);
 			setUser(null);
 			setIsAuthenticated(false);
 			setIsLoading(false);
@@ -82,6 +86,7 @@ export function AuthProvider({ children }) {
 			.catch(() => {
 				clearStoredToken();
 				clearCachedUser();
+				setToken(null);
 				setUser(null);
 				setIsAuthenticated(false);
 			})
@@ -90,6 +95,7 @@ export function AuthProvider({ children }) {
 
 	const value = useMemo(
 		() => ({
+			token,
 			user,
 			isAuthenticated,
 			isLoading,
@@ -99,6 +105,7 @@ export function AuthProvider({ children }) {
 					throw new Error('Login succeeded but no token was returned.');
 				}
 				setStoredToken(response.token);
+				setToken(response.token);
 				const me = await authApi.me(response.token);
 				setUser(me.data);
 				setIsAuthenticated(true);
@@ -113,6 +120,7 @@ export function AuthProvider({ children }) {
 					throw new Error('No token was provided for loginWithToken.');
 				}
 				setStoredToken(token);
+				setToken(token);
 				const me = await authApi.me(token);
 				setUser(me.data);
 				setIsAuthenticated(true);
@@ -124,6 +132,7 @@ export function AuthProvider({ children }) {
 					throw new Error('Google auth succeeded but no token was returned.');
 				}
 				setStoredToken(response.token);
+				setToken(response.token);
 				const me = await authApi.me(response.token);
 				setUser(me.data);
 				setIsAuthenticated(true);
@@ -135,6 +144,7 @@ export function AuthProvider({ children }) {
 				} finally {
 					clearStoredToken();
 					clearCachedUser();
+					setToken(null);
 					setUser(null);
 					setIsAuthenticated(false);
 					// Hard-navigate to login immediately so the current page
@@ -144,12 +154,13 @@ export function AuthProvider({ children }) {
 			},
 			refreshUser: async () => {
 				const me = await authApi.me();
+				setToken(getStoredToken());
 				setUser(me.data);
 				setIsAuthenticated(true);
 				return me.data;
 			},
 		}),
-		[user, isAuthenticated, isLoading]
+		[token, user, isAuthenticated, isLoading]
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
