@@ -13,15 +13,15 @@ export default function Hero() {
 				*/}
 				<Image
 					src="/images/FormulaHub-BG.png"
-					alt="F1 Background Placeholder"
+					alt="F1 Background Pattern"
 					fill
 					sizes="100vw"
 					priority
-					className="h-full w-full object-cover object-center opacity-40 brightness-100 mix-blend-lighten"
+					className="h-full w-full object-cover object-center opacity-60 brightness-[1.2] mix-blend-screen"
 				/>
 				{/* Gradient Overlays for Readability and Blending */}
-				<div className="absolute inset-0 bg-linear-to-b from-[#050507]/20 via-[#050507]/60 to-[#050507]" />
-				<div className="absolute inset-0 bg-linear-to-r from-[#050507] via-[#050507]/40 to-transparent" />
+				<div className="absolute inset-0 bg-linear-to-b from-[#050507]/40 via-[#050507]/50 to-[#050507]" />
+				<div className="absolute inset-0 bg-linear-to-r from-[#050507]/80 via-[#050507]/30 to-transparent" />
 			</div>
 
 			<div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16 pt-24">
@@ -32,7 +32,7 @@ export default function Hero() {
 
 					<h1 className="text-balance text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl animate-fade-in [animation-delay:120ms] uppercase filter drop-shadow-xl">
 						Predict Smarter Races With
-						<span className="bg-linear-to-r from-red-400 via-red-600 to-red-800 bg-clip-text text-transparent block mt-2">
+						<span className="block mt-4 mb-2 font-black tracking-[-0.03em] uppercase bg-linear-to-r from-white to-[#a90000] bg-clip-text text-transparent">
 							FormulaHub
 						</span>
 					</h1>
