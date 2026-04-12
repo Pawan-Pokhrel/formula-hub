@@ -2,12 +2,19 @@
 
 import { useAuth } from '@/providers/AuthProvider';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import toast from 'react-hot-toast';
 import Navbar from './Navbar';
 
 const AUTH_PAGES = ['/login', '/register'];
-const PROTECTED_PREFIXES = ['/profile', '/track', '/predict', '/strategy', '/telemetry', '/compare'];
+const PROTECTED_PREFIXES = [
+	'/profile',
+	'/track',
+	'/predict',
+	'/strategy',
+	'/telemetry',
+	'/compare',
+];
 const REDIRECT_DELAY_MS = 1800;
 
 function isProtectedPath(pathname) {
@@ -143,9 +150,9 @@ function RedirectLoader({ visible }) {
 						borderRadius: 2,
 						background: 'linear-gradient(90deg, #e11d48, #fb7185)',
 						animation:
-							visible
-								? `fhProgress ${REDIRECT_DELAY_MS}ms linear forwards`
-								: 'none',
+							visible ?
+								`fhProgress ${REDIRECT_DELAY_MS}ms linear forwards`
+							:	'none',
 					}}
 				/>
 			</div>
@@ -165,24 +172,31 @@ export default function ClientLayout({ children }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const { isAuthenticated, isLoading } = useAuth();
+	const hasMounted = useSyncExternalStore(
+		() => () => {},
+		() => true,
+		() => false
+	);
+
+	const safePathname = pathname || '';
 	const queryString = searchParams.toString();
 	const nextParam = searchParams.get('next') || '';
-	const isAuthPage = AUTH_PAGES.includes(pathname);
-	const requiresAuth = isProtectedPath(pathname);
+	const isAuthPage = AUTH_PAGES.includes(safePathname);
+	const requiresAuth = isProtectedPath(safePathname);
 	const redirectedPathRef = useRef('');
-	const [redirectingToLogin, setRedirectingToLogin] = useState(false);
 
 	useEffect(() => {
+		if (!hasMounted) return;
 		if (isLoading) return;
 
 		if (requiresAuth && !isAuthenticated) {
-			const requestedPath = pathname + (queryString ? `?${queryString}` : '');
-			setRedirectingToLogin(true);
+			const requestedPath =
+				safePathname + (queryString ? `?${queryString}` : '');
 
 			const timer = setTimeout(() => {
-				if (redirectedPathRef.current !== pathname) {
+				if (redirectedPathRef.current !== safePathname) {
 					toast('Please log in to continue to this area.');
-					redirectedPathRef.current = pathname;
+					redirectedPathRef.current = safePathname;
 				}
 				router.replace(`/login?next=${encodeURIComponent(requestedPath)}`);
 			}, REDIRECT_DELAY_MS);
@@ -190,7 +204,6 @@ export default function ClientLayout({ children }) {
 			return () => clearTimeout(timer);
 		}
 
-		setRedirectingToLogin(false);
 		redirectedPathRef.current = '';
 
 		if (isAuthPage && isAuthenticated) {
@@ -198,15 +211,20 @@ export default function ClientLayout({ children }) {
 			router.replace(safeNext);
 		}
 	}, [
+		hasMounted,
 		isAuthenticated,
 		isAuthPage,
 		isLoading,
 		nextParam,
-		pathname,
+		safePathname,
 		queryString,
 		requiresAuth,
 		router,
 	]);
+
+	if (!hasMounted) {
+		return <>{children}</>;
+	}
 
 	// Branded loading screen while auth session is being checked
 	if (isLoading && (requiresAuth || isAuthPage)) {
@@ -223,7 +241,7 @@ export default function ClientLayout({ children }) {
 				>
 					{children}
 				</div>
-				<RedirectLoader visible={redirectingToLogin} />
+				<RedirectLoader visible={requiresAuth && !isAuthenticated} />
 			</>
 		);
 	}
