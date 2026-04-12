@@ -6,6 +6,8 @@ import {
 	getTeamCode,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
+import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
+import { logActivity } from '@/lib/api/historyApi';
 import {
 	getSchedule,
 	getTelemetrySessionSnapshot,
@@ -17,12 +19,11 @@ import {
 } from '@/lib/api/standingsApi';
 import { getSessionData } from '@/lib/api/trackApi';
 import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
+import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@/providers/AuthProvider';
-import { logActivity } from '@/lib/api/historyApi';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	FaCarSide,
 	FaChevronDown,
@@ -47,6 +48,8 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
+
+const HISTORY_LOG_DEBOUNCE_MS = 1800;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HELPERS
@@ -450,7 +453,7 @@ function SeasonDropdown({ value, onChange, years, disabled }) {
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40 disabled:cursor-not-allowed"
+				className="w-full flex items-center justify-between rounded-xl border border-white/12 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/22 disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				<span>{value}</span>
 				<FaChevronDown
@@ -533,7 +536,7 @@ function RaceDropdown({ value, onChange, schedule, disabled }) {
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full flex items-center justify-between rounded-xl border border-white/[0.12] bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40 disabled:cursor-not-allowed"
+				className="w-full flex items-center justify-between rounded-xl border border-white/12 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/22 disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				<span className="mr-2 flex min-w-0 flex-1 items-center gap-2">
 					{value === 'all' ?
@@ -586,7 +589,7 @@ function RaceDropdown({ value, onChange, schedule, disabled }) {
 									}}
 									className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center gap-2 ${active ? 'bg-white/6 text-white font-medium' : 'text-white/80 hover:bg-white/3'}`}
 								>
-									<span className="text-[10px] text-white/40 min-w-[1.5rem]">
+									<span className="text-[10px] text-white/40 min-w-6">
 										R{race.round}
 									</span>
 									{getCountryCode(race.circuit?.country) && (
@@ -684,7 +687,7 @@ function EntityDropdown({
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-haspopup="listbox"
-				className="w-full flex items-center gap-2.5 rounded-xl border border-white/[0.12] bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/[0.22] disabled:opacity-40 disabled:cursor-not-allowed"
+				className="w-full flex items-center gap-2.5 rounded-xl border border-white/12 bg-black/50 px-3 py-2.5 text-sm text-white outline-none transition hover:border-white/22 disabled:opacity-40 disabled:cursor-not-allowed"
 			>
 				{selected ?
 					<>
@@ -2160,7 +2163,7 @@ function RaceWeekendDashboard({
 					{lapChartData.length > 0 ?
 						<>
 							<div className="mb-2 flex flex-wrap items-center gap-2">
-								<div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1">
+								<div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/2 px-2 py-1">
 									<div className="relative h-5 w-5 overflow-hidden rounded-full border border-white/20 bg-black/30">
 										{leftAvatar && (
 											<Image
@@ -2183,7 +2186,7 @@ function RaceWeekendDashboard({
 										{lName}
 									</span>
 								</div>
-								<div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1">
+								<div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/2 px-2 py-1">
 									<div className="relative h-5 w-5 overflow-hidden rounded-full border border-white/20 bg-black/30">
 										{rightAvatar && (
 											<Image
@@ -2211,7 +2214,7 @@ function RaceWeekendDashboard({
 									</span>
 								</div>
 								{excludedLapMarkers.length > 0 && (
-									<div className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-2 py-1">
+									<div className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/2 px-2 py-1">
 										<span className="text-[10px] uppercase tracking-[0.12em] text-white/45">
 											Excluded
 										</span>
@@ -2340,7 +2343,7 @@ function RaceWeekendDashboard({
 								</div>
 							</div>
 						</>
-					:	<div className="flex-1 border border-white/5 rounded-2xl flex flex-col items-center justify-center bg-white/[0.01]">
+					:	<div className="flex-1 border border-white/5 rounded-2xl flex flex-col items-center justify-center bg-white/1">
 							<span className="text-white/20 text-xs uppercase tracking-widest text-center px-4">
 								{safeTelemetry.lap_traces?.length > 0 ?
 									'No Laps for selected drivers'
@@ -2394,7 +2397,7 @@ function RaceWeekendDashboard({
 								:	'Prev --'}
 							</span>
 						</button>
-						<span className="rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-white/65">
+						<span className="rounded-md border border-white/10 bg-white/3 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-white/65">
 							{lapCompareLabel}
 						</span>
 						<button
@@ -2460,7 +2463,7 @@ function RaceWeekendDashboard({
 													/>
 												</button>
 												{lapDropdownOpen && lapCompareOptions.length > 0 && (
-													<div className="absolute right-0 top-[calc(100%+6px)] z-50 w-44 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0a0b0f] shadow-2xl">
+													<div className="absolute right-0 top-[calc(100%+6px)] z-50 w-44 overflow-hidden rounded-xl border border-white/8 bg-[#0a0b0f] shadow-2xl">
 														<div className="max-h-64 overflow-y-auto py-1">
 															{lapCompareOptions.map((option) => {
 																const active =
@@ -2512,7 +2515,7 @@ function RaceWeekendDashboard({
 								].map((row) => (
 									<tr
 										key={row.key}
-										className="bg-white/[0.02]"
+										className="bg-white/2"
 									>
 										<td className="rounded-l-xl border border-white/8 border-r-0 px-3 py-2">
 											<div className="flex items-center gap-2.5 min-w-[180px]">
@@ -2618,10 +2621,15 @@ export default function DriverComparisonPageClient() {
 		:	currentYear;
 	const requestedType =
 		searchParams.get('type') === 'constructors' ? 'constructors' : 'drivers';
+	const requestedView =
+		searchParams.get('view') === 'career' ? 'career' : 'season';
+	const requestedRoundRaw = searchParams.get('round') || 'all';
+	const initialRound =
+		/^\d+$/.test(requestedRoundRaw) ? requestedRoundRaw : 'all';
 
 	const [year, setYear] = useState(initialYear);
 	const [comparisonType, setComparisonType] = useState(requestedType);
-	const [viewMode, setViewMode] = useState('season');
+	const [viewMode, setViewMode] = useState(requestedView);
 	const [dataset, setDataset] = useState({
 		drivers: [],
 		constructors: [],
@@ -2630,7 +2638,7 @@ export default function DriverComparisonPageClient() {
 	const [loading, setLoading] = useState(true);
 
 	const [schedule, setSchedule] = useState([]);
-	const [selectedRace, setSelectedRace] = useState('all');
+	const [selectedRace, setSelectedRace] = useState(initialRound);
 
 	const [raceTelemetry, setRaceTelemetry] = useState(null);
 	const [telemetryLoading, setTelemetryLoading] = useState(false);
@@ -2651,6 +2659,11 @@ export default function DriverComparisonPageClient() {
 		const p = searchParams.get('b') || '';
 		return requestedType === 'drivers' ? p.trim().toUpperCase() : p.trim();
 	});
+	const [hasUserInteracted, setHasUserInteracted] = useState(false);
+	const hasHydratedYearRef = useRef(false);
+	const markUserInteraction = useCallback(() => {
+		setHasUserInteracted(true);
+	}, []);
 
 	const years = useMemo(
 		() =>
@@ -2692,7 +2705,11 @@ export default function DriverComparisonPageClient() {
 					rounds: Number(data?.rounds || 0),
 				});
 				setSchedule(Array.isArray(scheduleData) ? scheduleData : []);
-				setSelectedRace('all'); // Reset race when year changes
+				if (hasHydratedYearRef.current) {
+					setSelectedRace('all'); // Reset race when user changes year
+				} else {
+					hasHydratedYearRef.current = true;
+				}
 			})
 			.finally(() => {
 				if (active) setLoading(false);
@@ -2904,33 +2921,110 @@ export default function DriverComparisonPageClient() {
 
 	const { token, isAuthenticated } = useAuth();
 	const historyLoggedRef = useRef('');
+	const historyLogTimeoutRef = useRef(null);
 
 	useEffect(() => {
-		if (isAuthenticated && token && leftEntity && rightEntity) {
-			const hc = comparisonType === 'drivers'
-				? `${leftEntity.driver_code}-vs-${rightEntity.driver_code}`
-				: `${leftEntity.team_name}-vs-${rightEntity.team_name}`;
-				
-			if (historyLoggedRef.current !== hc) {
-				historyLoggedRef.current = hc;
-				
-				const t1 = comparisonType === 'drivers' ? leftEntity.driver_name : leftEntity.team_name;
-				const t2 = comparisonType === 'drivers' ? rightEntity.driver_name : rightEntity.team_name;
-				const image = comparisonType === 'drivers' 
-					? getCarImage(leftEntity.team_name) 
-					: getTeamLogoPath(leftEntity.team_name);
-					
-				logActivity(token, {
-					activity_type: 'Comparison',
-					title: `${t1} vs. ${t2}`,
-					subtitle: comparisonType === 'drivers' ? 'Driver Telemetry' : 'Constructor Delta',
-					image_url: image || '/images/cars/2026redbullracingcarright.png',
-					color_hex: resolveColors(leftEntity, rightEntity).lc || '#3671C6',
-					reference_url: `/compare?type=${comparisonType}&left=${getKey(leftEntity, comparisonType)}&right=${getKey(rightEntity, comparisonType)}`
-				}).catch(console.error);
+		const shouldLogComparison = hasUserInteracted || selectedRace !== 'all';
+		if (
+			!isAuthenticated ||
+			!token ||
+			!leftEntity ||
+			!rightEntity ||
+			!shouldLogComparison
+		) {
+			if (historyLogTimeoutRef.current) {
+				clearTimeout(historyLogTimeoutRef.current);
+				historyLogTimeoutRef.current = null;
 			}
+			return;
 		}
-	}, [leftEntity, rightEntity, comparisonType, isAuthenticated, token]);
+
+		const hc =
+			comparisonType === 'drivers' ?
+				`${leftEntity.driver_code}-vs-${rightEntity.driver_code}-${viewMode}-${selectedRace}-${year}`
+			:	`${leftEntity.team_name}-vs-${rightEntity.team_name}-${viewMode}-${selectedRace}-${year}`;
+
+		if (historyLoggedRef.current === hc) return;
+
+		if (historyLogTimeoutRef.current) {
+			clearTimeout(historyLogTimeoutRef.current);
+		}
+
+		historyLogTimeoutRef.current = setTimeout(() => {
+			historyLogTimeoutRef.current = null;
+			if (historyLoggedRef.current === hc) return;
+			historyLoggedRef.current = hc;
+
+			const t1 =
+				comparisonType === 'drivers' ?
+					leftEntity.driver_name
+				:	leftEntity.team_name;
+			const t2 =
+				comparisonType === 'drivers' ?
+					rightEntity.driver_name
+				:	rightEntity.team_name;
+			const image =
+				comparisonType === 'drivers' ?
+					getTelemetryDriverImage(leftEntity.driver_code, 2026)
+				:	getTeamLogoPath(leftEntity.team_name);
+			const params = new URLSearchParams({
+				type: comparisonType,
+				year: String(year),
+				a: getKey(leftEntity, comparisonType),
+				b: getKey(rightEntity, comparisonType),
+			});
+			if (viewMode === 'career') {
+				params.set('view', 'career');
+			} else if (selectedRace !== 'all') {
+				params.set('round', String(selectedRace));
+			}
+
+			const baseSubtitle =
+				comparisonType === 'drivers' ? 'Driver Telemetry' : 'Constructor Delta';
+			const selectedRaceItem =
+				selectedRace === 'all' ? null : (
+					availableSchedule.find(
+						(race) => String(race?.round) === String(selectedRace)
+					)
+				);
+			const raceLabel =
+				selectedRaceItem ? getRaceDisplayName(selectedRaceItem)
+				: selectedRace !== 'all' ? `Round ${selectedRace}`
+				: null;
+			const subtitle =
+				raceLabel ? `${year} - ${raceLabel} - ${baseSubtitle}` : baseSubtitle;
+
+			logActivity(token, {
+				activity_type: 'Comparison',
+				title: `${t1} vs. ${t2}`,
+				subtitle,
+				image_url:
+					image ||
+					getCarImage(leftEntity.team_name) ||
+					'/images/cars/2026redbullracingcarright.png',
+				color_hex: resolveColors(leftEntity, rightEntity).lc || '#3671C6',
+				reference_url: `/compare?${params.toString()}`,
+			}).catch(console.error);
+		}, HISTORY_LOG_DEBOUNCE_MS);
+
+		return () => {
+			if (historyLogTimeoutRef.current) {
+				clearTimeout(historyLogTimeoutRef.current);
+				historyLogTimeoutRef.current = null;
+			}
+		};
+	}, [
+		leftEntity,
+		rightEntity,
+		comparisonType,
+		isAuthenticated,
+		token,
+		viewMode,
+		selectedRace,
+		hasUserInteracted,
+		year,
+		availableSchedule,
+	]);
 
 	const lName =
 		comparisonType === 'drivers' ?
@@ -3017,7 +3111,10 @@ export default function DriverComparisonPageClient() {
 								<button
 									key={key}
 									type="button"
-									onClick={() => setComparisonType(key)}
+									onClick={() => {
+										markUserInteraction();
+										setComparisonType(key);
+									}}
 									className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 ${comparisonType === key ? 'bg-white/12 text-white' : 'text-white/35 hover:text-white/70'}`}
 								>
 									{icon} {label}
@@ -3029,14 +3126,20 @@ export default function DriverComparisonPageClient() {
 						<div className="inline-flex gap-1 rounded-xl border border-white/10 bg-black/45 p-1 backdrop-blur-xl">
 							<button
 								type="button"
-								onClick={() => setViewMode('season')}
+								onClick={() => {
+									markUserInteraction();
+									setViewMode('season');
+								}}
 								className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 ${viewMode === 'season' ? 'bg-white/12 text-white' : 'text-white/35 hover:text-white/70'}`}
 							>
 								{year} Season
 							</button>
 							<button
 								type="button"
-								onClick={() => setViewMode('career')}
+								onClick={() => {
+									markUserInteraction();
+									setViewMode('career');
+								}}
 								disabled={!careerAvailable}
 								className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] transition-all duration-200 ${viewMode === 'career' ? 'bg-white/12 text-white' : 'text-white/35 hover:text-white/70'} disabled:opacity-25 disabled:cursor-not-allowed`}
 							>
@@ -3053,7 +3156,10 @@ export default function DriverComparisonPageClient() {
 					<EntityDropdown
 						label={comparisonType === 'drivers' ? 'Driver A' : 'Constructor A'}
 						value={resolvedLeft}
-						onChange={setLeftKey}
+						onChange={(k) => {
+							markUserInteraction();
+							setLeftKey(k);
+						}}
 						entities={entities}
 						comparisonType={comparisonType}
 						disabled={loading || entities.length < 2}
@@ -3063,6 +3169,7 @@ export default function DriverComparisonPageClient() {
 						<button
 							type="button"
 							onClick={() => {
+								markUserInteraction();
 								setLeftKey(resolvedRight);
 								setRightKey(resolvedLeft);
 							}}
@@ -3079,7 +3186,10 @@ export default function DriverComparisonPageClient() {
 					<EntityDropdown
 						label={comparisonType === 'drivers' ? 'Driver B' : 'Constructor B'}
 						value={resolvedRight}
-						onChange={setRightKey}
+						onChange={(k) => {
+							markUserInteraction();
+							setRightKey(k);
+						}}
 						entities={entities}
 						comparisonType={comparisonType}
 						disabled={loading || entities.length < 2}
@@ -3094,6 +3204,7 @@ export default function DriverComparisonPageClient() {
 								<SeasonDropdown
 									value={year}
 									onChange={(v) => {
+										markUserInteraction();
 										setLoading(true);
 										setYear(Number(v));
 									}}
@@ -3109,6 +3220,7 @@ export default function DriverComparisonPageClient() {
 								<RaceDropdown
 									value={selectedRace}
 									onChange={(v) => {
+										markUserInteraction();
 										setSelectedRace(v);
 									}}
 									schedule={availableSchedule}

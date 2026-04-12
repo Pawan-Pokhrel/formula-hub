@@ -16,10 +16,14 @@ import {
 	WeekendStatusWidget,
 } from '@/components/dashboard/widgets';
 import {
+	getCountryCode,
 	getDriverImagePath,
 	getTeamLogoPath,
+	getTrackImagePath,
 	parseRaceDateTime,
 } from '@/components/schedule/scheduleHelpers';
+import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
+import { getHistory } from '@/lib/api/historyApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
 	getCurrentWeekendBrief,
@@ -45,41 +49,8 @@ import {
 	DEFAULT_WIDGET_ORDER,
 	WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
-import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
-import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
 import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage } from '@/utils/f1_images';
-import { toast } from 'react-hot-toast';
-
-const USER_HISTORY_MOCK = [
-	{
-		id: 'hist_1',
-		type: 'Comparison',
-		title: 'Verstappen vs. Norris',
-		subtitle: 'Miami Grand Prix 2026 · Telemetry Delta',
-		timestamp: '2 hours ago',
-		image: '/images/f1-cars/redbull-racing.png',
-		color: '#3671C6',
-	},
-	{
-		id: 'hist_2',
-		type: 'Prediction',
-		title: 'Silverstone Pace Forecast',
-		subtitle: 'British Grand Prix · Lap Time Neural Net',
-		timestamp: 'Yesterday',
-		image: '/images/f1-cars/mclaren.png',
-		color: '#FF8000',
-	},
-	{
-		id: 'hist_3',
-		type: 'Simulation',
-		title: 'Monaco Overcut Scenario',
-		subtitle: 'Monte Carlo · Pit Strategy Engine',
-		timestamp: '3 days ago',
-		image: '/images/f1-cars/ferrari.png',
-		color: '#E8002D',
-	}
-];
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -92,10 +63,15 @@ import {
 	FaClock,
 	FaExchangeAlt,
 	FaHistory,
+	FaList,
 	FaProjectDiagram,
 	FaStar,
+	FaThLarge,
 	FaTrophy,
 } from 'react-icons/fa';
+
+const CARD_HISTORY_LIMIT = 25;
+const LIST_HISTORY_LIMIT = 50;
 
 const DASHBOARD_ASPECTS = [
 	{
@@ -117,6 +93,11 @@ const DASHBOARD_ASPECTS = [
 		id: 'saved',
 		label: 'Generated Races',
 		widgets: ['saved-races'],
+	},
+	{
+		id: 'activities',
+		label: 'Activities',
+		widgets: [],
 	},
 ];
 
@@ -212,6 +193,18 @@ function formatStartTime(targetDate, targetTime) {
 	});
 }
 
+function getHistorySearchParams(referenceUrl) {
+	if (!referenceUrl) return null;
+	try {
+		if (referenceUrl.startsWith('/')) {
+			return new URL(referenceUrl, 'https://formulahub.local').searchParams;
+		}
+		return new URL(referenceUrl).searchParams;
+	} catch {
+		return null;
+	}
+}
+
 export default function DashboardPage() {
 	const currentYear = new Date().getFullYear();
 	const validWidgetIds = useMemo(() => {
@@ -250,9 +243,16 @@ export default function DashboardPage() {
 		defaultPreferences.favoriteTeams
 	);
 	const [activeAspect, setActiveAspect] = useState('overview');
+	const [activityView, setActivityView] = useState('cards');
 	const [prefsHydrated, setPrefsHydrated] = useState(false);
+	const [userHistory, setUserHistory] = useState([]);
+	const [historyLoading, setHistoryLoading] = useState(false);
 	const hasFetchedDashboardDataRef = useRef(false);
-	const { isAuthenticated, user } = useAuth();
+	const { isAuthenticated, user, token } = useAuth();
+	const historyFetchLimit =
+		activeAspect === 'activities' && activityView === 'list' ?
+			LIST_HISTORY_LIMIT
+		:	CARD_HISTORY_LIMIT;
 
 	useEffect(() => {
 		if (hasFetchedDashboardDataRef.current) return;
@@ -367,6 +367,16 @@ export default function DashboardPage() {
 		prefsHydrated,
 		validWidgetIds,
 	]);
+
+	useEffect(() => {
+		if (!isAuthenticated || !token) return;
+		if (activeAspect !== 'activities' && activeAspect !== 'overview') return;
+		setHistoryLoading(true);
+		getHistory(token, historyFetchLimit)
+			.then((data) => setUserHistory(Array.isArray(data) ? data : []))
+			.catch(() => setUserHistory([]))
+			.finally(() => setHistoryLoading(false));
+	}, [isAuthenticated, token, activeAspect, historyFetchLimit]);
 
 	const countdown = useMemo(
 		() => getCountdown(nextRace?.date, nextRace?.time),
@@ -749,6 +759,35 @@ export default function DashboardPage() {
 		}
 	};
 
+	const driverByCode = useMemo(() => {
+		const map = new Map();
+		driverStandings.forEach((row) => {
+			const code = String(row?.driver_code || '')
+				.trim()
+				.toUpperCase();
+			if (code) map.set(code, row);
+		});
+		return map;
+	}, [driverStandings]);
+
+	const trackRaceByYearRound = useMemo(() => {
+		const source = trackSchedule.length > 0 ? trackSchedule : schedule;
+		const map = new Map();
+		source.forEach((race) => {
+			const round = Number(race?.round || 0);
+			const raceYear = Number(race?.year || currentYear);
+			if (!round || !raceYear) return;
+			map.set(`${raceYear}_${round}`, race);
+		});
+		return map;
+	}, [trackSchedule, schedule, currentYear]);
+
+	const historyItemsToRender = useMemo(() => {
+		const maxItems =
+			activityView === 'list' ? LIST_HISTORY_LIMIT : CARD_HISTORY_LIMIT;
+		return Array.isArray(userHistory) ? userHistory.slice(0, maxItems) : [];
+	}, [activityView, userHistory]);
+
 	if (loading) {
 		return (
 			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-20 text-white md:px-12 lg:px-20">
@@ -1035,10 +1074,13 @@ export default function DashboardPage() {
 
 				<div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-xl">
 					{DASHBOARD_ASPECTS.filter(
-						(aspect) => aspect.id !== 'saved' || isAuthenticated
+						(aspect) =>
+							(aspect.id !== 'saved' && aspect.id !== 'activities') ||
+							isAuthenticated
 					).map((aspect) => {
 						const active = activeAspect === aspect.id;
 						const isSaved = aspect.id === 'saved';
+						const isActivities = aspect.id === 'activities';
 						return (
 							<button
 								key={aspect.id}
@@ -1057,6 +1099,13 @@ export default function DashboardPage() {
 										}`}
 									/>
 								)}
+								{isActivities && (
+									<FaHistory
+										className={`text-[9px] ${
+											active ? 'text-red-300' : 'text-red-600'
+										}`}
+									/>
+								)}
 								{aspect.label}
 								{isSaved && generatedRaces.length > 0 && (
 									<span
@@ -1067,6 +1116,17 @@ export default function DashboardPage() {
 										}`}
 									>
 										{generatedRaces.length}
+									</span>
+								)}
+								{isActivities && userHistory.length > 0 && (
+									<span
+										className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+											active ?
+												'bg-red-500/30 text-red-100'
+											:	'bg-white/10 text-gray-500'
+										}`}
+									>
+										{userHistory.length}
 									</span>
 								)}
 							</button>
@@ -1119,218 +1179,285 @@ export default function DashboardPage() {
 						{favoriteDrivers.length > 0 || favoriteTeams.length > 0 ?
 							<>
 								<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-									{favoriteDrivers.slice(0, FAVORITE_DRIVER_LIMIT).map((code) => {
-										const drv = driverStandings.find(
-											(d) => d.driver_code === code
-										);
-										if (!drv) return null;
-										const leaderPoints = Number(driverStandings[0]?.points || 0);
-										const gap = leaderPoints - Number(drv.points);
-										const isLeader = driverStandings[0]?.driver_code === code;
-										const driverRankIndex = driverStandings.findIndex(
-											(d) => d.driver_code === code
-										);
-										const driverRank = Number(
-											drv.position ||
-												(driverRankIndex >= 0 ? driverRankIndex + 1 : 0)
-										);
-										const runnerUpPoints = Number(
-											driverStandings[1]?.points || 0
-										);
-										const displayGap =
-											isLeader ?
-												`+${Math.max(0, Number(drv.points) - runnerUpPoints)} PTS CLEAR`
-											:	`-${Math.max(0, gap)} PTS TO LEADER`;
+									{favoriteDrivers
+										.slice(0, FAVORITE_DRIVER_LIMIT)
+										.map((code) => {
+											const drv = driverStandings.find(
+												(d) => d.driver_code === code
+											);
+											if (!drv) return null;
+											const leaderPoints = Number(
+												driverStandings[0]?.points || 0
+											);
+											const gap = leaderPoints - Number(drv.points);
+											const isLeader = driverStandings[0]?.driver_code === code;
+											const driverRankIndex = driverStandings.findIndex(
+												(d) => d.driver_code === code
+											);
+											const driverRank = Number(
+												drv.position ||
+													(driverRankIndex >= 0 ? driverRankIndex + 1 : 0)
+											);
+											const runnerUpPoints = Number(
+												driverStandings[1]?.points || 0
+											);
+											const displayGap =
+												isLeader ?
+													`+${Math.max(0, Number(drv.points) - runnerUpPoints)} PTS CLEAR`
+												:	`-${Math.max(0, gap)} PTS TO LEADER`;
 
-										const teamColor = getTeamColorHex(drv.team_name);
-										const driverImg = getDriverImagePath(code);
-										const teamLogo = getTeamLogoPath(drv.team_name);
-										const carImg = getCarImage(drv.team_name);
+											const teamColor = getTeamColorHex(drv.team_name);
+											const driverImg = getDriverImagePath(code);
+											const teamLogo = getTeamLogoPath(drv.team_name);
+											const carImg = getCarImage(drv.team_name);
 
-										return (
-											<div
-												key={code}
-												className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
-											>
-												{/* Top section: Team Color Gradient & Driver Info */}
-												<div 
-													className="relative p-6 px-7 pb-20"
-													style={{
-														background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`
-													}}
+											return (
+												<div
+													key={code}
+													className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
 												>
-													<div className="relative z-10 flex items-start justify-between">
-														<div className="flex items-center gap-4">
-															{driverImg ?
-																<div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
-																	<Image src={driverImg} alt={code} fill className="object-cover object-top" />
+													{/* Top section: Team Color Gradient & Driver Info */}
+													<div
+														className="relative p-6 px-7 pb-20"
+														style={{
+															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
+														}}
+													>
+														<div className="relative z-10 flex items-start justify-between">
+															<div className="flex items-center gap-4">
+																{driverImg ?
+																	<div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+																		<Image
+																			src={driverImg}
+																			alt={code}
+																			fill
+																			className="object-cover object-top"
+																		/>
+																	</div>
+																:	<div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 text-xl font-black text-white shadow-xl">
+																		{code}
+																	</div>
+																}
+																<div>
+																	<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">
+																		Favorite Driver
+																	</p>
+																	<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">
+																		{drv.driver_name}
+																	</h3>
+																	<p className="mt-2 flex items-center gap-2 text-xs font-bold text-white/95 drop-shadow-md">
+																		{teamLogo && (
+																			<span className="relative inline-block h-4 w-4">
+																				<Image
+																					src={teamLogo}
+																					alt=""
+																					fill
+																					className="object-contain"
+																				/>
+																			</span>
+																		)}
+																		{drv.team_name}
+																	</p>
 																</div>
-															:	<div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 text-xl font-black text-white shadow-xl">{code}</div>}
-															<div>
-																<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">Favorite Driver</p>
-																<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">{drv.driver_name}</h3>
-																<p className="mt-2 flex items-center gap-2 text-xs font-bold text-white/95 drop-shadow-md">
-																	{teamLogo && <span className="relative inline-block h-4 w-4"><Image src={teamLogo} alt="" fill className="object-contain" /></span>}
-																	{drv.team_name}
-																</p>
+															</div>
+															<div className="flex flex-col items-end gap-2">
+																<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">
+																	P{driverRank || '-'}
+																</span>
+																{isLeader && (
+																	<span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">
+																		Leader
+																	</span>
+																)}
 															</div>
 														</div>
-														<div className="flex flex-col items-end gap-2">
-															<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">P{driverRank || '-'}</span>
-															{isLeader && <span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">Leader</span>}
+
+														{/* Unobstructed Car Image sitting perfectly on the dividing line */}
+														<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+															{carImg && (
+																<Image
+																	src={carImg}
+																	alt="Car"
+																	fill
+																	className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]"
+																/>
+															)}
 														</div>
 													</div>
 
-													{/* Unobstructed Car Image sitting perfectly on the dividing line */}
-													<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
-														{carImg && <Image src={carImg} alt="Car" fill className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]" />}
+													{/* Bottom section: Stats in a clean, dark grid avoiding the car mapping */}
+													<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
+														<div>
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Championship Rank
+															</p>
+															<p className="text-xl font-black text-white">
+																P{driverRank || '-'}
+															</p>
+														</div>
+														<div className="pl-6">
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Championship
+															</p>
+															<p className="text-[22px] font-black text-white leading-none">
+																{drv.points}{' '}
+																<span className="text-xs font-bold text-gray-500">
+																	PTS
+																</span>
+															</p>
+														</div>
+														<div className="col-span-2 pt-2 border-t border-white/5">
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Title Focus
+															</p>
+															<p
+																className="text-[15px] font-black tracking-wide"
+																style={{
+																	color: isLeader ? '#34d399' : '#f87171',
+																}}
+															>
+																{displayGap}
+															</p>
+														</div>
 													</div>
 												</div>
+											);
+										})}
 
-												{/* Bottom section: Stats in a clean, dark grid avoiding the car mapping */}
-												<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
-													<div>
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship Rank</p>
-														<p className="text-xl font-black text-white">P{driverRank || '-'}</p>
-													</div>
-													<div className="pl-6">
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship</p>
-														<p className="text-[22px] font-black text-white leading-none">{drv.points} <span className="text-xs font-bold text-gray-500">PTS</span></p>
-													</div>
-													<div className="col-span-2 pt-2 border-t border-white/5">
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Title Focus</p>
-														<p className="text-[15px] font-black tracking-wide" style={{ color: isLeader ? '#34d399' : '#f87171' }}>{displayGap}</p>
-													</div>
-												</div>
-											</div>
-										);
-									})}
+									{favoriteTeams
+										.slice(0, FAVORITE_TEAM_LIMIT)
+										.map((teamName) => {
+											const tm = constructorStandings.find(
+												(t) => t.team_name === teamName
+											);
+											if (!tm) return null;
+											const leaderPoints = Number(
+												constructorStandings[0]?.points || 0
+											);
+											const gap = leaderPoints - Number(tm.points);
+											const isLeader =
+												constructorStandings[0]?.team_name === teamName;
+											const teamRankIndex = constructorStandings.findIndex(
+												(t) => t.team_name === teamName
+											);
+											const teamRank = Number(
+												tm.position ||
+													(teamRankIndex >= 0 ? teamRankIndex + 1 : 0)
+											);
+											const runnerUpPoints = Number(
+												constructorStandings[1]?.points || 0
+											);
+											const displayGap =
+												isLeader ?
+													`+${Math.max(0, Number(tm.points) - runnerUpPoints)} PTS CLEAR`
+												:	`-${Math.max(0, gap)} PTS TO LEADER`;
 
-									{favoriteTeams.slice(0, FAVORITE_TEAM_LIMIT).map((teamName) => {
-										const tm = constructorStandings.find(
-											(t) => t.team_name === teamName
-										);
-										if (!tm) return null;
-										const leaderPoints = Number(
-											constructorStandings[0]?.points || 0
-										);
-										const gap = leaderPoints - Number(tm.points);
-										const isLeader =
-											constructorStandings[0]?.team_name === teamName;
-										const teamRankIndex = constructorStandings.findIndex(
-											(t) => t.team_name === teamName
-										);
-										const teamRank = Number(
-											tm.position || (teamRankIndex >= 0 ? teamRankIndex + 1 : 0)
-										);
-										const runnerUpPoints = Number(
-											constructorStandings[1]?.points || 0
-										);
-										const displayGap =
-											isLeader ?
-												`+${Math.max(0, Number(tm.points) - runnerUpPoints)} PTS CLEAR`
-											:	`-${Math.max(0, gap)} PTS TO LEADER`;
+											const teamColor = getTeamColorHex(teamName);
+											const teamLogo = getTeamLogoPath(teamName);
+											const carImg = getCarImage(teamName);
 
-										const teamColor = getTeamColorHex(teamName);
-										const teamLogo = getTeamLogoPath(teamName);
-										const carImg = getCarImage(teamName);
-
-										return (
-											<div
-												key={teamName}
-												className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
-											>
-												{/* Top section */}
-												<div 
-													className="relative p-6 px-7 pb-20"
-													style={{
-														background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`
-													}}
+											return (
+												<div
+													key={teamName}
+													className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
 												>
-													<div className="relative z-10 flex items-start justify-between">
-														<div className="flex items-center gap-4">
-															{teamLogo ?
-																<div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-white border-2 border-transparent shadow-[0_4px_15px_rgba(0,0,0,0.5)] p-2">
-																	<Image src={teamLogo} alt={teamName} fill className="object-contain" />
+													{/* Top section */}
+													<div
+														className="relative p-6 px-7 pb-20"
+														style={{
+															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
+														}}
+													>
+														<div className="relative z-10 flex items-start justify-between">
+															<div className="flex items-center gap-4">
+																{teamLogo ?
+																	<div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-white border-2 border-transparent shadow-[0_4px_15px_rgba(0,0,0,0.5)] p-2">
+																		<Image
+																			src={teamLogo}
+																			alt={teamName}
+																			fill
+																			className="object-contain"
+																		/>
+																	</div>
+																:	<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-black/40 text-lg font-black shadow-xl">
+																		{teamName.substring(0, 3).toUpperCase()}
+																	</div>
+																}
+																<div>
+																	<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">
+																		Favorite Team
+																	</p>
+																	<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">
+																		{teamName}
+																	</h3>
+																	<p className="mt-2 text-xs font-bold text-white/95 drop-shadow-md">
+																		Constructor
+																	</p>
 																</div>
-															:	<div className="flex h-16 w-16 items-center justify-center rounded-xl bg-black/40 text-lg font-black shadow-xl">{teamName.substring(0,3).toUpperCase()}</div>}
-															<div>
-																<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">Favorite Team</p>
-																<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">{teamName}</h3>
-																<p className="mt-2 text-xs font-bold text-white/95 drop-shadow-md">
-																	Constructor
-																</p>
+															</div>
+															<div className="flex flex-col items-end gap-2">
+																<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">
+																	P{teamRank || '-'}
+																</span>
+																{isLeader && (
+																	<span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">
+																		Leader
+																	</span>
+																)}
 															</div>
 														</div>
-														<div className="flex flex-col items-end gap-2">
-															<span className="rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white backdrop-blur-md shadow-lg border border-white/10">P{teamRank || '-'}</span>
-															{isLeader && <span className="rounded-full bg-[#22c55e]/90 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-[0_0_15px_rgba(34,197,94,0.5)] backdrop-blur-md border border-[#22c55e]/30">Leader</span>}
+
+														{/* Separated Car Image */}
+														<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+															{carImg && (
+																<Image
+																	src={carImg}
+																	alt="Car"
+																	fill
+																	className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]"
+																/>
+															)}
 														</div>
 													</div>
-													
-													{/* Separated Car Image */}
-													<div className="absolute -bottom-6 right-[-20px] h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
-														{carImg && <Image src={carImg} alt="Car" fill className="object-contain object-right drop-shadow-[0_15px_20px_rgba(0,0,0,0.6)]" />}
-													</div>
-												</div>
 
-												{/* Bottom section */}
-												<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
-													<div>
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship Rank</p>
-														<p className="text-xl font-black text-white">P{teamRank || '-'}</p>
-													</div>
-													<div className="pl-6">
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Championship</p>
-														<p className="text-[22px] font-black text-white leading-none">{tm.points} <span className="text-xs font-bold text-gray-500">PTS</span></p>
-													</div>
-													<div className="col-span-2 pt-2 border-t border-white/5">
-														<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Title Focus</p>
-														<p className="text-[15px] font-black tracking-wide" style={{ color: isLeader ? '#34d399' : '#f87171' }}>{displayGap}</p>
+													{/* Bottom section */}
+													<div className="relative z-20 flex-1 bg-[#0A0A0C] px-7 py-6 grid grid-cols-2 gap-y-5 gap-x-2 border-t border-white/5">
+														<div>
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Championship Rank
+															</p>
+															<p className="text-xl font-black text-white">
+																P{teamRank || '-'}
+															</p>
+														</div>
+														<div className="pl-6">
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Championship
+															</p>
+															<p className="text-[22px] font-black text-white leading-none">
+																{tm.points}{' '}
+																<span className="text-xs font-bold text-gray-500">
+																	PTS
+																</span>
+															</p>
+														</div>
+														<div className="col-span-2 pt-2 border-t border-white/5">
+															<p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">
+																Title Focus
+															</p>
+															<p
+																className="text-[15px] font-black tracking-wide"
+																style={{
+																	color: isLeader ? '#34d399' : '#f87171',
+																}}
+															>
+																{displayGap}
+															</p>
+														</div>
 													</div>
 												</div>
-											</div>
-										);
-									})}
-								</div>
-
-								{/* NEW: Platform History Section */}
-								<div className="pt-8">
-									<div className="mb-6 flex items-end justify-between">
-										<div>
-											<p className="text-[11px] font-bold uppercase tracking-[0.24em] text-red-400">Analysis History</p>
-											<h2 className="text-2xl font-black uppercase tracking-wide text-white mt-1">Recent Activity</h2>
-										</div>
-										<Link href="/profile" className="text-xs font-bold text-gray-400 hover:text-white transition uppercase tracking-wider flex items-center gap-2">
-											View All <FaArrowRight />
-										</Link>
-									</div>
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-										{USER_HISTORY_MOCK.map((item) => (
-											<div key={item.id} className="group cursor-pointer rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden hover:border-white/20 transition-all duration-300 hover:-translate-y-1">
-												{/* Header / Timestamp */}
-												<div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-													<div className="flex items-center gap-2">
-														<span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-														<span className="text-[10px] font-bold uppercase tracking-wider text-white/70">{item.type}</span>
-													</div>
-													<span className="text-[10px] flex items-center gap-1.5 text-gray-500 uppercase tracking-wider font-semibold">
-														<FaClock /> {item.timestamp}
-													</span>
-												</div>
-												{/* Body */}
-												<div className="p-6 pb-2">
-													<h3 className="text-lg font-black text-white group-hover:text-white line-clamp-1">{item.title}</h3>
-													<p className="text-xs text-gray-400 mt-1 pb-4 border-b border-white/5">{item.subtitle}</p>
-												</div>
-												{/* Visual / Image */}
-												<div className="relative h-28 w-full px-6 overflow-hidden">
-													<div className="absolute inset-0 opacity-10 bg-linear-to-b from-transparent to-white/5" />
-													<Image src={item.image} alt={item.type} fill className="object-contain object-bottom scale-110 translate-y-2 opacity-50 group-hover:opacity-90 group-hover:scale-125 transition-all duration-500 mix-blend-screen" />
-												</div>
-											</div>
-										))}
-									</div>
+											);
+										})}
 								</div>
 							</>
 						:	<div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md">
@@ -1353,12 +1480,355 @@ export default function DashboardPage() {
 					</div>
 				)}
 
+				{activeAspect === 'activities' && (
+					<div className="space-y-6 animate-fade-in">
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-[11px] font-bold uppercase tracking-[0.24em] text-red-400">
+									FormulaHub · Timeline
+								</p>
+								<h2 className="text-2xl font-black uppercase tracking-wide text-white mt-1">
+									Your Activity Feed
+								</h2>
+							</div>
+							<div className="inline-flex gap-1 rounded-xl border border-white/10 bg-black/45 p-1 backdrop-blur-xl">
+								<button
+									type="button"
+									onClick={() => setActivityView('cards')}
+									className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'cards' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
+								>
+									<FaThLarge className="text-[11px]" />
+								</button>
+								<button
+									type="button"
+									onClick={() => setActivityView('list')}
+									className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all ${activityView === 'list' ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/75'}`}
+								>
+									<FaList className="text-[11px]" />
+								</button>
+							</div>
+						</div>
+
+						{historyLoading ?
+							<div
+								className={`${activityView === 'list' ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5'}`}
+							>
+								{Array.from({ length: 3 }).map((_, i) => (
+									<div
+										key={i}
+										className={`animate-pulse rounded-3xl border border-white/10 bg-white/5 ${activityView === 'list' ? 'h-20' : 'h-64'}`}
+									/>
+								))}
+							</div>
+						: historyItemsToRender.length === 0 ?
+							<div className="flex flex-col items-center justify-center h-72 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md">
+								<FaHistory className="mb-4 text-3xl text-gray-600" />
+								<h3 className="text-lg font-bold text-white">
+									No Activity Yet
+								</h3>
+								<p className="mt-2 max-w-md text-center text-sm text-gray-400">
+									Your comparisons, predictions, simulations, and strategy runs
+									will appear here automatically.
+								</p>
+								<div className="mt-5 flex gap-3">
+									<Link
+										href="/compare"
+										className="rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-500 transition-colors"
+									>
+										Compare
+									</Link>
+									<Link
+										href="/predict"
+										className="rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/10 transition-colors"
+									>
+										Predict
+									</Link>
+								</div>
+							</div>
+						:	<div
+								className={`${activityView === 'list' ? 'space-y-3' : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5'}`}
+							>
+								{historyItemsToRender.map((item) => {
+									const baseAccentColor = item.color_hex || '#ef4444';
+									const params = getHistorySearchParams(item.reference_url);
+									const isCompareActivity = item.activity_type === 'Comparison';
+									const compareType =
+										params?.get('type') === 'constructors' ?
+											'constructors'
+										:	'drivers';
+									const leftParam =
+										params?.get('a') || params?.get('left') || '';
+									const rightParam =
+										params?.get('b') || params?.get('right') || '';
+
+									const leftDriverCode = leftParam.trim().toUpperCase();
+									const rightDriverCode = rightParam.trim().toUpperCase();
+									const leftDriver = driverByCode.get(leftDriverCode) || null;
+									const rightDriver = driverByCode.get(rightDriverCode) || null;
+
+									const leftTeamName =
+										compareType === 'drivers' ?
+											leftDriver?.team_name
+										:	leftParam;
+									const rightTeamName =
+										compareType === 'drivers' ?
+											rightDriver?.team_name
+										:	rightParam;
+
+									const leftAccentColor =
+										isCompareActivity ?
+											getTeamColorHex(leftTeamName) || baseAccentColor
+										:	baseAccentColor;
+									const rightAccentColor =
+										isCompareActivity ?
+											getTeamColorHex(rightTeamName) || baseAccentColor
+										:	baseAccentColor;
+
+									const compareLeftImage =
+										compareType === 'drivers' ?
+											getTelemetryDriverImage(leftDriverCode, 2026)
+										:	getCarImage(leftParam);
+									const compareRightImage =
+										compareType === 'drivers' ?
+											getTelemetryDriverImage(rightDriverCode, 2026)
+										:	getCarImage(rightParam);
+
+									const isTrackActivity =
+										item.activity_type === 'Simulation' &&
+										String(item.reference_url || '').startsWith('/track');
+									const trackYear = Number(params?.get('year') || currentYear);
+									const trackRound = Number(params?.get('round') || 0);
+									const trackRace =
+										trackYear && trackRound ?
+											trackRaceByYearRound.get(`${trackYear}_${trackRound}`)
+										:	null;
+									const trackCountry =
+										trackRace?.country || trackRace?.circuit?.country || null;
+									const trackCountryCode = getCountryCode(trackCountry);
+									const trackFlagImage =
+										trackCountryCode ?
+											`/images/flags/${trackCountryCode}.png`
+										:	null;
+									const trackCircuitImage =
+										trackRace ? getTrackImagePath(trackRace) : null;
+
+									const cardAccentColor =
+										isCompareActivity ? leftAccentColor : baseAccentColor;
+									const timeAgo = (() => {
+										if (!item.created_at) return '';
+										const diff =
+											Date.now() - new Date(item.created_at).getTime();
+										const mins = Math.floor(diff / 60000);
+										if (mins < 1) return 'Just now';
+										if (mins < 60) return `${mins}m ago`;
+										const hrs = Math.floor(mins / 60);
+										if (hrs < 24) return `${hrs}h ago`;
+										const days = Math.floor(hrs / 24);
+										return `${days}d ago`;
+									})();
+
+									const typeIcon = {
+										Comparison: FaExchangeAlt,
+										Prediction: FaChartLine,
+										Simulation: FaProjectDiagram,
+										Strategy: FaBroadcastTower,
+									};
+									const TypeIcon = typeIcon[item.activity_type] || FaHistory;
+
+									if (activityView === 'list') {
+										return (
+											<Link
+												key={item.id}
+												href={item.reference_url || '#'}
+												className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-[#0A0A0C] px-4 py-3 transition-all duration-300 hover:border-white/25 hover:shadow-lg"
+											>
+												<div
+													className="absolute left-0 top-0 bottom-0 w-1"
+													style={{
+														background:
+															isCompareActivity ?
+																`linear-gradient(180deg, ${leftAccentColor}, ${rightAccentColor})`
+															:	cardAccentColor,
+													}}
+												/>
+												<div
+													className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border"
+													style={{
+														backgroundColor: `${cardAccentColor}25`,
+														borderColor: `${cardAccentColor}40`,
+													}}
+												>
+													<TypeIcon
+														className="text-[12px]"
+														style={{ color: cardAccentColor }}
+													/>
+												</div>
+												<div className="min-w-0 flex-1">
+													<p className="truncate text-sm font-black text-white">
+														{item.title}
+													</p>
+													<p className="truncate text-xs text-gray-400 mt-0.5">
+														{item.subtitle}
+													</p>
+												</div>
+												<span className="shrink-0 text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
+													{timeAgo}
+												</span>
+												<div className="relative h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+													{(isTrackActivity ?
+														trackCircuitImage || item.image_url
+													:	compareLeftImage || item.image_url) && (
+														<Image
+															src={
+																isTrackActivity ?
+																	trackCircuitImage || item.image_url
+																:	compareLeftImage || item.image_url
+															}
+															alt={item.activity_type}
+															fill
+															className="object-contain object-center opacity-80 group-hover:opacity-100 transition-opacity"
+														/>
+													)}
+												</div>
+											</Link>
+										);
+									}
+
+									return (
+										<Link
+											key={item.id}
+											href={item.reference_url || '#'}
+											className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0A0A0C] transition-all duration-300 hover:border-white/25 hover:shadow-xl hover:-translate-y-1"
+										>
+											{/* Accent bar */}
+											<div
+												className="h-1 w-full"
+												style={{
+													background:
+														isCompareActivity ?
+															`linear-gradient(90deg, ${leftAccentColor}, ${rightAccentColor})`
+														:	`linear-gradient(90deg, ${cardAccentColor}, transparent)`,
+												}}
+											/>
+
+											{/* Header */}
+											<div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+												<div className="flex items-center gap-2.5">
+													<div
+														className="flex h-7 w-7 items-center justify-center rounded-lg"
+														style={{
+															backgroundColor: `${cardAccentColor}25`,
+															border: `1px solid ${cardAccentColor}40`,
+														}}
+													>
+														<TypeIcon
+															className="text-[10px]"
+															style={{ color: cardAccentColor }}
+														/>
+													</div>
+													<span className="text-[10px] font-bold uppercase tracking-wider text-white/70">
+														{item.activity_type}
+													</span>
+												</div>
+												<span className="text-[10px] flex items-center gap-1.5 text-gray-500 uppercase tracking-wider font-semibold">
+													<FaClock className="text-[8px]" /> {timeAgo}
+												</span>
+											</div>
+
+											{/* Body */}
+											<div className="flex-1 p-6 pb-2">
+												<h3 className="text-lg font-black text-white group-hover:text-white line-clamp-1">
+													{item.title}
+												</h3>
+												<p className="text-xs text-gray-400 mt-1 pb-4 border-b border-white/5">
+													{item.subtitle}
+												</p>
+											</div>
+
+											{/* Image */}
+											<div className="relative h-28 w-full overflow-hidden">
+												<div
+													className="absolute inset-0"
+													style={{
+														background:
+															isCompareActivity ?
+																`linear-gradient(120deg, ${leftAccentColor}1A, transparent 45%, ${rightAccentColor}1A)`
+															:	`linear-gradient(to bottom, transparent, ${cardAccentColor}10)`,
+													}}
+												/>
+												{isCompareActivity ?
+													<div className="absolute inset-0 grid grid-cols-2">
+														<div className="relative border-r border-white/10">
+															{compareLeftImage && (
+																<Image
+																	src={compareLeftImage}
+																	alt="Left comparison"
+																	fill
+																	className="object-contain object-bottom scale-105 translate-y-2 opacity-45 group-hover:opacity-85 group-hover:scale-115 transition-all duration-500"
+																/>
+															)}
+														</div>
+														<div className="relative">
+															{compareRightImage && (
+																<Image
+																	src={compareRightImage}
+																	alt="Right comparison"
+																	fill
+																	className="object-contain object-bottom scale-105 translate-y-2 opacity-45 group-hover:opacity-85 group-hover:scale-115 transition-all duration-500"
+																/>
+															)}
+														</div>
+													</div>
+												: isTrackActivity ?
+													<>
+														{trackFlagImage && (
+															<Image
+																src={trackFlagImage}
+																alt="Track country"
+																fill
+																className="object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+															/>
+														)}
+														{(trackCircuitImage || item.image_url) && (
+															<Image
+																src={trackCircuitImage || item.image_url}
+																alt={trackRace?.event || item.activity_type}
+																fill
+																className="object-contain object-bottom scale-110 translate-y-2 opacity-45 group-hover:opacity-85 group-hover:scale-125 transition-all duration-500"
+															/>
+														)}
+													</>
+												: item.image_url ?
+													<Image
+														src={item.image_url}
+														alt={item.activity_type}
+														fill
+														className="object-contain object-bottom scale-110 translate-y-2 opacity-40 group-hover:opacity-80 group-hover:scale-125 transition-all duration-500"
+													/>
+												:	null}
+											</div>
+
+											{/* Footer */}
+											<div className="px-6 py-3 flex items-center justify-end">
+												<span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500 group-hover:text-red-300 transition-colors flex items-center gap-1.5">
+													Open <FaArrowRight className="text-[8px]" />
+												</span>
+											</div>
+										</Link>
+									);
+								})}
+							</div>
+						}
+					</div>
+				)}
+
 				<div
 					className={`rounded-2xl border border-white/10 bg-black/25 p-3 backdrop-blur-sm md:p-4 ${
 						activeAspect === 'operations' && !isLiveRaceWeekend ?
 							'min-h-0 overflow-visible'
-						: activeAspect === 'overview' ? 'hidden'
-						: 'min-h-[580px] lg:h-[calc(100vh-205px)] lg:min-h-0'
+						: activeAspect === 'overview' || activeAspect === 'activities' ?
+							'hidden'
+						:	'min-h-[580px] lg:h-[calc(100vh-205px)] lg:min-h-0'
 					}`}
 				>
 					<DashboardShell
