@@ -42,6 +42,7 @@ export default function RootLayout({ children }) {
 							containerStyle={{
 								top: 20,
 								right: 20,
+						zIndex: 99999,
 							}}
 							toastOptions={{
 							duration: 3500,
