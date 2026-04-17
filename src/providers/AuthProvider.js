@@ -1,6 +1,7 @@
 'use client';
 
 import authApi from '@/lib/api/authApi';
+import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import {
 	clearStoredToken,
 	getStoredToken,
@@ -63,6 +64,11 @@ export function AuthProvider({ children }) {
 	useEffect(() => {
 		setCachedUser(user);
 	}, [user]);
+
+	useEffect(() => {
+		if (!user?.avatarUrl) return;
+		void primeAvatarCache(user.avatarUrl);
+	}, [user?.avatarUrl]);
 
 	// On mount: verify token + refresh user from server (background sync)
 	useEffect(() => {

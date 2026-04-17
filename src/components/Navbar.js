@@ -1,6 +1,7 @@
 // components/Navbar.js
 'use client';
 
+import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import {
 	getDriverImagePath,
 	getTeamCode,
@@ -245,7 +246,7 @@ export default function Navbar() {
 		.trim()
 		.charAt(0)
 		.toUpperCase();
-	const userAvatarUrl = user?.avatarUrl || null;
+	const userAvatarUrl = user?.avatarUrl || user?.avatarPath || null;
 
 	const handleProtectedNavigation = (event, item) => {
 		if (isAuthenticated || !item.requiresAuth) return;
@@ -532,11 +533,9 @@ export default function Navbar() {
 							>
 								{userAvatarUrl ?
 									<span className="relative h-10 w-10 overflow-hidden rounded-full">
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
+										<CachedAvatarImage
 											src={userAvatarUrl}
 											alt="Profile avatar"
-											referrerPolicy="no-referrer"
 											className="h-full w-full object-cover"
 										/>
 									</span>

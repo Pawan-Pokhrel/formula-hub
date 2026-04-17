@@ -1,6 +1,8 @@
 'use client';
 
+import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import authApi from '@/lib/api/authApi';
+import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import getCroppedImg from '@/lib/utils/cropImage';
 import { useAuth } from '@/providers/AuthProvider';
@@ -25,6 +27,57 @@ import {
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
 
+const PENDING_VERIFICATION_STORAGE_KEY =
+	'formulahub.register.pendingVerification.v1';
+
+function getPendingVerification() {
+	if (typeof window === 'undefined') return null;
+	try {
+		const raw = window.localStorage.getItem(PENDING_VERIFICATION_STORAGE_KEY);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw);
+		if (!parsed?.email || typeof parsed.email !== 'string') {
+			return null;
+		}
+		return {
+			email: parsed.email.trim(),
+			createdAt:
+				typeof parsed.createdAt === 'number' ? parsed.createdAt : Date.now(),
+		};
+	} catch {
+		return null;
+	}
+}
+
+function setPendingVerification(email) {
+	if (typeof window === 'undefined') return;
+	try {
+		const normalizedEmail = String(email || '').trim();
+		if (!normalizedEmail) {
+			window.localStorage.removeItem(PENDING_VERIFICATION_STORAGE_KEY);
+			return;
+		}
+		window.localStorage.setItem(
+			PENDING_VERIFICATION_STORAGE_KEY,
+			JSON.stringify({
+				email: normalizedEmail,
+				createdAt: Date.now(),
+			})
+		);
+	} catch {
+		// Ignore storage write failures.
+	}
+}
+
+function clearPendingVerification() {
+	if (typeof window === 'undefined') return;
+	try {
+		window.localStorage.removeItem(PENDING_VERIFICATION_STORAGE_KEY);
+	} catch {
+		// Ignore storage write failures.
+	}
+}
+
 const schema = yup.object().shape({
 	fullName: yup
 		.string()
@@ -37,6 +90,7 @@ const schema = yup.object().shape({
 	phoneNumber: yup.string().required('Phone number is required'),
 	username: yup.string().optional(),
 	avatarUrl: yup.string().nullable().optional(),
+	avatarPath: yup.string().nullable().optional(),
 	password: yup
 		.string()
 		.required('Password is required')
@@ -312,6 +366,7 @@ export default function RegisterPage() {
 	// Verification step state
 	const [showVerification, setShowVerification] = useState(false);
 	const [registeredEmail, setRegisteredEmail] = useState('');
+	const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
 
 	const {
 		register,
@@ -327,6 +382,13 @@ export default function RegisterPage() {
 	});
 
 	const avatarUrl = watch('avatarUrl');
+
+	useEffect(() => {
+		const pending = getPendingVerification();
+		if (!pending?.email) return;
+		setPendingVerificationEmail(pending.email);
+		setRegisteredEmail((prev) => prev || pending.email);
+	}, []);
 
 	useEffect(() => {
 		if (!avatarUrl) {
@@ -374,6 +436,7 @@ export default function RegisterPage() {
 
 			const response = await authApi.uploadAvatar(fileToUpload);
 			const uploadedUrl = response?.avatarUrl || '';
+			const uploadedPath = response?.avatarPath || '';
 			if (!uploadedUrl) {
 				throw new Error('Upload finished but no image URL was returned.');
 			}
@@ -382,7 +445,12 @@ export default function RegisterPage() {
 				shouldDirty: true,
 				shouldValidate: true,
 			});
+			setValue('avatarPath', uploadedPath, {
+				shouldDirty: true,
+				shouldValidate: false,
+			});
 			setAvatarPreview(uploadedUrl);
+			void primeAvatarCache(uploadedUrl);
 			toast.success('Profile picture uploaded successfully!');
 			setCropSrc(null); // Close the cropper
 		} catch (err) {
@@ -406,6 +474,8 @@ export default function RegisterPage() {
 			if (response.success) {
 				toast.success(response.message || 'Verification code sent!');
 				setRegisteredEmail(data.email);
+				setPendingVerificationEmail(data.email);
+				setPendingVerification(data.email);
 				setShowVerification(true);
 			}
 		} catch (err) {
@@ -418,6 +488,9 @@ export default function RegisterPage() {
 	};
 
 	const handleVerified = async (token) => {
+		clearPendingVerification();
+		setPendingVerificationEmail('');
+		setRegisteredEmail('');
 		toast.success('Account activated! Redirecting to dashboard...');
 		if (token) {
 			await loginWithToken(token);
@@ -448,6 +521,18 @@ export default function RegisterPage() {
 
 	const handleBackToRegister = () => {
 		setShowVerification(false);
+	};
+
+	const handleContinueVerification = () => {
+		const email = registeredEmail || pendingVerificationEmail;
+		if (!email) return;
+		setRegisteredEmail(email);
+		setShowVerification(true);
+	};
+
+	const handleDismissPendingVerification = () => {
+		clearPendingVerification();
+		setPendingVerificationEmail('');
 		setRegisteredEmail('');
 	};
 
@@ -503,6 +588,37 @@ export default function RegisterPage() {
 									</p>
 								</div>
 
+								{pendingVerificationEmail && (
+									<div className="mb-5 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-left">
+										<p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-200/80">
+											Verification Pending
+										</p>
+										<p className="mt-1 text-sm text-white/80">
+											An unverified account exists for{' '}
+											<span className="font-semibold text-white">
+												{pendingVerificationEmail}
+											</span>
+											.
+										</p>
+										<div className="mt-3 flex flex-wrap gap-2">
+											<button
+												type="button"
+												onClick={handleContinueVerification}
+												className="rounded-xl bg-amber-300 px-4 py-2 text-xs font-semibold text-black transition hover:bg-amber-200 cursor-pointer"
+											>
+												Continue Verification
+											</button>
+											<button
+												type="button"
+												onClick={handleDismissPendingVerification}
+												className="rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/5 hover:text-white cursor-pointer"
+											>
+												Start Over
+											</button>
+										</div>
+									</div>
+								)}
+
 								<form
 									onSubmit={handleSubmit(handleRegister)}
 									className="space-y-4"
@@ -510,6 +626,10 @@ export default function RegisterPage() {
 									<input
 										type="hidden"
 										{...register('avatarUrl')}
+									/>
+									<input
+										type="hidden"
+										{...register('avatarPath')}
 									/>
 									{/* Full Name */}
 									<div>
@@ -670,12 +790,10 @@ export default function RegisterPage() {
 												{avatarPreview ?
 													<div className="flex w-full items-center gap-3 pl-1">
 														<div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/20 bg-black/40">
-															<Image
+															<CachedAvatarImage
 																src={avatarPreview}
 																alt="Profile preview"
-																fill
-																unoptimized
-																className="object-cover"
+																className="h-full w-full object-cover"
 															/>
 														</div>
 														<div className="flex-1 truncate">

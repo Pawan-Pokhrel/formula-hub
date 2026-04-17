@@ -1,11 +1,13 @@
 'use client';
 
+import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import {
 	getDriverImagePath,
 	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import authApi from '@/lib/api/authApi';
+import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
 	getConstructorStandings,
@@ -672,6 +674,7 @@ export default function ProfilePage() {
 		phoneNumber: '',
 		username: '',
 		avatarUrl: '',
+		avatarPath: '',
 	});
 	const [profileSaving, setProfileSaving] = useState(false);
 	const [profileAvatarUploading, setProfileAvatarUploading] = useState(false);
@@ -700,6 +703,7 @@ export default function ProfilePage() {
 			phoneNumber: user?.phoneNumber || '',
 			username: user?.username || '',
 			avatarUrl: user?.avatarUrl || '',
+			avatarPath: user?.avatarPath || '',
 		});
 	}, [user]);
 
@@ -807,9 +811,25 @@ export default function ProfilePage() {
 				fullName: profileForm.fullName.trim(),
 				phoneNumber: profileForm.phoneNumber.trim(),
 				username: profileForm.username.trim() || null,
-				avatarUrl: profileForm.avatarUrl || null,
 			};
+			if (!user?.isGoogleAuth) {
+				payload.avatarUrl = profileForm.avatarUrl || null;
+				payload.avatarPath = profileForm.avatarPath || null;
+			}
 			const response = await authApi.updateProfile(payload);
+			const savedUser = response?.data;
+			if (savedUser) {
+				setProfileForm({
+					fullName: savedUser.fullName || '',
+					phoneNumber: savedUser.phoneNumber || '',
+					username: savedUser.username || '',
+					avatarUrl: savedUser.avatarUrl || '',
+					avatarPath: savedUser.avatarPath || '',
+				});
+				if (savedUser.avatarUrl) {
+					void primeAvatarCache(savedUser.avatarUrl);
+				}
+			}
 			await refreshUser();
 			toast.success(response?.message || 'Profile updated successfully.');
 		} catch (error) {
@@ -819,15 +839,24 @@ export default function ProfilePage() {
 		}
 	};
 
-	const persistAvatarChange = async (nextAvatarUrl, successMessage) => {
+	const persistAvatarChange = async (nextAvatar, successMessage) => {
 		setProfileAvatarUploading(true);
 		try {
 			const response = await authApi.updateProfile({
-				avatarUrl: nextAvatarUrl,
+				avatarUrl: nextAvatar?.avatarUrl ?? null,
+				avatarPath: nextAvatar?.avatarPath ?? null,
 			});
 
-			const savedAvatar = response?.data?.avatarUrl || '';
-			setProfileForm((prev) => ({ ...prev, avatarUrl: savedAvatar }));
+			const savedAvatarUrl = response?.data?.avatarUrl || '';
+			const savedAvatarPath = response?.data?.avatarPath || '';
+			setProfileForm((prev) => ({
+				...prev,
+				avatarUrl: savedAvatarUrl,
+				avatarPath: savedAvatarPath,
+			}));
+			if (savedAvatarUrl) {
+				void primeAvatarCache(savedAvatarUrl);
+			}
 			await refreshUser();
 			toast.success(successMessage);
 		} catch (error) {
@@ -855,16 +884,17 @@ export default function ProfilePage() {
 
 		try {
 			const response = await authApi.uploadAvatar(file);
-			const uploadedUrl = response?.avatarUrl || '';
-			if (!uploadedUrl) {
+			const uploadedAvatar = {
+				avatarUrl: response?.avatarUrl || '',
+				avatarPath: response?.avatarPath || '',
+			};
+			if (!uploadedAvatar.avatarUrl) {
 				throw new Error('Upload finished but no image URL was returned.');
 			}
 
-			setProfileForm((prev) => ({ ...prev, avatarUrl: uploadedUrl }));
-			await persistAvatarChange(
-				uploadedUrl,
-				'Profile image updated successfully.'
-			);
+			setProfileForm((prev) => ({ ...prev, ...uploadedAvatar }));
+			void primeAvatarCache(uploadedAvatar.avatarUrl);
+			await persistAvatarChange(uploadedAvatar, 'Profile image updated successfully.');
 		} catch (error) {
 			toast.error(getApiErrorMessage(error, 'Failed to upload profile image.'));
 		} finally {
@@ -878,8 +908,11 @@ export default function ProfilePage() {
 			return;
 		}
 
-		setProfileForm((prev) => ({ ...prev, avatarUrl: '' }));
-		await persistAvatarChange(null, 'Profile image removed.');
+		setProfileForm((prev) => ({ ...prev, avatarUrl: '', avatarPath: '' }));
+		await persistAvatarChange(
+			{ avatarUrl: null, avatarPath: null },
+			'Profile image removed.'
+		);
 	};
 
 	const requestEmailChange = async () => {
@@ -1237,15 +1270,11 @@ export default function ProfilePage() {
 										<div className="group relative">
 											<div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white/15 bg-black/50 ring-2 ring-red-600/20 ring-offset-2 ring-offset-[#09090b] transition-all duration-300 group-hover:ring-red-600/40">
 												{profileForm.avatarUrl ?
-													<>
-														{/* eslint-disable-next-line @next/next/no-img-element */}
-														<img
-															src={profileForm.avatarUrl}
-															alt="Profile avatar"
-															referrerPolicy="no-referrer"
-															className="h-full w-full object-cover"
-														/>
-													</>
+													<CachedAvatarImage
+														src={profileForm.avatarUrl}
+														alt="Profile avatar"
+														className="h-full w-full object-cover"
+													/>
 												:	<div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/40">
 														{userInitial}
 													</div>
