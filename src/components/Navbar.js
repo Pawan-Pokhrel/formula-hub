@@ -536,6 +536,7 @@ export default function Navbar() {
 										<CachedAvatarImage
 											src={userAvatarUrl}
 											alt="Profile avatar"
+											sizes="40px"
 											className="h-full w-full object-cover"
 										/>
 									</span>
