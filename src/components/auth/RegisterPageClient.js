@@ -793,6 +793,7 @@ export default function RegisterPage() {
 															<CachedAvatarImage
 																src={avatarPreview}
 																alt="Profile preview"
+																sizes="36px"
 																className="h-full w-full object-cover"
 															/>
 														</div>

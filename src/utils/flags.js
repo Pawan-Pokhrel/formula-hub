@@ -1,4 +1,5 @@
 import React from 'react';
+import SafeImage from '@/components/common/SafeImage';
 
 export const getCountryCode = (name) => {
 	if (!name) return null;
@@ -46,9 +47,11 @@ export const getCountryFlag = (name) => {
 	const code = getCountryCode(name);
 	if (code) {
 		return (
-			<img 
+			<SafeImage
 				src={`https://flagcdn.com/w40/${code}.png`}
-				srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+				unoptimized
+				width={20}
+				height={14}
 				alt={`${name} flag`}
 				className="w-5 h-[14px] rounded-[2px] object-cover border border-white/20 shadow-sm"
 			/>

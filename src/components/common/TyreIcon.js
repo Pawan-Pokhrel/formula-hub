@@ -1,4 +1,5 @@
 import React from 'react';
+import SafeImage from '@/components/common/SafeImage';
 import { COMPOUND_COLORS } from '@/components/strategy/constants';
 
 export default function TyreIcon({ compound, className = "w-5 h-5", sizeLabel = false, forceCircle = false }) {
@@ -14,12 +15,18 @@ export default function TyreIcon({ compound, className = "w-5 h-5", sizeLabel = 
 
 	if (src && !forceCircle) {
 		return (
-			<img 
-				src={src} 
-				alt={compound} 
-				className={`object-contain drop-shadow-md ${className}`} 
-				title={compound} 
-			/>
+			<span
+				className={`relative inline-block shrink-0 ${className}`}
+				title={compound}
+			>
+				<SafeImage
+					src={src}
+					alt={compound}
+					fill
+					sizes="40px"
+					className="object-contain drop-shadow-md"
+				/>
+			</span>
 		);
 	}
 	

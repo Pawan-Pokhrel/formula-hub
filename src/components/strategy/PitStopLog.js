@@ -1,3 +1,4 @@
+import SafeImage from '@/components/common/SafeImage';
 import TyreIcon from '@/components/common/TyreIcon';
 import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
 import { getDriverImage } from '@/utils/f1_images';
@@ -67,12 +68,12 @@ export default function PitStopLog({
 									L{stop.lap}
 								</span>
 								{driverImage && (
-									<img
+									<SafeImage
 										src={driverImage}
 										alt={stop.abbr}
-										onError={(e) => {
-											e.currentTarget.style.display = 'none';
-										}}
+										width={20}
+										height={20}
+										hideOnError
 										className="h-5 w-5 rounded-full object-cover border border-white/20"
 									/>
 								)}
@@ -84,12 +85,12 @@ export default function PitStopLog({
 									{stop.abbr}
 								</span>
 								{teamLogo && (
-									<img
+									<SafeImage
 										src={teamLogo}
 										alt={driverInfo?.team || 'Team'}
-										onError={(e) => {
-											e.currentTarget.style.display = 'none';
-										}}
+										width={14}
+										height={14}
+										hideOnError
 										className="h-3.5 w-3.5 object-contain opacity-90"
 									/>
 								)}

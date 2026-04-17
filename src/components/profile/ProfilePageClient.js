@@ -1268,11 +1268,12 @@ export default function ProfilePage() {
 								<div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 									<div className="flex items-center gap-4">
 										<div className="group relative">
-											<div className="h-20 w-20 overflow-hidden rounded-full border-2 border-white/15 bg-black/50 ring-2 ring-red-600/20 ring-offset-2 ring-offset-[#09090b] transition-all duration-300 group-hover:ring-red-600/40">
+											<div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-white/15 bg-black/50 ring-2 ring-red-600/20 ring-offset-2 ring-offset-[#09090b] transition-all duration-300 group-hover:ring-red-600/40">
 												{profileForm.avatarUrl ?
 													<CachedAvatarImage
 														src={profileForm.avatarUrl}
 														alt="Profile avatar"
+														sizes="80px"
 														className="h-full w-full object-cover"
 													/>
 												:	<div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/40">

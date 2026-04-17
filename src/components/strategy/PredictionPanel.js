@@ -6,6 +6,7 @@ import {
 	FaFlag,
 } from 'react-icons/fa';
 
+import SafeImage from '@/components/common/SafeImage';
 import TyreIcon from '@/components/common/TyreIcon';
 import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
 import { getCarImage, getDriverImage } from '@/utils/f1_images';
@@ -189,22 +190,26 @@ export default function PredictionPanel({
 				style={{ borderTop: `3px solid ${driverInfo?.color || '#666'}` }}
 			>
 				{carImage && (
-					<img
-						src={carImage}
-						alt="Car"
-						className="absolute -right-4 -bottom-6 h-28 opacity-25 object-contain drop-shadow-2xl pointer-events-none transition-transform duration-700 group-hover:scale-105"
-					/>
+					<div className="pointer-events-none absolute -right-4 -bottom-6 h-28 w-56 opacity-25 transition-transform duration-700 group-hover:scale-105">
+						<SafeImage
+							src={carImage}
+							alt="Car"
+							fill
+							sizes="224px"
+							className="object-contain drop-shadow-2xl"
+						/>
+					</div>
 				)}
 				<div className="flex items-center justify-between relative z-10">
 					<div className="flex items-center gap-3">
 						{driverImage ?
-							<img
+							<SafeImage
 								src={driverImage}
-								onError={(e) => {
-									e.currentTarget.style.display = 'none';
-								}}
-								className="w-12 h-12 object-cover rounded-full bg-black/40 border border-white/20 shadow-xl"
 								alt={selectedDriver}
+								width={48}
+								height={48}
+								hideOnError
+								className="w-12 h-12 object-cover rounded-full bg-black/40 border border-white/20 shadow-xl"
 							/>
 						:	<div className="w-12 h-12 rounded-full bg-black/40 border border-white/20 shadow-xl flex items-center justify-center text-xs font-black tracking-wider text-gray-300">
 								{selectedDriver}
@@ -216,12 +221,12 @@ export default function PredictionPanel({
 							</h3>
 							<div className="flex items-center gap-1.5">
 								{teamLogo && (
-									<img
+									<SafeImage
 										src={teamLogo}
 										alt={driverInfo?.team || 'Team'}
-										onError={(e) => {
-											e.currentTarget.style.display = 'none';
-										}}
+										width={14}
+										height={14}
+										hideOnError
 										className="h-3.5 w-3.5 object-contain"
 									/>
 								)}

@@ -1,6 +1,6 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
+import SafeImage from '@/components/common/SafeImage';
 import { getCachedAvatarObjectUrl } from '@/lib/avatar/avatarCache';
 import { useEffect, useRef, useState } from 'react';
 
@@ -9,6 +9,7 @@ export default function CachedAvatarImage({
 	alt,
 	className = '',
 	referrerPolicy = 'no-referrer',
+	sizes = '100vw',
 	...props
 }) {
 	const [cachedAvatar, setCachedAvatar] = useState({
@@ -63,9 +64,12 @@ export default function CachedAvatarImage({
 	}
 
 	return (
-		<img
+		<SafeImage
 			src={displaySrc}
 			alt={alt}
+			fill
+			sizes={sizes}
+			unoptimized
 			referrerPolicy={referrerPolicy}
 			className={className}
 			{...props}
