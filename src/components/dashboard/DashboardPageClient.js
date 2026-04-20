@@ -148,7 +148,7 @@ const TEAM_COLOR_HEX = {
 	'haas f1 team': '#B6BABD',
 	'rb f1 team': '#6692FF',
 	'racing bulls': '#6692FF',
-	audi: '#52E252',
+	audi: '#E60000',
 	sauber: '#52E252',
 	cadillac: '#8A8A8A',
 	'cadillac f1 team': '#8A8A8A',
@@ -1578,7 +1578,7 @@ export default function DashboardPage() {
 									href="/profile"
 									className="mt-4 rounded-xl bg-red-600 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-500 transition-colors"
 								>
-									Update Preferences
+									Update Favorites
 								</Link>
 							</div>
 						}
