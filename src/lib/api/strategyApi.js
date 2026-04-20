@@ -32,9 +32,9 @@ export async function runSimulation({
  * Load full lap-by-lap race data for replay simulation.
  * First call may take 30-60s (FastF1 loading), cached afterwards.
  */
-export async function loadRaceData({ year, roundNum }) {
+export async function loadRaceData({ year, roundNum, signal }) {
 	const params = new URLSearchParams({ year, round_num: roundNum });
-	const { data } = await api.post(`/strategy/race-data?${params.toString()}`, null, { timeout: 120000 });
+	const { data } = await api.post(`/strategy/race-data?${params.toString()}`, null, { timeout: 120000, signal });
 	return data;
 }
 

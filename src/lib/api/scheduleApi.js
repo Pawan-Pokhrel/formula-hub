@@ -197,13 +197,16 @@ function buildTelemetryFromLastRace(lastRace) {
 	};
 }
 
-export const getSchedule = async (year, { forceRefresh = false } = {}) => {
+export const getSchedule = async (
+	year,
+	{ forceRefresh = false, signal } = {}
+) => {
 	if (!forceRefresh) {
 		const cached = getCachedSchedule(year);
 		if (cached) return cached;
 	}
 
-	const response = await api.get(`/schedule/${year}`);
+	const response = await api.get(`/schedule/${year}`, { signal });
 	if (Array.isArray(response.data?.data)) {
 		setCachedSchedule(year, response.data.data);
 		return response.data.data;
@@ -286,13 +289,19 @@ export const getTelemetryHistoryEvents = async (year, limit = 24) => {
 	return [];
 };
 
-export const getTelemetrySessionSnapshot = async ({ year, round, session }) => {
+export const getTelemetrySessionSnapshot = async ({
+	year,
+	round,
+	session,
+	signal,
+}) => {
 	const response = await api.get('/schedule/telemetry/session', {
 		params: {
 			year,
 			round,
 			session: session || undefined,
 		},
+		signal,
 	});
 	if (response.data.success) {
 		return response.data.data;

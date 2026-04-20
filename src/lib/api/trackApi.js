@@ -93,7 +93,14 @@ export const toggleTrackFavorite = async (year, round) => {
 export const getOvertakeProbabilities = async (
 	year,
 	round,
-	{ lap, timeSec, topN = 12, signal } = {}
+	{
+		lap,
+		timeSec,
+		topN = 12,
+		attackerDriver,
+		targetDriver,
+		signal,
+	} = {}
 ) => {
 	if (!lap || lap < 1) {
 		throw new Error('lap must be >= 1');
@@ -106,6 +113,8 @@ export const getOvertakeProbabilities = async (
 				lap,
 				top_n: topN,
 				time_sec: typeof timeSec === 'number' ? timeSec : undefined,
+				attacker_driver: attackerDriver || undefined,
+				target_driver: targetDriver || undefined,
 			},
 			signal,
 		}
@@ -118,6 +127,14 @@ export const getOvertakeProbabilities = async (
 	throw new Error(
 		res.data?.message || 'Failed to fetch overtake probabilities'
 	);
+};
+
+export const getOvertakeModelMetadata = async ({ signal } = {}) => {
+	const res = await api.get('/track/overtake-model/metadata', { signal });
+	if (res.data?.success) {
+		return res.data.data;
+	}
+	throw new Error(res.data?.message || 'Failed to fetch overtake model metadata');
 };
 
 /**

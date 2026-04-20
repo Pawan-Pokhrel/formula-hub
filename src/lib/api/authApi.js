@@ -27,26 +27,26 @@ const authApi = {
 	},
 
 	logout: async () => {
-		const { data } = await api.post('/auth/logout');
+		const { data } = await api.post('/users/me/logout');
 		return data;
 	},
 
 	me: async (token = null) => {
 		const config =
 			token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
-		const { data } = await api.get('/auth/me', config);
+		const { data } = await api.get('/users/me', config);
 		return data;
 	},
 
 	updateProfile: async (payload) => {
-		const { data } = await api.put('/auth/profile', payload);
+		const { data } = await api.patch('/users/me', payload);
 		return data;
 	},
 
 	uploadAvatar: async (file) => {
 		const formData = new FormData();
 		formData.append('file', file);
-		const { data } = await api.post('/auth/avatar/upload', formData, {
+		const { data } = await api.post('/users/me/avatar', formData, {
 			headers: {
 				'Content-Type': 'multipart/form-data',
 			},
@@ -55,17 +55,17 @@ const authApi = {
 	},
 
 	requestEmailChange: async (payload) => {
-		const { data } = await api.post('/auth/email-change/request', payload);
+		const { data } = await api.post('/users/me/email-change/request', payload);
 		return data;
 	},
 
 	verifyEmailChange: async (payload) => {
-		const { data } = await api.post('/auth/email-change/verify', payload);
+		const { data } = await api.post('/users/me/email-change/verify', payload);
 		return data;
 	},
 
 	changePassword: async (payload) => {
-		const { data } = await api.post('/auth/change-password', payload);
+		const { data } = await api.post('/users/me/change-password', payload);
 		return data;
 	},
 

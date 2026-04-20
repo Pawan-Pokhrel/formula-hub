@@ -1,25 +1,23 @@
 import api from './api';
 
-export const getMyPreferences = async () => {
-	const { data } = await api.get('/preferences/me');
+/**
+ * Fetch the authenticated user's favorite drivers and teams.
+ */
+export const getMyFavorites = async () => {
+	const { data } = await api.get('/users/me/favorites');
 	if (data.success) return data.data;
-	throw new Error(data.message || 'Failed to load preferences');
+	throw new Error(data.message || 'Failed to load favorites');
 };
 
+/**
+ * Update the authenticated user's favorite drivers and teams.
+ */
 export const updateMyFavorites = async (payload) => {
-	const { data } = await api.patch('/preferences/me/favorites', payload);
+	const { data } = await api.patch('/users/me/favorites', payload);
 	if (data.success) return data.data;
 	throw new Error(data.message || 'Failed to update favorites');
 };
 
-export const updateMyLayout = async (payload) => {
-	const { data } = await api.patch('/preferences/me/layout', payload);
-	if (data.success) return data.data;
-	throw new Error(data.message || 'Failed to update layout');
-};
-
-export const resetMyPreferences = async () => {
-	const { data } = await api.post('/preferences/me/reset');
-	if (data.success) return data.data;
-	throw new Error(data.message || 'Failed to reset preferences');
-};
+// Legacy alias — callers that still import getMyPreferences will
+// transparently use the new favorites-only endpoint.
+export const getMyPreferences = getMyFavorites;
