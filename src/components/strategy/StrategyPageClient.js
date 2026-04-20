@@ -41,10 +41,11 @@ export default function StrategyPageClient() {
 
 	const [currentLap, setCurrentLap] = useState(1);
 	const [playing, setPlaying] = useState(false);
-	const [lapDurationSec, setLapDurationSec] = useState(5);
+	const [lapDurationSec, setLapDurationSec] = useState(90);
 	const [lapProgress, setLapProgress] = useState(0);
 	const playRef = useRef(null);
 	const lapTimerRef = useRef(0);
+	const abortControllerRef = useRef(null);
 
 	const [selectedDriver, setSelectedDriver] = useState(null);
 	const [prediction, setPrediction] = useState(null);
@@ -202,6 +203,12 @@ export default function StrategyPageClient() {
 	async function handleLoadRace() {
 		if (!selectedRound) return;
 
+		if (loading && abortControllerRef.current) {
+			abortControllerRef.current.abort();
+		}
+		const abortController = new AbortController();
+		abortControllerRef.current = abortController;
+
 		setLoading(true);
 		setError(null);
 		setRaceData(null);
@@ -215,7 +222,7 @@ export default function StrategyPageClient() {
 		lapTimerRef.current = 0;
 
 		try {
-			const res = await loadRaceData({ year, roundNum: selectedRound });
+			const res = await loadRaceData({ year, roundNum: selectedRound, signal: abortController.signal });
 			if (!res.success) {
 				setError(res.message || 'Failed to load race');
 				return;
@@ -245,11 +252,16 @@ export default function StrategyPageClient() {
 				setSelectedDriver(sorted[0]);
 			}
 		} catch (e) {
+			if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+				return; // Do not clear the new loading state because another race is being loaded
+			}
 			setError(
 				e?.response?.data?.message || e.message || 'Failed to load race'
 			);
 		} finally {
-			setLoading(false);
+			if (abortControllerRef.current === abortController) {
+				setLoading(false);
+			}
 		}
 	}
 
@@ -333,25 +345,27 @@ export default function StrategyPageClient() {
 			<div className="fixed inset-0 bg-black/88 z-0" />
 
 			<div className="relative z-10">
-				<StrategyHeader
-					raceData={raceData}
-					showConfig={showConfig}
-					onToggleConfig={() => setShowConfig((prev) => !prev)}
-				/>
-
-				{showConfig && (
-					<RaceSetupPanel
-						currentYear={currentYear}
-						year={year}
-						onYearChange={setYear}
-						circuits={circuits}
-						selectedRound={selectedRound}
-						onRoundChange={setSelectedRound}
-						circuitsLoading={circuitsLoading}
-						loading={loading}
-						onLoadRace={handleLoadRace}
+				<div className="relative z-50">
+					<StrategyHeader
+						raceData={raceData}
+						showConfig={showConfig}
+						onToggleConfig={() => setShowConfig((prev) => !prev)}
 					/>
-				)}
+
+					{showConfig && (
+						<RaceSetupPanel
+							currentYear={currentYear}
+							year={year}
+							onYearChange={setYear}
+							circuits={circuits}
+							selectedRound={selectedRound}
+							onRoundChange={setSelectedRound}
+							circuitsLoading={circuitsLoading}
+							loading={loading}
+							onLoadRace={handleLoadRace}
+						/>
+					)}
+				</div>
 
 				{error && (
 					<div className="px-6 md:px-12 py-2">

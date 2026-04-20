@@ -109,19 +109,22 @@ export default function PlaybackBar({
 
 				<div className="flex items-center gap-1.5">
 					<FaClock className="text-[10px] text-gray-500" />
-					{[5, 10].map((seconds) => (
-						<button
-							key={seconds}
-							onClick={() => onLapDurationChange(seconds)}
-							className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all ${
-								lapDurationSec === seconds ?
-									'bg-red-600/30 text-red-400 border border-red-500/30'
-								:	'bg-black/35 text-gray-400 hover:text-white border border-white/10'
-							}`}
-						>
-							{seconds}s
-						</button>
-					))}
+					{[1, 2, 5, 10, 20, 50].map((speed) => {
+						const seconds = 90 / speed;
+						return (
+							<button
+								key={speed}
+								onClick={() => onLapDurationChange(seconds)}
+								className={`px-2 py-1 rounded-md text-[10px] sm:text-xs font-mono transition-all ${
+									Math.abs(lapDurationSec - seconds) < 0.1 ?
+										'bg-red-600/30 text-red-400 border border-red-500/30'
+									:	'bg-black/35 text-gray-400 hover:text-white border border-white/10'
+								}`}
+							>
+								{speed}x
+							</button>
+						);
+					})}
 				</div>
 			</div>
 		</div>

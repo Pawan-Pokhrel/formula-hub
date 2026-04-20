@@ -58,13 +58,13 @@ export default function RaceSetupPanel({
 
 						<button
 							onClick={onLoadRace}
-							disabled={!selectedRound || loading}
+							disabled={!selectedRound}
 							className="flex items-center justify-center gap-2 px-6 py-[13px] rounded-xl bg-linear-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:from-gray-700 disabled:to-gray-800 disabled:cursor-not-allowed text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-red-600/20 disabled:shadow-none"
 						>
 							{loading ?
 								<>
 									<div className="h-2.5 w-2.5 rounded-full bg-white/80 animate-pulse" />
-									Preparing race
+									Cancel & Reload
 								</>
 							: !selectedRound ? <>Select a Race</> :	<>
 									<FaPlay className="text-xs" />
