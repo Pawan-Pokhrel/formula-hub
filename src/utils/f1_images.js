@@ -15,7 +15,7 @@ export const getCarImage = (teamName) => {
 	if (low.includes('aston')) return '/images/cars/2026astonmartincarright.png';
 	if (low.includes('alpine')) return '/images/cars/2026alpinecarright.png';
 	if (low.includes('williams')) return '/images/cars/2026williamscarright.png';
-	if (low.includes('visa') || low.includes('racingbulls') || low.includes('alphatauri')) return '/images/cars/2026racingbullscarright.png';
+	if (low.includes('visa') || low.includes('racingbulls') || low.includes('alphatauri') || low.includes('rbf1team') || low === 'rb' || low === 'vcarb') return '/images/cars/2026racingbullscarright.png';
 	if (low.includes('haas')) return '/images/cars/2026haasf1teamcarright.png';
 	if (low.includes('audi') || low.includes('kick') || low.includes('sauber') || low.includes('alfa')) return '/images/cars/2026audicarright.png';
 	if (low.includes('cadillac')) return '/images/cars/2026cadillaccarright.png';
