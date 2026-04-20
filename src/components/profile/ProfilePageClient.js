@@ -807,15 +807,43 @@ export default function ProfilePage() {
 	const saveProfile = async () => {
 		setProfileSaving(true);
 		try {
-			const payload = {
-				fullName: profileForm.fullName.trim(),
-				phoneNumber: profileForm.phoneNumber.trim(),
-				username: profileForm.username.trim() || null,
-			};
-			if (!user?.isGoogleAuth) {
-				payload.avatarUrl = profileForm.avatarUrl || null;
-				payload.avatarPath = profileForm.avatarPath || null;
+			// Build a true PATCH payload — only include fields that have changed.
+			const payload = {};
+
+			const trimmedFullName = profileForm.fullName.trim();
+			if (trimmedFullName !== (user?.fullName || '')) {
+				payload.fullName = trimmedFullName;
 			}
+
+			const trimmedPhone = profileForm.phoneNumber.trim();
+			if (trimmedPhone !== (user?.phoneNumber || '')) {
+				payload.phoneNumber = trimmedPhone;
+			}
+
+			const trimmedUsername = profileForm.username.trim() || null;
+			const currentUsername = user?.username || null;
+			if (trimmedUsername !== currentUsername) {
+				payload.username = trimmedUsername;
+			}
+
+			if (!user?.isGoogleAuth) {
+				const nextAvatarUrl = profileForm.avatarUrl || null;
+				const nextAvatarPath = profileForm.avatarPath || null;
+				if (
+					nextAvatarUrl !== (user?.avatarUrl || null) ||
+					nextAvatarPath !== (user?.avatarPath || null)
+				) {
+					payload.avatarUrl = nextAvatarUrl;
+					payload.avatarPath = nextAvatarPath;
+				}
+			}
+
+			// If nothing changed, skip the API call entirely.
+			if (Object.keys(payload).length === 0) {
+				toast('No changes to save.', { icon: 'ℹ️' });
+				return;
+			}
+
 			const response = await authApi.updateProfile(payload);
 			const savedUser = response?.data;
 			if (savedUser) {
@@ -884,9 +912,10 @@ export default function ProfilePage() {
 
 		try {
 			const response = await authApi.uploadAvatar(file);
+			const avatarData = response?.data || response;
 			const uploadedAvatar = {
-				avatarUrl: response?.avatarUrl || '',
-				avatarPath: response?.avatarPath || '',
+				avatarUrl: avatarData?.avatarUrl || '',
+				avatarPath: avatarData?.avatarPath || '',
 			};
 			if (!uploadedAvatar.avatarUrl) {
 				throw new Error('Upload finished but no image URL was returned.');
@@ -1100,15 +1129,15 @@ export default function ProfilePage() {
 						User Profile
 					</h1>
 					<p className="mt-3 max-w-2xl text-sm font-medium tracking-wide text-gray-500">
-						CONFIGURE YOUR PERSONAL DETAILS, ACCOUNT IDENTITY, AND APP
-						PREFERENCES FOR A TAILORED EXPERIENCE.
+						CONFIGURE YOUR PERSONAL DETAILS, ACCOUNT IDENTITY, AND
+						FAVORITES FOR A TAILORED EXPERIENCE.
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
 					{/* ─── ROW 1: Favorites ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-50">
-						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-visible">
 							<SectionStripe />
 							<div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
 								<div>
