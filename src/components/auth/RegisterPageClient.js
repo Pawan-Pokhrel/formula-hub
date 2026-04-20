@@ -2,6 +2,11 @@
 
 import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import authApi from '@/lib/api/authApi';
+import {
+	buildVerificationHref,
+	getEmailNotVerifiedDetail,
+	getSafeNextPath,
+} from '@/lib/auth/verificationFlow';
 import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import getCroppedImg from '@/lib/utils/cropImage';
@@ -9,7 +14,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useGoogleLogin } from '@react-oauth/google';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import { useForm } from 'react-hook-form';
@@ -26,57 +31,6 @@ import {
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
-
-const PENDING_VERIFICATION_STORAGE_KEY =
-	'formulahub.register.pendingVerification.v1';
-
-function getPendingVerification() {
-	if (typeof window === 'undefined') return null;
-	try {
-		const raw = window.localStorage.getItem(PENDING_VERIFICATION_STORAGE_KEY);
-		if (!raw) return null;
-		const parsed = JSON.parse(raw);
-		if (!parsed?.email || typeof parsed.email !== 'string') {
-			return null;
-		}
-		return {
-			email: parsed.email.trim(),
-			createdAt:
-				typeof parsed.createdAt === 'number' ? parsed.createdAt : Date.now(),
-		};
-	} catch {
-		return null;
-	}
-}
-
-function setPendingVerification(email) {
-	if (typeof window === 'undefined') return;
-	try {
-		const normalizedEmail = String(email || '').trim();
-		if (!normalizedEmail) {
-			window.localStorage.removeItem(PENDING_VERIFICATION_STORAGE_KEY);
-			return;
-		}
-		window.localStorage.setItem(
-			PENDING_VERIFICATION_STORAGE_KEY,
-			JSON.stringify({
-				email: normalizedEmail,
-				createdAt: Date.now(),
-			})
-		);
-	} catch {
-		// Ignore storage write failures.
-	}
-}
-
-function clearPendingVerification() {
-	if (typeof window === 'undefined') return;
-	try {
-		window.localStorage.removeItem(PENDING_VERIFICATION_STORAGE_KEY);
-	} catch {
-		// Ignore storage write failures.
-	}
-}
 
 const schema = yup.object().shape({
 	fullName: yup
@@ -200,7 +154,12 @@ function VerificationCodeInput({ value, onChange, disabled }) {
 
 // ── Verification Step Component ──────────────────────────────────────
 
-function VerificationStep({ email, onVerified, onBack }) {
+function VerificationStep({
+	email,
+	onVerified,
+	onBack,
+	initialResendCooldown = 0,
+}) {
 	const [code, setCode] = useState('      ');
 	const [isVerifying, setIsVerifying] = useState(false);
 	const [isResending, setIsResending] = useState(false);
@@ -215,10 +174,10 @@ function VerificationStep({ email, onVerified, onBack }) {
 		return () => clearInterval(timer);
 	}, [resendCooldown]);
 
-	// Start with an initial 30s cooldown (code was just sent on register)
 	useEffect(() => {
-		setResendCooldown(30);
-	}, []);
+		setResendCooldown(initialResendCooldown);
+		setCode('      ');
+	}, [email, initialResendCooldown]);
 
 	const codeValue = code.replace(/\s/g, '');
 	const isCodeComplete = codeValue.length === CODE_LENGTH;
@@ -349,6 +308,7 @@ function VerificationStep({ email, onVerified, onBack }) {
 
 export default function RegisterPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { register: registerUser, loginWithToken, googleAuth } = useAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -363,17 +323,11 @@ export default function RegisterPage() {
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-	// Verification step state
-	const [showVerification, setShowVerification] = useState(false);
-	const [registeredEmail, setRegisteredEmail] = useState('');
-	const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
-
 	const {
 		register,
 		handleSubmit,
 		formState: { errors, isValid, isDirty },
 		getValues,
-		reset,
 		setValue,
 		watch,
 	} = useForm({
@@ -382,13 +336,13 @@ export default function RegisterPage() {
 	});
 
 	const avatarUrl = watch('avatarUrl');
-
-	useEffect(() => {
-		const pending = getPendingVerification();
-		if (!pending?.email) return;
-		setPendingVerificationEmail(pending.email);
-		setRegisteredEmail((prev) => prev || pending.email);
-	}, []);
+	const verificationEmail =
+		searchParams.get('verify') === '1' ?
+			searchParams.get('email')?.trim() || ''
+		:	'';
+	const showVerification = Boolean(verificationEmail);
+	const verificationCodeJustSent = searchParams.get('sent') === '1';
+	const nextPath = getSafeNextPath(searchParams.get('next'));
 
 	useEffect(() => {
 		if (!avatarUrl) {
@@ -435,8 +389,9 @@ export default function RegisterPage() {
 			});
 
 			const response = await authApi.uploadAvatar(fileToUpload);
-			const uploadedUrl = response?.avatarUrl || '';
-			const uploadedPath = response?.avatarPath || '';
+			const avatarData = response?.data || response;
+			const uploadedUrl = avatarData?.avatarUrl || '';
+			const uploadedPath = avatarData?.avatarPath || '';
 			if (!uploadedUrl) {
 				throw new Error('Upload finished but no image URL was returned.');
 			}
@@ -473,12 +428,28 @@ export default function RegisterPage() {
 
 			if (response.success) {
 				toast.success(response.message || 'Verification code sent!');
-				setRegisteredEmail(data.email);
-				setPendingVerificationEmail(data.email);
-				setPendingVerification(data.email);
-				setShowVerification(true);
+				router.replace(
+					buildVerificationHref(data.email, {
+						sent: true,
+						nextPath: searchParams.get('next'),
+					})
+				);
 			}
 		} catch (err) {
+			const unverifiedDetail = getEmailNotVerifiedDetail(err);
+			if (unverifiedDetail) {
+				toast.error(
+					unverifiedDetail.message ||
+						'Email not verified. Please complete verification first.'
+				);
+				router.replace(
+					buildVerificationHref(unverifiedDetail.email || data.email, {
+						sent: Boolean(unverifiedDetail.resentCode),
+						nextPath: searchParams.get('next'),
+					})
+				);
+				return;
+			}
 			toast.error(
 				getApiErrorMessage(err, 'Registration failed. Please try again.')
 			);
@@ -488,14 +459,11 @@ export default function RegisterPage() {
 	};
 
 	const handleVerified = async (token) => {
-		clearPendingVerification();
-		setPendingVerificationEmail('');
-		setRegisteredEmail('');
-		toast.success('Account activated! Redirecting to dashboard...');
+		toast.success('Account activated! Redirecting...');
 		if (token) {
 			await loginWithToken(token);
 		}
-		setTimeout(() => router.push('/dashboard'), 1200);
+		setTimeout(() => router.push(nextPath), 1200);
 	};
 
 	const loginWithGoogle = useGoogleLogin({
@@ -506,7 +474,7 @@ export default function RegisterPage() {
 				const res = await googleAuth(tokenResponse.access_token);
 				if (res.success) {
 					toast.success(res.message || 'Google signup successful!');
-					router.push('/dashboard');
+					router.push(nextPath);
 				}
 			} catch (err) {
 				toast.error(getApiErrorMessage(err, 'Google signup failed.'));
@@ -520,20 +488,11 @@ export default function RegisterPage() {
 	});
 
 	const handleBackToRegister = () => {
-		setShowVerification(false);
-	};
-
-	const handleContinueVerification = () => {
-		const email = registeredEmail || pendingVerificationEmail;
-		if (!email) return;
-		setRegisteredEmail(email);
-		setShowVerification(true);
-	};
-
-	const handleDismissPendingVerification = () => {
-		clearPendingVerification();
-		setPendingVerificationEmail('');
-		setRegisteredEmail('');
+		const nextRegisterUrl =
+			nextPath && nextPath !== '/dashboard' ?
+				`/register?next=${encodeURIComponent(nextPath)}`
+			:	'/register';
+		router.push(nextRegisterUrl);
 	};
 
 	return (
@@ -574,9 +533,10 @@ export default function RegisterPage() {
 					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-8 py-5 shadow-2xl">
 						{showVerification ?
 							<VerificationStep
-								email={registeredEmail}
+								email={verificationEmail}
 								onVerified={handleVerified}
 								onBack={handleBackToRegister}
+								initialResendCooldown={verificationCodeJustSent ? 30 : 0}
 							/>
 						:	<>
 								<div className="text-center mb-4">
@@ -587,37 +547,6 @@ export default function RegisterPage() {
 										Get access to exclusive F1 insights
 									</p>
 								</div>
-
-								{pendingVerificationEmail && (
-									<div className="mb-5 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-left">
-										<p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-200/80">
-											Verification Pending
-										</p>
-										<p className="mt-1 text-sm text-white/80">
-											An unverified account exists for{' '}
-											<span className="font-semibold text-white">
-												{pendingVerificationEmail}
-											</span>
-											.
-										</p>
-										<div className="mt-3 flex flex-wrap gap-2">
-											<button
-												type="button"
-												onClick={handleContinueVerification}
-												className="rounded-xl bg-amber-300 px-4 py-2 text-xs font-semibold text-black transition hover:bg-amber-200 cursor-pointer"
-											>
-												Continue Verification
-											</button>
-											<button
-												type="button"
-												onClick={handleDismissPendingVerification}
-												className="rounded-xl border border-white/15 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/5 hover:text-white cursor-pointer"
-											>
-												Start Over
-											</button>
-										</div>
-									</div>
-								)}
 
 								<form
 									onSubmit={handleSubmit(handleRegister)}

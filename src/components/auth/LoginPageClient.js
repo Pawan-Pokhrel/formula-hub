@@ -1,6 +1,11 @@
 'use client';
 
 import authApi from '@/lib/api/authApi';
+import {
+	buildVerificationHref,
+	getEmailNotVerifiedDetail,
+	getSafeNextPath,
+} from '@/lib/auth/verificationFlow';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -22,17 +27,6 @@ const loginSchema = yup.object().shape({
 		.email('Invalid email format'),
 	password: yup.string().required('Password is required'),
 });
-
-function getSafeNextPath(nextPath) {
-	if (!nextPath || typeof nextPath !== 'string') return '/dashboard';
-	if (!nextPath.startsWith('/') || nextPath.startsWith('//'))
-		return '/dashboard';
-	const lower = nextPath.toLowerCase();
-	if (lower === '/login' || lower.startsWith('/login?')) return '/dashboard';
-	if (lower === '/register' || lower.startsWith('/register?'))
-		return '/dashboard';
-	return nextPath;
-}
 
 /* ─── Verification Code Input (same pattern as register page) ─── */
 const CODE_LENGTH = 6;
@@ -211,6 +205,12 @@ function ForgotPasswordStep({ onBack }) {
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const handleStepBack = () => {
+		if (step === 'newPassword') setStep('code');
+		else if (step === 'code') setStep('email');
+		else onBack();
 	};
 
 	return (
@@ -417,13 +417,17 @@ function ForgotPasswordStep({ onBack }) {
 				</>
 			)}
 
-			{/* Back to login */}
+			{/* Dynamic Back to previous step / login */}
 			<button
 				type="button"
-				onClick={onBack}
-				className="w-full text-center text-white/50 hover:text-white/70 text-sm transition cursor-pointer"
+				onClick={handleStepBack}
+				className="w-full text-center text-white/50 hover:text-white/70 text-sm transition cursor-pointer mt-4"
 			>
-				← Back to Sign In
+				{step === 'newPassword'
+					? '← Back to Code Entry'
+					: step === 'code'
+						? '← Back to Email'
+						: '← Back to Sign In'}
 			</button>
 		</div>
 	);
@@ -460,6 +464,19 @@ export default function LoginPage() {
 				router.replace(nextPath);
 			}
 		} catch (err) {
+			const unverifiedDetail = getEmailNotVerifiedDetail(err);
+			if (unverifiedDetail) {
+				toast.error(
+					unverifiedDetail.message ||
+						'Email not verified. Please complete verification to continue.'
+				);
+				router.replace(
+					buildVerificationHref(unverifiedDetail.email || data.email, {
+						nextPath: searchParams.get('next'),
+					})
+				);
+				return;
+			}
 			toast.error(
 				getApiErrorMessage(err, 'Login failed. Please check your credentials.')
 			);
