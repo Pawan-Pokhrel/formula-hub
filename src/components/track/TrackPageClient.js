@@ -1,45 +1,139 @@
 'use client';
 
+import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { logActivity } from '@/lib/api/historyApi';
 import {
-	getSessionData,
-	getYearSchedule,
-	toggleTrackFavorite,
+  getOvertakeModelMetadata,
+  getOvertakeProbabilities,
+  getSessionData,
+  getYearSchedule,
+  toggleTrackFavorite,
 } from '@/lib/api/trackApi';
 import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	FaCalendarAlt,
-	FaChevronLeft,
-	FaCloudRain,
-	FaCrown,
-	FaExchangeAlt,
-	FaExclamationTriangle,
-	FaFastBackward,
-	FaFastForward,
-	FaFlag,
-	FaFlagCheckered,
-	FaMapMarkerAlt,
-	FaPause,
-	FaPlay,
-	FaRedo,
-	FaSkullCrossbones,
-	FaStar,
-	FaStepBackward,
-	FaStepForward,
-	FaSun,
-	FaTachometerAlt,
-	FaTimes,
-	FaTint,
-	FaTrophy,
-	FaWind,
-	FaWrench,
+  FaCalendarAlt,
+  FaChevronDown,
+  FaChevronLeft,
+  FaCloudRain,
+  FaCompress,
+  FaCrown,
+  FaExchangeAlt,
+  FaExclamationTriangle,
+  FaExpand,
+  FaFastBackward,
+  FaFastForward,
+  FaFlag,
+  FaFlagCheckered,
+  FaMapMarkerAlt,
+  FaPause,
+  FaPlay,
+  FaRedo,
+  FaSkullCrossbones,
+  FaStar,
+  FaStepBackward,
+  FaStepForward,
+  FaStopwatch,
+  FaSun,
+  FaTachometerAlt,
+  FaTimes,
+  FaTint,
+  FaTrophy,
+  FaWind,
+  FaWrench,
 } from 'react-icons/fa';
 
 /* ================================================================== */
 /*  Helpers                                                            */
+/* ================================================================== */
+function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, disabled }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const dropdownRef = useRef(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+				setIsOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	const selectedOption = options.find((o) => o.abbr === value);
+
+	return (
+		<div className="relative w-full" ref={dropdownRef}>
+			<div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 block mb-1.5">
+				{label}
+			</div>
+			<button
+				type="button"
+				onClick={() => !disabled && setIsOpen(!isOpen)}
+				disabled={disabled}
+				className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-left transition-colors hover:border-red-500/50 hover:bg-black/60 focus:bg-white/5 disabled:opacity-50`}
+			>
+				{selectedOption ? (
+					<div className="flex items-center gap-3">
+						<div className="relative h-6 w-6 overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-sm">
+							<img
+								src={`/images/drivers/${selectedOption.abbr}.png`}
+								alt={selectedOption.abbr}
+								className="h-full w-full object-cover object-top"
+								onError={(e) => { e.target.style.display = 'none'; }}
+							/>
+						</div>
+						<div className="flex flex-col">
+							<span className="text-sm font-bold text-white leading-none">
+								{selectedOption.abbr}
+							</span>
+							<span className="text-[9px] font-mono text-gray-400 mt-0.5 uppercase">
+								{selectedOption.currentPosition ? `P${selectedOption.currentPosition}` : `G${selectedOption.gridPosition}`}
+							</span>
+						</div>
+					</div>
+				) : (
+					<span className="text-sm text-gray-500 py-1">{placeholder}</span>
+				)}
+				<FaChevronDown className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={12} />
+			</button>
+
+			{isOpen && (
+				<div className="absolute left-0 right-0 top-[100%] z-50 mt-2 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#121215] shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-3xl styled-scrollbar">
+					{options.map((option) => (
+						<button
+							key={option.abbr}
+							onClick={() => {
+								onChange(option.abbr);
+								setIsOpen(false);
+							}}
+							className="flex w-full items-center gap-3 border-b border-white/5 py-2.5 px-3 text-left transition hover:bg-red-600/20 active:bg-red-600/40"
+						>
+							<div className="relative h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-white/10">
+								<img
+									src={`/images/drivers/${option.abbr}.png`}
+									alt={option.abbr}
+									className="h-full w-full object-cover object-top"
+									onError={(e) => { e.target.style.display = 'none'; }}
+								/>
+							</div>
+							<div className="flex flex-col">
+								<span className="text-sm font-bold text-white leading-none">
+									{option.abbr}
+								</span>
+								<span className="text-[10px] font-mono text-gray-400 mt-0.5">
+									{option.currentPosition ? `P${option.currentPosition}` : `G${option.gridPosition}`}
+								</span>
+							</div>
+						</button>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
 /* ================================================================== */
 
 /** Format seconds → "MM:SS" */
@@ -55,6 +149,92 @@ function formatLapTime(sec) {
 	const m = Math.floor(sec / 60);
 	const s = sec % 60;
 	return `${m}:${s.toFixed(3).padStart(6, '0')}`;
+}
+
+function formatGapValue(
+	sec,
+	{ showPlus = true, fallback = '—', zeroFloor = 0.0005 } = {}
+) {
+	if (sec == null || !Number.isFinite(Number(sec))) return fallback;
+	const numeric = Math.abs(Number(sec)) < zeroFloor ? 0 : Number(sec);
+	if (numeric === 0) return `${showPlus ? '+' : ''}0.000`;
+	const sign = numeric > 0 ? (showPlus ? '+' : '') : '-';
+	return `${sign}${Math.abs(numeric).toFixed(3)}`;
+}
+
+function formatProbability(prob) {
+	if (prob == null || !Number.isFinite(Number(prob))) return '—';
+	return `${(Number(prob) * 100).toFixed(1)}%`;
+}
+
+const CAUTION_CROWN_TYPES = new Set(['Yellow', 'DoubleYellow', 'SC', 'VSC']);
+
+function shouldShowLeaderCrown(flags) {
+	return Array.isArray(flags) && flags.some((flag) => CAUTION_CROWN_TYPES.has(flag?.type));
+}
+
+function isRaceOrderEntryActive(entry) {
+	if (!entry) return false;
+	const status = String(entry.status || '').toUpperCase();
+	return entry.active !== false && !['DNF', 'DNS', 'DSQ'].includes(status);
+}
+
+function isDriverSelectableForOvertake(entry) {
+	return isRaceOrderEntryActive(entry);
+}
+
+function getCompletedLapCount(currentLap, isPreRaceState) {
+	if (isPreRaceState) return 0;
+	return Math.max(0, Number(currentLap || 0) - 1);
+}
+
+function getVisibleFastestLap(sessionData, playbackSecond) {
+	if (!sessionData?.events) return null;
+
+	let best = null;
+	for (const evt of sessionData.events) {
+		if (evt.time_sec > playbackSecond) continue;
+		if (evt.type === 'fastest_lap') {
+			const abbr = evt.title.split(' ')[0];
+			best = { abbr, lap: evt.lap, time: evt.detail };
+		}
+	}
+	return best;
+}
+
+function getDriverSortPosition(info, fallback) {
+	const grid = Number(info?.grid_position);
+	if (Number.isFinite(grid) && grid > 0) return grid;
+	return fallback;
+}
+
+function buildGridBoard(drivers) {
+	const entries = Object.entries(drivers || {});
+	const driverCount = entries.length;
+
+	return entries
+		.map(([abbr, info], index) => ({
+			abbr,
+			position: getDriverSortPosition(info, driverCount + index + 1),
+			officialPos: getDriverSortPosition(info, driverCount + index + 1),
+			gridPosition: getDriverSortPosition(info, driverCount + index + 1),
+			gapAhead: null,
+			gapLeader: null,
+			progressLaps: 0,
+			laps: 0,
+			active: info?.status !== 'DNS',
+			status: info?.status === 'DNS' ? 'DNS' : '',
+		}))
+		.sort((a, b) => a.position - b.position)
+		.map((entry, index) => ({
+			...entry,
+			position: index + 1,
+		}));
+}
+
+function getTimingSampleIndex(timeSec, maxIndex) {
+	if (!Number.isFinite(timeSec) || maxIndex <= 0) return 0;
+	return Math.max(0, Math.min(Math.floor(timeSec), maxIndex));
 }
 
 /** Get best lap time for a driver up to a given lap */
@@ -195,7 +375,8 @@ function precomputeRaceInsights(data) {
 			if (lapBestAbbr && lapBestTime < overallBest) {
 				overallBest = lapBestTime;
 				overallBestAbbr = lapBestAbbr;
-				const tSec = lap_starts?.[lap] ?? lap * 90;
+				const lapStart = lap_starts?.[lap] ?? lap * 90;
+				const tSec = lap_starts?.[lap + 1] ?? lapStart + lapBestTime;
 				events.push({
 					type: 'fastest_lap',
 					lap,
@@ -449,6 +630,129 @@ function getCountryCode(country) {
 	return null;
 }
 
+function DriverPicker({
+	label,
+	helper,
+	value,
+	options,
+	isOpen,
+	onToggle,
+	onSelect,
+	placeholder,
+}) {
+	const selectedOption = options.find((option) => option.abbr === value) || null;
+
+	return (
+		<div className="relative">
+			<span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 block mb-1.5">
+				{label}
+			</span>
+			{helper && <p className="mb-2 text-[11px] text-gray-500">{helper}</p>}
+			<button
+				type="button"
+				onClick={onToggle}
+				className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/35 px-3 py-2.5 text-left text-white transition-all hover:border-white/20"
+			>
+				{selectedOption ?
+					<>
+						<div className="relative h-11 w-11 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+							<Image
+								src={
+									getTelemetryDriverImage(selectedOption.abbr, 2026) ||
+									`/images/drivers/${selectedOption.abbr}.png`
+								}
+								alt={selectedOption.abbr}
+								fill
+								sizes="44px"
+								className="object-cover object-top"
+							/>
+						</div>
+						<div className="min-w-0 flex-1">
+							<div className="flex items-center gap-2">
+								<span className="text-sm font-bold text-white">
+									{selectedOption.abbr}
+								</span>
+								<span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-gray-300">
+									G{selectedOption.gridPosition}
+								</span>
+								{selectedOption.currentPosition && (
+									<span className="text-[10px] font-medium text-gray-400">
+										P{selectedOption.currentPosition}
+									</span>
+								)}
+							</div>
+							<p className="truncate text-[11px] text-gray-500">
+								{selectedOption.info?.team || 'Current runner'}
+							</p>
+						</div>
+					</>
+				:	<div className="flex-1">
+						<div className="text-sm font-semibold text-gray-200">
+							{placeholder}
+						</div>
+						<p className="text-[11px] text-gray-500">
+							Choose from active drivers only.
+						</p>
+					</div>}
+				<FaChevronDown
+					className={`shrink-0 text-[12px] text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+				/>
+			</button>
+
+			{isOpen && (
+				<div className="absolute left-0 right-0 top-[calc(100%+8px)] z-40 max-h-80 overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0a0d]/95 p-2 shadow-2xl backdrop-blur-xl">
+					{options.map((option) => {
+						const isSelected = option.abbr === value;
+						return (
+							<button
+								key={`${label}-${option.abbr}`}
+								type="button"
+								onClick={() => onSelect(option.abbr)}
+								className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-all ${
+									isSelected ?
+										'bg-red-500/12 ring-1 ring-red-500/20'
+									:	'hover:bg-white/6'
+								}`}
+							>
+								<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+									<Image
+										src={
+											getTelemetryDriverImage(option.abbr, 2026) ||
+											`/images/drivers/${option.abbr}.png`
+										}
+										alt={option.abbr}
+										fill
+										sizes="48px"
+										className="object-cover object-top"
+									/>
+								</div>
+								<div className="min-w-0 flex-1">
+									<div className="flex items-center gap-2">
+										<span className="text-sm font-bold text-white">
+											{option.abbr}
+										</span>
+										<span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-gray-300">
+											G{option.gridPosition}
+										</span>
+										{option.currentPosition && (
+											<span className="text-[10px] font-medium text-gray-400">
+												P{option.currentPosition}
+											</span>
+										)}
+									</div>
+									<p className="truncate text-[11px] text-gray-500">
+										{option.info?.team || 'Current runner'}
+									</p>
+								</div>
+							</button>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+}
+
 /* ================================================================== */
 /*  Track-position computation (precomputed once on data load)         */
 /* ================================================================== */
@@ -493,28 +797,25 @@ function getTrackParameter(px, py, trackX, trackY, arcLen, stride = 3) {
  * Returns boards[sampleIdx] = [{abbr, position, laps, active, status}, …]
  */
 function precomputeRacePositions(data) {
-	const { track, drivers, positions, info, lap_starts } = data;
-	const rp = data.race_positions; // { abbr: { "1": pos, "2": pos, … } }
-	const trackX = track.x;
-	const trackY = track.y;
-
+	const { drivers, info, lap_starts } = data;
+	const rp = data.race_positions;
+	const secondLevel = data.second_level_timing || {};
+	const driverCount = Object.keys(drivers).length;
+	const durationSec = Math.max(0, Math.round(info?.duration_sec || 0));
 	const maxSamples = Math.max(
-		...Object.values(positions).map((p) => p.x?.length || 0),
+		durationSec + 1,
+		...Object.values(secondLevel).map((entry) => entry?.position?.length || 0),
 		1
 	);
-	const driverCount = Object.keys(drivers).length;
+	const gridBoard = buildGridBoard(drivers);
 
-	// Pre-compute retirement sample index for DNF/DSQ drivers
-	const retiredAtSample = {};
+	const retiredAtSecond = {};
 	for (const [abbr, drvInfo] of Object.entries(drivers)) {
 		if (drvInfo.retired_at_sec != null) {
-			retiredAtSample[abbr] = Math.floor(
-				drvInfo.retired_at_sec * (info.sample_rate || 1)
-			);
+			retiredAtSecond[abbr] = Math.floor(Number(drvInfo.retired_at_sec));
 		}
 	}
 
-	// Helper: determine which lap we're on from lap_starts
 	const getLap = (timeSec) => {
 		if (!lap_starts || lap_starts.length === 0) return 1;
 		let lo = 0,
@@ -530,32 +831,54 @@ function precomputeRacePositions(data) {
 	const boards = new Array(maxSamples);
 
 	for (let s = 0; s < maxSamples; s++) {
+		if (s === 0) {
+			boards[s] = gridBoard.map((entry) => ({ ...entry }));
+			continue;
+		}
+
 		const board = [];
-		const timeSec = s / (info.sample_rate || 1);
+		const timeSec = s;
 		const currentLap = getLap(timeSec);
 
 		for (const abbr of Object.keys(drivers)) {
 			const drvInfo = drivers[abbr];
+			const timingRow = secondLevel[abbr] || {};
+			const timingIndex = getTimingSampleIndex(
+				timeSec,
+				Math.max(
+					(timingRow.position?.length || 1) - 1,
+					(timingRow.gap_ahead?.length || 1) - 1,
+					(timingRow.gap_leader?.length || 1) - 1,
+					(timingRow.progress_laps?.length || 1) - 1
+				)
+			);
 
-			// DNS drivers: always at bottom, inactive
 			if (drvInfo.status === 'DNS') {
 				board.push({
 					abbr,
+					position: driverCount,
+					officialPos: driverCount,
+					gridPosition: getDriverSortPosition(drvInfo, driverCount),
 					laps: 0,
-					score: -9999,
+					progressLaps: 0,
+					gapAhead: null,
+					gapLeader: null,
 					active: false,
 					status: 'DNS',
 				});
 				continue;
 			}
 
-			// Check retirement — time-dependent so DNF appears only after the driver actually retires
-			const isRetired = abbr in retiredAtSample && s > retiredAtSample[abbr];
+			const isRetired = abbr in retiredAtSecond && timeSec > retiredAtSecond[abbr];
+			const secondLevelPos = Number(timingRow.position?.[timingIndex]);
+			const gapAhead = Number(timingRow.gap_ahead?.[timingIndex]);
+			const gapLeader = Number(timingRow.gap_leader?.[timingIndex]);
+			const progressLaps = Number(timingRow.progress_laps?.[timingIndex]);
 
-			// Determine position from backend race_positions data
 			let officialPos = null;
-			if (rp && rp[abbr]) {
-				// Walk backwards from currentLap to find latest position
+			if (Number.isFinite(secondLevelPos) && secondLevelPos > 0) {
+				officialPos = secondLevelPos;
+			} else if (rp && rp[abbr]) {
 				for (let l = currentLap; l >= 1; l--) {
 					const p = rp[abbr][String(l)];
 					if (p != null) {
@@ -567,36 +890,38 @@ function precomputeRacePositions(data) {
 				if (officialPos == null) {
 					officialPos = drvInfo.grid_position || driverCount;
 				}
+			} else {
+				officialPos = drvInfo.grid_position || driverCount;
 			}
 
-			// Once retired, snap to finish_position if available
 			if (isRetired && drvInfo.finish_position) {
 				officialPos = drvInfo.finish_position;
 			}
 
-			const hasPos = positions[abbr]?.x && s < positions[abbr].x.length;
-
-			// Dynamic status: DNF/DSQ only shows AFTER the driver actually retires
 			const finalStatus = drvInfo.status || '';
 			const isDNFType = finalStatus === 'DNF' || finalStatus === 'DSQ';
 			const dynamicStatus =
 				isDNFType ?
 					isRetired ? finalStatus
-					:	'' // still racing → no DNF badge
-				:	finalStatus; // 'Finished' or ''
+					:	''
+				:	finalStatus;
 
 			board.push({
 				abbr,
-				laps: currentLap,
-				score: officialPos != null ? driverCount - officialPos + 1000 : 0,
-				active: !isRetired && hasPos,
+				laps: Number.isFinite(progressLaps) ? Math.max(1, Math.floor(progressLaps)) : currentLap,
+				progressLaps: Number.isFinite(progressLaps) ? progressLaps : currentLap,
+				active: !isRetired,
 				status: dynamicStatus,
 				officialPos,
+				gridPosition: getDriverSortPosition(drvInfo, officialPos || driverCount),
+				gapAhead: Number.isFinite(gapAhead) ? gapAhead : null,
+				gapLeader: Number.isFinite(gapLeader) ? gapLeader : null,
 			});
 		}
 
-		// Sort: active by officialPos (lower = better), inactive at bottom
 		board.sort((a, b) => {
+			if (a.status === 'DNS' && b.status !== 'DNS') return 1;
+			if (b.status === 'DNS' && a.status !== 'DNS') return -1;
 			if (!a.active && !b.active) {
 				const aFp = drivers[a.abbr]?.finish_position ?? 99;
 				const bFp = drivers[b.abbr]?.finish_position ?? 99;
@@ -604,7 +929,6 @@ function precomputeRacePositions(data) {
 			}
 			if (!a.active) return 1;
 			if (!b.active) return -1;
-			// Use officialPos directly for sorting
 			const aP = a.officialPos ?? 99;
 			const bP = b.officialPos ?? 99;
 			return aP - bP;
@@ -853,6 +1177,44 @@ function drawTrack(ctx, w, h, trackX, trackY) {
 	ctx.restore();
 }
 
+function drawLeaderCrownBadge(ctx, px, py, dotR, canvasWidth) {
+	const placeOnRight = px < canvasWidth - 34;
+	const badgeX = placeOnRight ? px + dotR + 14 : px - dotR - 14;
+	const badgeY = py;
+
+	ctx.save();
+	ctx.beginPath();
+	ctx.arc(badgeX, badgeY, 9, 0, Math.PI * 2);
+	ctx.fillStyle = 'rgba(5, 5, 5, 0.86)';
+	ctx.fill();
+	ctx.strokeStyle = 'rgba(251, 191, 36, 0.9)';
+	ctx.lineWidth = 1.25;
+	ctx.stroke();
+
+	ctx.translate(badgeX, badgeY + 0.5);
+	ctx.beginPath();
+	ctx.moveTo(-5.5, 3.5);
+	ctx.lineTo(-4.5, -2.5);
+	ctx.lineTo(-1.5, 0.2);
+	ctx.lineTo(0, -4.5);
+	ctx.lineTo(1.5, 0.2);
+	ctx.lineTo(4.5, -2.5);
+	ctx.lineTo(5.5, 3.5);
+	ctx.closePath();
+	ctx.fillStyle = '#fbbf24';
+	ctx.shadowColor = '#fbbf24';
+	ctx.shadowBlur = 10;
+	ctx.fill();
+
+	ctx.beginPath();
+	ctx.moveTo(-5.8, 4.3);
+	ctx.lineTo(5.8, 4.3);
+	ctx.strokeStyle = '#f59e0b';
+	ctx.lineWidth = 1.4;
+	ctx.stroke();
+	ctx.restore();
+}
+
 function drawDrivers(
 	ctx,
 	w,
@@ -861,7 +1223,9 @@ function drawDrivers(
 	t,
 	selectedDriver,
 	currentBoard,
-	driverImages
+	driverImages,
+	showLeaderCrown,
+	activeBattle
 ) {
 	const sr = data.info.sample_rate || 1;
 	const drivers = data.drivers;
@@ -872,6 +1236,9 @@ function drawDrivers(
 	const leaderAbbr = currentBoard?.[0]?.abbr;
 
 	const hasSelection = !!selectedDriver;
+	const battleDriverSet =
+		activeBattle ? new Set([activeBattle.attacker, activeBattle.target]) : new Set();
+	const renderedCoords = {};
 
 	const ordered = Object.keys(drivers)
 		.slice()
@@ -907,18 +1274,21 @@ function drawDrivers(
 		const isLeader = abbr === leaderAbbr;
 		const isSelected = abbr === selectedDriver;
 		const dimmed = hasSelection && !isSelected;
+		const isBattleDriver = battleDriverSet.has(abbr);
 
 		const dotR =
 			isSelected ? 8
+			: isBattleDriver ? 7
 			: isLeader ? 7
 			: 5;
 		const glowBlur =
 			isSelected ? 24
+			: isBattleDriver ? 18
 			: isLeader ? 16
 			: 10;
 
 		ctx.save();
-		ctx.globalAlpha = dimmed ? 0.3 : 1.0;
+		ctx.globalAlpha = dimmed ? 0.72 : 1.0;
 
 		// Leader gold outer ring
 		if (isLeader) {
@@ -949,6 +1319,19 @@ function drawDrivers(
 		ctx.strokeStyle = isSelected ? '#fff' : 'rgba(255,255,255,0.5)';
 		ctx.lineWidth = isSelected ? 2.5 : 1.5;
 		ctx.stroke();
+
+		if (isBattleDriver) {
+			const pulse = 0.8 + Math.sin(t * 8) * 0.18;
+			ctx.save();
+			ctx.beginPath();
+			ctx.arc(px, py, dotR + 5 + pulse, 0, Math.PI * 2);
+			ctx.strokeStyle = 'rgba(251, 113, 133, 0.85)';
+			ctx.lineWidth = 2;
+			ctx.shadowColor = 'rgba(251, 113, 133, 0.75)';
+			ctx.shadowBlur = 16;
+			ctx.stroke();
+			ctx.restore();
+		}
 
 		// Selected driver: circular headshot above marker
 		let headshotDrawn = false;
@@ -1015,7 +1398,57 @@ function drawDrivers(
 		ctx.textBaseline = 'middle';
 		ctx.fillText(posLabel, px, pillY + pillH / 2);
 
+		if (isLeader && showLeaderCrown) {
+			drawLeaderCrownBadge(ctx, px, py, dotR, w);
+		}
+
+		if (isBattleDriver) {
+			renderedCoords[abbr] = { px, py };
+		}
+
 		ctx.restore(); // globalAlpha
+	}
+
+	if (activeBattle) {
+		const attackerCoords = renderedCoords[activeBattle.attacker];
+		const targetCoords = renderedCoords[activeBattle.target];
+		if (attackerCoords && targetCoords) {
+			const midX = (attackerCoords.px + targetCoords.px) / 2;
+			const midY = (attackerCoords.py + targetCoords.py) / 2 - 22;
+			const label = `BATTLE P${activeBattle.position}`;
+
+			ctx.save();
+			ctx.beginPath();
+			ctx.moveTo(targetCoords.px, targetCoords.py);
+			ctx.lineTo(attackerCoords.px, attackerCoords.py);
+			ctx.strokeStyle = 'rgba(251, 113, 133, 0.8)';
+			ctx.lineWidth = 2;
+			ctx.setLineDash([6, 5]);
+			ctx.shadowColor = 'rgba(251, 113, 133, 0.7)';
+			ctx.shadowBlur = 14;
+			ctx.stroke();
+			ctx.setLineDash([]);
+
+			ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+			const labelWidth = ctx.measureText(label).width + 16;
+			const labelX = Math.max(8, Math.min(w - labelWidth - 8, midX - labelWidth / 2));
+			const labelY = Math.max(10, midY);
+
+			ctx.beginPath();
+			if (ctx.roundRect) ctx.roundRect(labelX, labelY, labelWidth, 18, 6);
+			else ctx.rect(labelX, labelY, labelWidth, 18);
+			ctx.fillStyle = 'rgba(10, 10, 12, 0.9)';
+			ctx.fill();
+			ctx.strokeStyle = 'rgba(251, 113, 133, 0.7)';
+			ctx.lineWidth = 1.2;
+			ctx.stroke();
+
+			ctx.fillStyle = '#fda4af';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(label, labelX + labelWidth / 2, labelY + 9);
+			ctx.restore();
+		}
 	}
 }
 
@@ -1042,10 +1475,12 @@ export default function TrackPage() {
 	const [selectedYear, setSelectedYear] = useState(
 		hasInitialDeepLink ?
 			String(initialDeepLinkYear)
-		:	String(new Date().getFullYear())
+		:	String(Math.min(new Date().getFullYear(), 2026))
 	);
 	const [schedule, setSchedule] = useState([]);
-	const [scheduleLoading, setScheduleLoading] = useState(false);
+	const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+	const [scheduleError, setScheduleError] = useState('');
+	
 	const [selectedRace, setSelectedRace] = useState(null);
 
 	/* ── Visualization state ── */
@@ -1054,14 +1489,27 @@ export default function TrackPage() {
 	const [speed, setSpeed] = useState(5);
 	const [displayTime, setDisplayTime] = useState(0);
 	const [selectedDriver, setSelectedDriver] = useState(null);
-	const [currentBoard, setCurrentBoard] = useState(null);
 	const [lapInput, setLapInput] = useState('');
 	const [genStatus, setGenStatus] = useState(null);
-	const [activeFlags, setActiveFlags] = useState([]);
 	const [controlsVisible, setControlsVisible] = useState(true);
+	const [showTimingTower, setShowTimingTower] = useState(true);
+	const [showRaceInsights, setShowRaceInsights] = useState(true);
+	const [isReplayFullscreen, setIsReplayFullscreen] = useState(false);
+	const [overtakeMeta, setOvertakeMeta] = useState(null);
+	const [overtakeData, setOvertakeData] = useState(null);
+	const [overtakeLoading, setOvertakeLoading] = useState(false);
+	const [overtakeError, setOvertakeError] = useState('');
+	const [overtakeAttacker, setOvertakeAttacker] = useState('');
+	const [overtakeTarget, setOvertakeTarget] = useState('');
+	const [openDriverPicker, setOpenDriverPicker] = useState(null);
+	const [showBattleHUD, setShowBattleHUD] = useState(true);
+	const [battleHUDPos, setBattleHUDPos] = useState({ x: 50, y: 12 }); // % percentage coordinates
+	const [isDraggingHUD, setIsDraggingHUD] = useState(false);
+	const dragHUDOffset = useRef({ x: 0, y: 0 });
 
 	/* ── refs ── */
 	const canvasRef = useRef(null);
+	const replayShellRef = useRef(null);
 	const controlsTimerRef = useRef(null);
 	const animRef = useRef(null);
 	const timeRef = useRef(0);
@@ -1079,6 +1527,7 @@ export default function TrackPage() {
 	const selectedDriverRef = useRef(null);
 	const boardRef = useRef(null);
 	const activeFlagsRef = useRef([]);
+	const activeBattleRef = useRef(null);
 
 	/* sync refs */
 	useEffect(() => {
@@ -1099,6 +1548,14 @@ export default function TrackPage() {
 	useEffect(() => {
 		selectedDriverRef.current = selectedDriver;
 	}, [selectedDriver]);
+	useEffect(() => {
+		const handleFullscreenChange = () => {
+			setIsReplayFullscreen(document.fullscreenElement === replayShellRef.current);
+		};
+		document.addEventListener('fullscreenchange', handleFullscreenChange);
+		return () =>
+			document.removeEventListener('fullscreenchange', handleFullscreenChange);
+	}, []);
 
 	/* ── Pre-compute race positions ── */
 	const racePositions = useMemo(() => {
@@ -1109,6 +1566,31 @@ export default function TrackPage() {
 	useEffect(() => {
 		racePositionsRef.current = racePositions;
 	}, [racePositions]);
+
+	const playbackSecond = useMemo(
+		() =>
+			getTimingSampleIndex(
+				displayTime,
+				Math.max(0, Math.round(sessionData?.info?.duration_sec || 0))
+			),
+		[displayTime, sessionData]
+	);
+
+	const currentBoard = useMemo(() => {
+		if (!sessionData || !racePositions?.length) return null;
+		const boardIndex = getTimingSampleIndex(playbackSecond, racePositions.length - 1);
+		return racePositions[boardIndex] || null;
+	}, [playbackSecond, racePositions, sessionData]);
+
+	const activeFlags = useMemo(() => {
+		if (!sessionData) return [];
+		return getActiveFlags(sessionData.flags, playbackSecond);
+	}, [playbackSecond, sessionData]);
+
+	useEffect(() => {
+		boardRef.current = currentBoard;
+		activeFlagsRef.current = activeFlags;
+	}, [activeFlags, currentBoard]);
 
 	/* ── Pre-compute race insights/events ── */
 	const raceInsights = useMemo(() => {
@@ -1147,46 +1629,76 @@ export default function TrackPage() {
 		driverImagesRef.current = imgs;
 	}, [sessionData]);
 
+	useEffect(() => {
+		if (!sessionData) return;
+		const controller = new AbortController();
+
+		getOvertakeModelMetadata({ signal: controller.signal })
+			.then((meta) => {
+				if (!controller.signal.aborted) {
+					setOvertakeMeta(meta);
+					setOvertakeError('');
+				}
+			})
+			.catch((err) => {
+				if (err.name === 'AbortError' || err.name === 'CanceledError') return;
+				console.error(err);
+				setOvertakeMeta(null);
+				setOvertakeError(
+					err?.response?.data?.detail ||
+						err.message ||
+						'Unable to load overtake model metadata.'
+				);
+			});
+
+		return () => controller.abort();
+	}, [sessionData]);
+
 	/* ── Fetch schedule when year changes ── */
 	useEffect(() => {
 		if (!selectedYear) {
-			const timerId = setTimeout(() => {
-				setSchedule([]);
-			}, 0);
-			return () => clearTimeout(timerId);
-		}
-		const resetTimerId = setTimeout(() => {
-			setScheduleLoading(true);
 			setSchedule([]);
-			setSelectedRace(null);
-			setSessionData(null);
-			setGenStatus(null);
-		}, 0);
+			setScheduleError('');
+			return;
+		}
+
+		// In industrial approach, we clear previous state but keep a separate loading indicator
+		// to avoid flickering "No races found" messages.
+		setSchedule([]);
+		setSelectedRace(null);
+		setSessionData(null);
+		setGenStatus(null);
+		setIsPlaying(false);
+		setIsLoadingSchedule(true);
+		setScheduleError('');
 
 		const controller = new AbortController();
 
-		getYearSchedule(parseInt(selectedYear))
+		getYearSchedule(parseInt(selectedYear), { signal: controller.signal })
 			.then((list) => {
 				if (!controller.signal.aborted) {
 					setSchedule(list || []);
 				}
 			})
 			.catch((err) => {
-				if (err.name !== 'AbortError') console.error(err);
+				if (err.name === 'AbortError' || err.name === 'CanceledError') return;
+				console.error('Schedule fetch error:', err);
+				setScheduleError(err.message || 'Failed to load season schedule.');
 			})
 			.finally(() => {
-				if (!controller.signal.aborted) setScheduleLoading(false);
+				if (!controller.signal.aborted) {
+					setIsLoadingSchedule(false);
+				}
 			});
 
 		return () => {
-			clearTimeout(resetTimerId);
 			controller.abort();
 		};
 	}, [selectedYear]);
 
 	useEffect(() => {
 		const deepLink = deepLinkSelectionRef.current;
-		if (!deepLink || scheduleLoading) return;
+		if (!deepLink ) return;
 		if (Number(selectedYear) !== deepLink.year) return;
 
 		const race = schedule.find((item) => item.round === deepLink.round);
@@ -1194,7 +1706,7 @@ export default function TrackPage() {
 
 		setSelectedRace({ year: deepLink.year, round: deepLink.round });
 		deepLinkSelectionRef.current = null;
-	}, [schedule, scheduleLoading, selectedYear]);
+	}, [schedule, selectedYear]);
 
 	/* ── Fetch session data when a race is selected ── */
 	useEffect(() => {
@@ -1202,15 +1714,16 @@ export default function TrackPage() {
 		const { year, round } = selectedRace;
 		const controller = new AbortController();
 
-		const resetTimerId = setTimeout(() => {
-			setSessionData(null);
-			setSelectedDriver(null);
-			setCurrentBoard(null);
-			setGenStatus(null);
-			setIsPlaying(false);
-			timeRef.current = 0;
-			setDisplayTime(0);
-		}, 0);
+		setSessionData(null);
+		setSelectedDriver(null);
+		setGenStatus(null);
+		setOvertakeData(null);
+		setOvertakeError('');
+		setOvertakeAttacker('');
+		setOvertakeTarget('');
+		setIsPlaying(false);
+		timeRef.current = 0;
+		setDisplayTime(0);
 
 		getSessionData(year, round, {
 			signal: controller.signal,
@@ -1242,21 +1755,19 @@ export default function TrackPage() {
 				}
 			})
 			.catch((err) => {
-				if (err.name !== 'AbortError') {
-					if (err?.response?.status === 401 || err?.response?.status === 403) {
-						setGenStatus({
-							status: 'error',
-							message: 'Please sign in to load this track session.',
-						});
-						return;
-					}
-					console.error(err);
-					setGenStatus({ status: 'error', message: err.message });
+				if (err.name === 'AbortError' || err.name === 'CanceledError') return;
+				if (err?.response?.status === 401 || err?.response?.status === 403) {
+					setGenStatus({
+						status: 'error',
+						message: 'Please sign in to load this track session.',
+					});
+					return;
 				}
+				console.error(err);
+				setGenStatus({ status: 'error', message: err.message });
 			});
 
 		return () => {
-			clearTimeout(resetTimerId);
 			controller.abort();
 		};
 	}, [selectedRace, isAuthenticated, token]);
@@ -1292,22 +1803,6 @@ export default function TrackPage() {
 			if (now - lastUiRef.current > 250) {
 				lastUiRef.current = now;
 				setDisplayTime(timeRef.current);
-
-				const rp = racePositionsRef.current;
-				if (rp) {
-					const sr = d.info.sample_rate || 1;
-					const sIdx = Math.min(
-						Math.floor(timeRef.current * sr),
-						rp.length - 1
-					);
-					const board = rp[Math.max(0, sIdx)];
-					boardRef.current = board;
-					setCurrentBoard(board);
-				}
-
-				// Compute active flags at current time
-				activeFlagsRef.current = getActiveFlags(d.flags, timeRef.current);
-				setActiveFlags(activeFlagsRef.current);
 			}
 
 			const dpr = window.devicePixelRatio || 1;
@@ -1334,7 +1829,9 @@ export default function TrackPage() {
 				timeRef.current,
 				selectedDriverRef.current,
 				boardRef.current,
-				driverImagesRef.current
+				driverImagesRef.current,
+				shouldShowLeaderCrown(activeFlagsRef.current),
+				activeBattleRef.current
 			);
 
 			animRef.current = requestAnimationFrame(frame);
@@ -1400,6 +1897,22 @@ export default function TrackPage() {
 		setSelectedDriver((prev) => (prev === abbr ? null : abbr));
 	}, []);
 
+	const toggleReplayFullscreen = useCallback(async () => {
+		const shell = replayShellRef.current;
+		if (!shell) return;
+
+		try {
+			if (document.fullscreenElement === shell) {
+				await document.exitFullscreen();
+			} else {
+				await shell.requestFullscreen();
+			}
+			setControlsVisible(true);
+		} catch (error) {
+			console.error('Unable to toggle fullscreen replay.', error);
+		}
+	}, []);
+
 	const handleSelectRace = useCallback((race) => {
 		if (!race.is_past) return;
 		setSelectedRace({ year: race.year, round: race.round });
@@ -1430,9 +1943,50 @@ export default function TrackPage() {
 		}
 	}, []);
 
+	/* ── Draggable HUD logic ── */
+	const handleHUDMouseDown = useCallback((e) => {
+		if (e.button !== 0) return; // Only left click
+		const rect = e.currentTarget.getBoundingClientRect();
+		dragHUDOffset.current = {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top,
+		};
+		setIsDraggingHUD(true);
+	}, []);
+
+	useEffect(() => {
+		if (!isDraggingHUD) return;
+
+		const handleMouseMove = (e) => {
+			const container = replayShellRef.current;
+			if (!container) return;
+
+			const rect = container.getBoundingClientRect();
+			let x = ((e.clientX - rect.left - dragHUDOffset.current.x + rect.width * 0) / rect.width) * 100;
+			let y = ((e.clientY - rect.top - dragHUDOffset.current.y) / rect.height) * 100;
+
+			// Clamp bounds
+			x = Math.max(5, Math.min(95, x));
+			y = Math.max(5, Math.min(95, y));
+
+			setBattleHUDPos({ x, y });
+		};
+
+		const handleMouseUp = () => setIsDraggingHUD(false);
+
+		window.addEventListener('mousemove', handleMouseMove);
+		window.addEventListener('mouseup', handleMouseUp);
+		return () => {
+			window.removeEventListener('mousemove', handleMouseMove);
+			window.removeEventListener('mouseup', handleMouseUp);
+		};
+	}, [isDraggingHUD]);
+
 	/* ── Derived values ── */
 	const lapNum =
-		sessionData ? getCurrentLap(sessionData.lap_starts, displayTime) : 0;
+		sessionData ? getCurrentLap(sessionData.lap_starts, playbackSecond) : 0;
+	const isPreRaceState = playbackSecond === 0;
+	const completedLaps = getCompletedLapCount(lapNum, isPreRaceState);
 	const totalLaps = sessionData?.info?.total_laps ?? 0;
 	const maxTime = sessionData?.info?.duration_sec ?? 0;
 	const driverCount = sessionData ? Object.keys(sessionData.drivers).length : 0;
@@ -1453,6 +2007,203 @@ export default function TrackPage() {
 		if (currentBoard) for (const e of currentBoard) m[e.abbr] = e;
 		return m;
 	}, [currentBoard]);
+	const showLeaderCrown = shouldShowLeaderCrown(activeFlags);
+	const visibleFastestLap = useMemo(
+		() => getVisibleFastestLap(sessionData, playbackSecond),
+		[playbackSecond, sessionData]
+	);
+	const isNeutralizedRaceState =
+		!isPreRaceState &&
+		activeFlags.some((flag) =>
+			['Yellow', 'DoubleYellow', 'SC', 'VSC', 'Red'].includes(flag.type)
+		);
+
+	const adjacentBattles = useMemo(() => {
+		if (!currentBoard?.length || completedLaps < 1 || isNeutralizedRaceState)
+			return [];
+		const pairs = [];
+
+		for (let idx = 1; idx < currentBoard.length; idx++) {
+			const attacker = currentBoard[idx];
+			const target = currentBoard[idx - 1];
+			if (!isRaceOrderEntryActive(attacker) || !isRaceOrderEntryActive(target)) {
+				continue;
+			}
+
+			const gap =
+				attacker.gapAhead ??
+				computeGapToAhead(sessionData?.lap_times, currentBoard, idx, lapNum);
+			if (gap == null || !Number.isFinite(Number(gap))) continue;
+
+			pairs.push({
+				attacker: attacker.abbr,
+				target: target.abbr,
+				attackerPosition: attacker.position,
+				targetPosition: target.position,
+				position: target.position,
+				gap: Number(gap),
+				intensity: Number(gap) <= 0.3 ? 'intense' : 'tracking',
+			});
+		}
+
+		return pairs.sort((a, b) => a.gap - b.gap);
+	}, [completedLaps, currentBoard, isNeutralizedRaceState, lapNum, sessionData]);
+
+	const activeBattle = useMemo(
+		() => adjacentBattles.find((pair) => pair.gap <= 1.2) || null,
+		[adjacentBattles]
+	);
+
+	useEffect(() => {
+		activeBattleRef.current = activeBattle;
+	}, [activeBattle]);
+
+	const battleDrivers = useMemo(() => {
+		if (!activeBattle) return new Set();
+		return new Set([activeBattle.attacker, activeBattle.target]);
+	}, [activeBattle]);
+
+	const activeRaceDriverCodes = useMemo(() => {
+		const codes = new Set();
+		for (const entry of currentBoard || []) {
+			if (isRaceOrderEntryActive(entry)) codes.add(entry.abbr);
+		}
+		return codes;
+	}, [currentBoard]);
+
+	const gridDriverOptions = useMemo(() => {
+		if (!sessionData?.drivers) return [];
+		return Object.entries(sessionData.drivers)
+			.map(([abbr, info], index) => ({
+				abbr,
+				info,
+				gridPosition: getDriverSortPosition(info, driverCount + index + 1),
+				currentPosition: posMap[abbr]?.position ?? null,
+			}))
+			.sort((a, b) => a.gridPosition - b.gridPosition);
+	}, [driverCount, posMap, sessionData]);
+
+	const activeGridDriverOptions = useMemo(
+		() => gridDriverOptions.filter((driver) => activeRaceDriverCodes.has(driver.abbr)),
+		[activeRaceDriverCodes, gridDriverOptions]
+	);
+
+	const effectiveOvertakeAttacker = overtakeAttacker || '';
+	const effectiveOvertakeTarget = overtakeTarget || '';
+
+	useEffect(() => {
+		if (!overtakeAttacker && !overtakeTarget) return;
+
+		const attackerEntry = currentBoard?.find(
+			(entry) => entry.abbr === overtakeAttacker
+		);
+		const targetEntry = currentBoard?.find(
+			(entry) => entry.abbr === overtakeTarget
+		);
+		const selectionStillValid =
+			(!overtakeAttacker || isDriverSelectableForOvertake(attackerEntry)) &&
+			(!overtakeTarget || isDriverSelectableForOvertake(targetEntry)) &&
+			(!overtakeAttacker || !overtakeTarget || (attackerEntry?.position > targetEntry?.position));
+
+		if (!selectionStillValid) {
+			queueMicrotask(() => {
+				setOvertakeAttacker('');
+				setOvertakeTarget('');
+			});
+		}
+	}, [currentBoard, overtakeAttacker, overtakeTarget]);
+
+	useEffect(() => {
+		if (
+			!sessionData ||
+			!selectedRace
+		) {
+			queueMicrotask(() => {
+				setOvertakeLoading(false);
+				setOvertakeData(null);
+			});
+			return;
+		}
+
+		let fetchAttacker = effectiveOvertakeAttacker || undefined;
+		let fetchTarget = effectiveOvertakeTarget || undefined;
+
+		// Industrial rule: Backend rejects partial pairs (422 XOR check).
+		// Either specify both different drivers or specify neither to get 'Top N' defaults.
+		if (fetchAttacker && fetchTarget && fetchAttacker === fetchTarget) {
+			queueMicrotask(() => {
+				setOvertakeError('Choose two different drivers for the overtake simulation.');
+			});
+			fetchAttacker = undefined;
+			fetchTarget = undefined;
+		} else if (!!fetchAttacker !== !!fetchTarget) {
+			// Partial selection: wait until both are picked before sending manual overrides to API
+			fetchAttacker = undefined;
+			fetchTarget = undefined;
+		}
+
+		const controller = new AbortController();
+		queueMicrotask(() => {
+			if (!controller.signal.aborted) {
+				setOvertakeLoading(true);
+				setOvertakeError('');
+			}
+		});
+
+		getOvertakeProbabilities(selectedRace.year, selectedRace.round, {
+			lap: Math.max(1, getCurrentLap(sessionData.lap_starts, playbackSecond)),
+			timeSec: playbackSecond,
+			topN: 8,
+			attackerDriver: fetchAttacker,
+			targetDriver: fetchTarget,
+			signal: controller.signal,
+		})
+			.then((result) => {
+				if (!controller.signal.aborted) {
+					setOvertakeData(result);
+				}
+			})
+			.catch((err) => {
+				if (err.name === 'AbortError' || err.name === 'CanceledError') return;
+				console.error(err);
+				setOvertakeData(null);
+				setOvertakeError(
+					err?.response?.data?.detail ||
+						err.message ||
+						'Unable to calculate overtake probabilities.'
+				);
+			})
+			.finally(() => {
+				if (!controller.signal.aborted) {
+					setOvertakeLoading(false);
+				}
+			});
+
+		return () => controller.abort();
+	}, [
+		effectiveOvertakeAttacker,
+		effectiveOvertakeTarget,
+		playbackSecond,
+		selectedRace,
+		sessionData,
+	]);
+
+	const selectedOvertakePair = overtakeData?.selected_pair || null;
+	const topOvertakePairs = useMemo(() => {
+		const pairs = Array.isArray(overtakeData?.pairs) ? overtakeData.pairs : [];
+		const activePairs = pairs.filter(
+			(pair) =>
+				activeRaceDriverCodes.has(pair.attacker_driver) &&
+				activeRaceDriverCodes.has(pair.target_driver)
+		);
+		const immediateBattles = activePairs.filter(
+			(pair) =>
+				Number(pair.cars_between || 0) === 0 &&
+				Number(pair.attacker_gap_ahead ?? Infinity) <= 1.5
+		);
+		return immediateBattles.length > 0 ? immediateBattles : activePairs;
+	}, [activeRaceDriverCodes, overtakeData]);
+	const displayedOvertakePair = selectedOvertakePair || topOvertakePairs[0] || null;
 
 	const isVisualizing = !!selectedRace;
 
@@ -1461,7 +2212,7 @@ export default function TrackPage() {
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-16 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
 			<div className="fixed inset-0 bg-linear-to-b from-black/90 via-black/80 to-black/90 z-0" />
 
-			<div className="relative z-10 max-w-[1440px] mx-auto pb-12">
+			<div className="relative z-10 max-w-[1600px] mx-auto pb-12">
 				{/* ────── Header ────── */}
 				<div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
 					<div className="flex items-center gap-4 animate-fade-in">
@@ -1528,18 +2279,6 @@ export default function TrackPage() {
 							full telemetry visualization.
 						</p>
 					</div>
-				: scheduleLoading ?
-					/* ── Loading schedule ── */
-					<div className="h-[60vh] rounded-2xl border border-white/10 bg-white/4 p-4 animate-fade-in">
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-							{Array.from({ length: 8 }).map((_, i) => (
-								<div
-									key={i}
-									className="h-[130px] rounded-xl bg-white/6 border border-white/10 animate-pulse"
-								/>
-							))}
-						</div>
-					</div>
 				: !isVisualizing ?
 					/* ── Race list for selected year ── */
 					<div className="animate-fade-in">
@@ -1570,7 +2309,34 @@ export default function TrackPage() {
 							</div>
 						</div>
 
-						{schedule.length === 0 ?
+						{isLoadingSchedule ?
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+								{Array.from({ length: 12 }).map((_, i) => (
+									<div key={i} className="h-[130px] rounded-xl border border-white/5 bg-white/5 animate-pulse flex flex-col p-4 justify-between">
+										<div className="flex justify-between items-start">
+											<div className="h-3 w-20 bg-white/10 rounded" />
+											<div className="h-4 w-12 bg-white/10 rounded-full" />
+										</div>
+										<div className="h-4 w-3/4 bg-white/10 rounded" />
+										<div className="flex justify-between">
+											<div className="h-3 w-24 bg-white/10 rounded" />
+											<div className="h-4 w-14 bg-white/10 rounded-full" />
+										</div>
+									</div>
+								))}
+							</div>
+						: scheduleError ?
+							<div className="flex flex-col items-center justify-center h-64 text-center">
+								<FaExclamationTriangle className="text-3xl text-red-500/50 mb-4" />
+								<p className="text-red-400 text-sm">{scheduleError}</p>
+								<button 
+									onClick={() => setSelectedYear(selectedYear)} // Trigger retry
+									className="mt-4 text-xs text-gray-400 hover:text-white underline"
+								>
+									Try again
+								</button>
+							</div>
+						: schedule.length === 0 ?
 							<div className="flex flex-col items-center justify-center h-64 text-center">
 								<FaFlagCheckered className="text-3xl text-gray-700 mb-4" />
 								<p className="text-gray-500 text-sm">
@@ -1791,28 +2557,16 @@ export default function TrackPage() {
 											</button>
 										</>
 									:	<>
-											<div className="w-24 h-3 rounded-full bg-white/8 overflow-hidden">
-												<div className="h-full w-1/2 bg-red-500/70 animate-pulse" />
+											<div className="w-48 h-1.5 rounded-full bg-white/5 overflow-hidden">
+												<div className="h-full w-1/2 bg-red-600/60 animate-shimmer" />
 											</div>
-											<div className="text-center">
-												<p className="text-gray-200 font-semibold text-sm mb-1">
-													{genStatus?.status === 'generating' ?
-														'Generating telemetry data'
-													:	'Loading track data'}
-												</p>
-												<p className="text-gray-500 text-xs max-w-sm leading-relaxed">
-													{genStatus?.status === 'generating' ?
-														'Extracting lap-by-lap telemetry from FastF1. This may take 1–2 minutes on first load.'
-													:	'Preparing visualization…'}
-												</p>
-											</div>
-											<div className="flex gap-1 mt-1">
-												{[0, 1, 2, 3, 4].map((i) => (
+											<div className="flex gap-1.5 mt-2">
+												{[0, 1, 2].map((i) => (
 													<div
 														key={i}
-														className="w-1 h-1 rounded-full bg-red-500/60"
+														className="w-1.5 h-1.5 rounded-full bg-red-600/40"
 														style={{
-															animation: `pulse 1.6s ease-in-out ${i * 0.15}s infinite`,
+															animation: `pulse 1.6s ease-in-out ${i * 0.2}s infinite`,
 														}}
 													/>
 												))}
@@ -1918,9 +2672,18 @@ export default function TrackPage() {
 						)}
 
 						{/* F1 Broadcast Layout: Tower | Canvas | Overlays */}
-						<div className="grid grid-cols-1 xl:grid-cols-[250px_1fr] gap-0 rounded-2xl overflow-hidden shadow-2xl border border-white/6">
+						<div
+							ref={replayShellRef}
+							className={isReplayFullscreen ? 'h-full w-full bg-[#050505] p-3 sm:p-4' : ''}
+						>
+							<div
+								className={`grid gap-0 rounded-2xl overflow-hidden shadow-2xl border border-white/6 ${
+									showTimingTower ? 'grid-cols-1 xl:grid-cols-[270px_minmax(0,1fr)]' : 'grid-cols-1'
+								} ${isReplayFullscreen ? 'h-full' : ''}`}
+							>
 							{/* ===== LEFT: F1-Style Driver Tower ===== */}
-							<div className="bg-[#0d0d0d] xl:border-r border-white/8 flex flex-col overflow-hidden">
+							{showTimingTower && (
+								<div className="bg-[#0d0d0d] xl:border-r border-white/8 flex flex-col overflow-hidden">
 								{/* Tower Header */}
 								<div className="px-3 py-2.5 border-b border-white/8 bg-[#111] shrink-0">
 									<div className="flex items-center justify-between">
@@ -1929,38 +2692,33 @@ export default function TrackPage() {
 										</h3>
 										<div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/6">
 											<span className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">
-												Lap
+												{isPreRaceState ? 'Grid' : 'Lap'}
 											</span>
 											<span className="text-[12px] font-bold text-white tabular-nums">
-												{lapNum}
+												{isPreRaceState ? 'Q' : lapNum}
 											</span>
-											<span className="text-[9px] text-gray-600">
-												/ {totalLaps}
-											</span>
+											{!isPreRaceState && (
+												<span className="text-[9px] text-gray-600">
+													/ {totalLaps}
+												</span>
+											)}
 										</div>
 									</div>
-									{sessionData?.fastest_lap?.abbr &&
-										lapNum >= (sessionData.fastest_lap.lap || 0) && (
-											<div className="mt-1.5">
-												<span className="text-[8px] font-bold bg-purple-500/15 text-purple-400 px-1.5 py-0.5 rounded-md border border-purple-500/20 inline-flex items-center gap-1">
-													<FaTachometerAlt className="text-[6px]" />
-													FL: {sessionData.fastest_lap.abbr}{' '}
-													{formatLapTime(sessionData.fastest_lap.time)}
-												</span>
-											</div>
-										)}
 								</div>
 
 								{/* Driver Rows */}
 								<div
 									className="flex-1 overflow-y-auto relative"
-									style={{ minHeight: Math.min(driverCount * ROW_H, 600) }}
+									style={{
+										minHeight: isReplayFullscreen ? 0 : Math.min(driverCount * ROW_H, 600),
+									}}
 								>
 									{Object.entries(sessionData.drivers).map(([abbr, info]) => {
 										const pe = posMap[abbr];
 										const pos = pe?.position ?? driverCount;
 										const isLeader = pos === 1;
 										const isSel = abbr === selectedDriver;
+										const isBattleDriver = battleDrivers.has(abbr);
 										const isActive = pe?.active !== false;
 										const drvStatus = pe?.status || '';
 										const isDNF = drvStatus === 'DNF';
@@ -1968,23 +2726,24 @@ export default function TrackPage() {
 										const isDSQ = drvStatus === 'DSQ';
 										const isRetired = isDNF || isDNS || isDSQ;
 
-										const lastLap = getLastLapTime(
-											sessionData.lap_times,
-											abbr,
-											lapNum
-										);
+										const lastLap =
+											isPreRaceState ?
+												null
+											:	getLastLapTime(sessionData.lap_times, abbr, lapNum);
 										const isFastestOverall =
-											sessionData?.fastest_lap?.abbr === abbr &&
-											lapNum >= (sessionData.fastest_lap.lap || 0);
+											!isPreRaceState &&
+											visibleFastestLap?.abbr === abbr;
 
 										const driverIdx =
 											currentBoard?.findIndex((e) => e.abbr === abbr) ?? -1;
-										const gap = computeGapToAhead(
-											sessionData.lap_times,
-											currentBoard,
-											driverIdx,
-											lapNum
-										);
+										const gap =
+											pe?.gapAhead ??
+											computeGapToAhead(
+												sessionData.lap_times,
+												currentBoard,
+												driverIdx,
+												lapNum
+											);
 
 										return (
 											<div
@@ -1998,17 +2757,23 @@ export default function TrackPage() {
 											>
 												<div
 													className={`flex items-center h-full mx-1 px-1.5 rounded-lg transition-all duration-200
-														${isSel ? 'bg-white/10 ring-1 ring-white/20' : 'hover:bg-white/5'}
 														${
-															isDNS ? 'opacity-15'
-															: isRetired ? 'opacity-25'
-															: !isActive ? 'opacity-40'
+															isSel ?
+																'bg-white/10 ring-1 ring-white/20'
+															: isBattleDriver ?
+																'bg-red-500/8 ring-1 ring-red-400/20 hover:bg-red-500/12'
+															:	'hover:bg-white/5'
+														}
+														${
+															isDNS ? 'opacity-45'
+															: isRetired ? 'opacity-60'
+															: !isActive ? 'opacity-75'
 															: ''
 														}`}
 												>
 													{/* Position */}
 													<div
-														className={`w-6 text-center shrink-0 text-[11px] font-black tabular-nums ${isLeader ? 'text-yellow-400' : 'text-gray-500'}`}
+														className={`w-6 text-center shrink-0 text-[11px] font-black tabular-nums ${isLeader ? 'text-white' : 'text-gray-500'}`}
 													>
 														{isDNS ?
 															<span className="text-[7px] text-gray-600">
@@ -2020,8 +2785,6 @@ export default function TrackPage() {
 															</span>
 														: isDNF ?
 															<FaSkullCrossbones className="text-red-500/60 text-[8px] mx-auto" />
-														: isLeader ?
-															<FaCrown className="text-yellow-400 text-[10px] mx-auto" />
 														:	pos}
 													</div>
 
@@ -2039,24 +2802,46 @@ export default function TrackPage() {
 															<span
 																className={`text-[11px] font-bold leading-none ${
 																	isSel ? 'text-white'
-																	: isRetired ? 'text-gray-600 line-through'
+																	: isRetired ? 'text-gray-300'
 																	: 'text-gray-200'
 																}`}
 															>
 																{abbr}
 															</span>
+															{showLeaderCrown && isLeader && (
+																<FaCrown className="text-[9px] text-yellow-300 shrink-0" />
+															)}
+															{isBattleDriver && (
+																<span
+																	className={`rounded-full px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.18em] ${
+																		activeBattle?.intensity === 'intense' ?
+																			'border border-red-400/25 bg-red-500/10 text-red-200'
+																		:	'border border-amber-400/25 bg-amber-500/10 text-amber-100'
+																	}`}
+																>
+																	Battle P{activeBattle?.position}
+																</span>
+															)}
 															{isFastestOverall && (
-																<div className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
+																<FaStopwatch
+																	className="text-[9px] text-purple-400 shrink-0"
+																	title="Fastest lap"
+																/>
 															)}
 															{isDNF && (
-																<span className="text-[6px] font-bold text-red-400/70">
+																<span className="text-[6px] font-bold text-red-400/85">
 																	DNF
+																</span>
+															)}
+															{isDNS && (
+																<span className="text-[6px] font-bold text-gray-400">
+																	DNS
 																</span>
 															)}
 														</div>
 														{!isRetired && lastLap != null && lapNum > 0 && (
 															<span
-																className={`text-[8px] font-mono leading-none mt-0.5 block ${isFastestOverall ? 'text-purple-400' : 'text-gray-500'}`}
+																className={`text-[10px] font-semibold font-mono leading-none mt-0.5 block tabular-nums ${isFastestOverall ? 'text-purple-400' : isBattleDriver ? 'text-red-100' : 'text-gray-300'}`}
 															>
 																{formatLapTime(lastLap)}
 															</span>
@@ -2065,16 +2850,28 @@ export default function TrackPage() {
 
 													{/* Interval */}
 													<div className="shrink-0 text-right">
-														{isLeader && !isRetired ?
-															<span className="text-[8px] font-bold text-yellow-400/80 leading-none tracking-wider">
-																INT
+														{isPreRaceState && !isRetired ?
+															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-white/8 bg-white/4 px-2 py-1 text-[8px] font-bold text-gray-300/90 leading-none tracking-[0.2em]">
+																GRID
+															</span>
+														: isLeader && !isRetired ?
+															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-1 text-[8px] font-bold text-yellow-300 leading-none tracking-[0.18em]">
+																LEAD
 															</span>
 														: !isLeader && !isRetired && gap != null ?
-															<span className="text-[9px] font-mono text-gray-400 leading-none tabular-nums">
-																+{gap > 0 ? gap.toFixed(1) : '0.0'}
+															<span
+																className={`inline-flex min-w-[3.9rem] justify-end rounded-md border px-2 py-1 text-[10px] font-semibold font-mono leading-none tabular-nums tracking-[0.06em] ${
+																	isBattleDriver && activeBattle?.intensity === 'intense' ?
+																		'border-red-400/25 bg-red-500/12 text-red-50'
+																	: isBattleDriver ?
+																		'border-amber-400/25 bg-amber-500/10 text-amber-50'
+																	:	'border-white/8 bg-white/4 text-gray-100'
+																}`}
+															>
+																{formatGapValue(gap)}
 															</span>
 														: isRetired && isDNF && info.laps_completed ?
-															<span className="text-[7px] font-mono text-red-500/50 leading-none">
+															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-red-500/15 bg-red-500/8 px-2 py-1 text-[8px] font-mono text-red-300/75 leading-none">
 																L{info.laps_completed}
 															</span>
 														:	null}
@@ -2136,12 +2933,12 @@ export default function TrackPage() {
 											const bestLap = getBestLapTime(
 												sessionData.lap_times,
 												selectedDriver,
-												lapNum
+												completedLaps
 											);
 											const lastLapSel = getLastLapTime(
 												sessionData.lap_times,
 												selectedDriver,
-												lapNum
+												isPreRaceState ? 0 : lapNum
 											);
 											return bestLap || lastLapSel ?
 													<div className="flex items-center gap-3 mt-1 text-[8px] text-gray-400">
@@ -2167,13 +2964,14 @@ export default function TrackPage() {
 									</div>
 								)}
 							</div>
+							)}
 
 							{/* ===== RIGHT: Canvas + Overlays ===== */}
-							<div className="relative bg-[#0a0a0a] overflow-visible">
+							<div className="relative bg-[#0a0a0a] overflow-hidden min-w-0">
 								{/* Canvas container */}
 								<div
-									style={{ aspectRatio: '16 / 9' }}
-									className={`w-full relative group ${!controlsVisible ? 'cursor-none' : ''}`}
+									style={isReplayFullscreen ? { height: '100%' } : { aspectRatio: '16 / 9' }}
+									className={`w-full relative group ${isReplayFullscreen ? 'h-full min-h-[420px]' : ''} ${!controlsVisible ? 'cursor-none' : ''}`}
 									onMouseMove={() => {
 										setControlsVisible(true);
 										clearTimeout(controlsTimerRef.current);
@@ -2193,6 +2991,126 @@ export default function TrackPage() {
 										ref={canvasRef}
 										style={{ display: 'block', width: '100%', height: '100%' }}
 									/>
+
+									<div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+										<button
+											type="button"
+											onClick={() => setShowTimingTower((prev) => !prev)}
+											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+												showTimingTower ?
+													'border-cyan-400/25 bg-cyan-400/10 text-cyan-100'
+												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+											}`}
+										>
+											Tower
+										</button>
+										<button
+											type="button"
+											onClick={() => setShowRaceInsights((prev) => !prev)}
+											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+												showRaceInsights ?
+													'border-red-400/25 bg-red-400/10 text-red-100'
+												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+											}`}
+										>
+											Insights
+										</button>
+										<button
+											type="button"
+											onClick={() => setShowBattleHUD((prev) => !prev)}
+											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+												showBattleHUD ?
+													'border-amber-400/25 bg-amber-400/10 text-amber-100'
+												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+											}`}
+										>
+											Battle
+										</button>
+										<button
+											type="button"
+											onClick={toggleReplayFullscreen}
+											className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/55 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-100 transition-all hover:border-white/20 hover:bg-black/70"
+										>
+											{isReplayFullscreen ?
+												<FaCompress className="text-[10px]" />
+											:	<FaExpand className="text-[10px]" />}
+											{isReplayFullscreen ? 'Exit' : 'Fullscreen'}
+										</button>
+									</div>
+
+									{activeBattle && showBattleHUD && (
+										<div 
+											className={`absolute z-40 transition-shadow duration-300 ${isDraggingHUD ? 'scale-[1.02] shadow-2xl cursor-grabbing' : 'cursor-grab'}`}
+											style={{ 
+												left: `${battleHUDPos.x}%`, 
+												top: `${battleHUDPos.y}%`,
+												transform: 'translateX(-50%)',
+												userSelect: 'none'
+											}}
+											onMouseDown={handleHUDMouseDown}
+										>
+											<div
+												className={`flex items-center gap-3 rounded-2xl px-3 py-2 shadow-2xl backdrop-blur-md relative group/hud ${
+													activeBattle.intensity === 'intense' ?
+														'border border-red-400/20 bg-black/82'
+													:	'border border-amber-400/20 bg-black/78'
+												}`}
+											>
+												{/* Close tool */}
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														setShowBattleHUD(false);
+													}}
+													className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover/hud:opacity-100 transition-opacity z-50 hover:bg-red-500"
+												>
+													<FaTimes className="text-[7px]" />
+												</button>
+
+												<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+													<Image
+														src={getTelemetryDriverImage(activeBattle.target, 2026) || `/images/drivers/${activeBattle.target}.png`}
+														alt={activeBattle.target}
+														fill
+														sizes="48px"
+														className="object-cover object-top pointer-events-none"
+													/>
+												</div>
+												<div className="min-w-[10rem] text-center">
+													<div
+														className={`text-[9px] font-bold uppercase tracking-[0.24em] ${
+															activeBattle.intensity === 'intense' ?
+																'text-red-200/80'
+															:	'text-amber-200/80'
+														}`}
+													>
+														Battle for P{activeBattle.position}
+													</div>
+													<div className="mt-1 text-sm font-black text-white">
+														{activeBattle.target} vs {activeBattle.attacker}
+													</div>
+													<div
+														className={`mt-0.5 text-[10px] font-mono ${
+															activeBattle.intensity === 'intense' ?
+																'text-red-100/85'
+															:	'text-amber-100/85'
+														}`}
+													>
+														Gap {formatGapValue(activeBattle.gap)}
+													</div>
+												</div>
+												<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+													<Image
+														src={getTelemetryDriverImage(activeBattle.attacker, 2026) || `/images/drivers/${activeBattle.attacker}.png`}
+														alt={activeBattle.attacker}
+														fill
+														sizes="48px"
+														className="object-cover object-top pointer-events-none"
+													/>
+												</div>
+											</div>
+										</div>
+									)}
 
 									{/* Weather overlay — top left of canvas */}
 									{currentWeather && (
@@ -2236,18 +3154,22 @@ export default function TrackPage() {
 									)}
 
 									{/* Race Insights overlay — top right of canvas */}
-									{visibleInsights.length > 0 && (
-										<div className="absolute top-3 right-3 z-20 w-64 max-h-[45%] overflow-y-auto bg-black/50 backdrop-blur-md rounded-xl border border-white/8 shadow-2xl">
-											<div className="px-3 py-2 border-b border-white/10 flex items-center justify-between sticky top-0 bg-black/70 backdrop-blur-md z-10 rounded-t-xl">
-												<h4 className="text-[9px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
+									{showRaceInsights && visibleInsights.length > 0 && (
+										<div
+											className={`absolute top-14 right-3 z-20 overflow-y-auto bg-black/70 backdrop-blur-md rounded-xl border border-white/8 shadow-2xl ${
+												isReplayFullscreen ? 'w-[24rem] max-h-[68%]' : 'w-80 max-h-[56%]'
+											}`}
+										>
+											<div className="px-4 py-3 border-b border-white/10 flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur-md z-10 rounded-t-xl">
+												<h4 className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300 flex items-center gap-2">
 													<FaFlag className="text-[7px] text-red-500" />
-													Insights
+													Race Insights
 												</h4>
-												<span className="text-[8px] text-gray-600 font-mono">
+												<span className="text-[9px] text-gray-500 font-mono">
 													{visibleInsights.length}
 												</span>
 											</div>
-											<div className="py-1">
+											<div className="px-2 py-2">
 												{[...visibleInsights]
 													.reverse()
 													.slice(0, 20)
@@ -2285,11 +3207,11 @@ export default function TrackPage() {
 														return (
 															<div
 																key={`${evt.type}-${evt.time_sec}-${i}`}
-																className={`mx-1.5 mb-0.5 px-2 py-1.5 rounded-md border bg-white/3 transition-all ${typeColorMap[evt.type] || 'border-white/6'}`}
+																className={`mb-1.5 rounded-lg border bg-white/4 px-3 py-2 transition-all ${typeColorMap[evt.type] || 'border-white/6'}`}
 															>
-																<div className="flex items-center gap-1.5">
+																<div className="flex items-start gap-2">
 																	<div
-																		className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+																		className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
 																		style={{
 																			backgroundColor:
 																				(evt.color || '#666') + '15',
@@ -2301,18 +3223,18 @@ export default function TrackPage() {
 																		)}
 																	</div>
 																	<div className="flex-1 min-w-0">
-																		<div className="flex items-center gap-1">
+																		<div className="flex items-center gap-1.5">
 																			<span
-																				className="text-[8px] font-bold leading-none"
+																				className="text-[10px] font-bold leading-none"
 																				style={{ color: evt.color || '#ccc' }}
 																			>
 																				{evt.title}
 																			</span>
-																			<span className="text-[7px] text-gray-600 font-mono">
+																			<span className="text-[8px] text-gray-500 font-mono">
 																				L{evt.lap}
 																			</span>
 																		</div>
-																		<p className="text-[7px] text-gray-500 leading-tight truncate">
+																		<p className="mt-1 text-[9px] text-gray-300 leading-snug">
 																			{evt.detail}
 																		</p>
 																	</div>
@@ -2486,9 +3408,266 @@ export default function TrackPage() {
 								</div>
 							</div>
 						</div>
+						</div>
+
+						<div className="mt-5 grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-5">
+							<div className="bg-white/3 backdrop-blur-xl rounded-2xl border border-white/6 p-5">
+								<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+									<div>
+										<div className="flex items-center gap-2">
+											<div className="w-9 h-9 rounded-xl bg-blue-500/12 border border-blue-500/20 flex items-center justify-center">
+												<FaExchangeAlt className="text-blue-300 text-sm" />
+											</div>
+											<div>
+												<h3 className="text-sm font-bold text-white">
+													Overtake Simulator
+												</h3>
+												<p className="text-[11px] text-gray-500 mt-0.5">
+													Simulate the next move between any two drivers on the
+													grid using the deployed model metadata.
+												</p>
+											</div>
+										</div>
+										<div className="flex flex-wrap gap-2 mt-3">
+											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
+												Model {overtakeMeta?.best_model_name || '—'}
+											</span>
+											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
+												Horizon {overtakeData?.horizon_laps || overtakeMeta?.horizon_laps || '—'} laps
+											</span>
+											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
+												Mode {overtakeData?.source_mode || '—'}
+											</span>
+											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
+												Features {(overtakeMeta?.numeric_features?.length || 0) + (overtakeMeta?.categorical_features?.length || 0)}
+											</span>
+										</div>
+									</div>
+									{overtakeMeta?.test_metrics && (
+										<div className="grid grid-cols-2 gap-2 min-w-[220px]">
+											<div className="rounded-xl bg-black/30 border border-white/8 px-3 py-2">
+												<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+													ROC AUC
+												</div>
+												<div className="text-sm font-bold text-white mt-1">
+													{overtakeMeta.test_metrics.roc_auc?.toFixed?.(3) || '—'}
+												</div>
+											</div>
+											<div className="rounded-xl bg-black/30 border border-white/8 px-3 py-2">
+												<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+													PR AUC
+												</div>
+												<div className="text-sm font-bold text-white mt-1">
+													{overtakeMeta.test_metrics.pr_auc?.toFixed?.(3) || '—'}
+												</div>
+											</div>
+										</div>
+									)}
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-5">
+									<div className="relative z-20">
+										<CustomOvertakeDropdown
+											label="Attacker"
+											value={effectiveOvertakeAttacker}
+											options={activeGridDriverOptions}
+											onChange={(val) => setOvertakeAttacker(val)}
+											placeholder="Select attacker"
+										/>
+									</div>
+									<div className="relative z-10">
+										<CustomOvertakeDropdown
+											label="Target"
+											value={effectiveOvertakeTarget}
+											options={activeGridDriverOptions}
+											onChange={(val) => setOvertakeTarget(val)}
+											placeholder="Select target"
+										/>
+									</div>
+								</div>
+
+								<div className="mt-4 rounded-2xl border border-white/8 bg-black/30 p-4 min-h-[180px] relative overflow-hidden">
+									{/* Industrial approach: Subtle loading overlay instead of replacing content with text */}
+									{overtakeLoading && (
+										<div className="absolute inset-x-0 top-0 h-1 z-30 overflow-hidden">
+											<div className="h-full w-full bg-blue-500/10">
+												<div className="h-full w-1/3 bg-blue-500/40 animate-shimmer" />
+											</div>
+										</div>
+									)}
+
+									{selectedOvertakePair ? (
+										<div>
+											<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+												<div>
+													<div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
+														Selected Pair
+													</div>
+													<div className="text-xl font-bold text-white mt-1">
+														{selectedOvertakePair.attacker_driver} vs {selectedOvertakePair.target_driver}
+													</div>
+													<p className="text-sm text-gray-400 mt-1">
+														P{selectedOvertakePair.attacker_pos} attacking P{selectedOvertakePair.target_pos}
+														{' '}with {selectedOvertakePair.cars_between} car
+														{selectedOvertakePair.cars_between === 1 ? '' : 's'} between.
+													</p>
+												</div>
+												<div className="rounded-2xl bg-blue-500/12 border border-blue-500/20 px-4 py-3 min-w-[180px]">
+													<div className="text-[10px] uppercase tracking-[0.2em] text-blue-200/70">
+														Chance In Horizon
+													</div>
+													<div className="text-3xl font-black text-blue-300 mt-1">
+														{formatProbability(selectedOvertakePair.p_overtake)}
+													</div>
+												</div>
+											</div>
+
+											<div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
+													<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+														Striking Distance
+													</div>
+													<div className="text-sm font-mono text-white mt-1">
+														{formatGapValue(selectedOvertakePair.attacker_gap_ahead)}
+													</div>
+												</div>
+												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
+													<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+														Cars Between
+													</div>
+													<div className="text-sm font-mono text-white mt-1">
+														{selectedOvertakePair.cars_between}
+													</div>
+												</div>
+												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
+													<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+														Lap Time Delta
+													</div>
+													<div className="text-sm font-mono text-white mt-1">
+														{formatGapValue(selectedOvertakePair.pace_advantage, {
+															showPlus: true,
+														})}
+													</div>
+												</div>
+												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
+													<div className="text-[9px] uppercase tracking-[0.18em] text-gray-600">
+														Track Context
+													</div>
+													<div className="text-sm text-white mt-1">
+														{selectedOvertakePair.flag_type || 'Green'}
+													</div>
+												</div>
+											</div>
+
+											<div className="flex flex-wrap gap-2 mt-4">
+												<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] text-gray-300">
+													Attacker tyre {selectedOvertakePair.attacker_compound}
+												</span>
+												<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] text-gray-300">
+													Target tyre {selectedOvertakePair.target_compound}
+												</span>
+												<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] text-gray-300">
+													DRS proxy {selectedOvertakePair.drs_window_proxy ? 'Open' : 'Out of range'}
+												</span>
+												{selectedOvertakePair.is_sc ? (
+													<span className="px-2 py-1 rounded-lg bg-yellow-500/12 border border-yellow-500/20 text-[10px] text-yellow-200">
+														Safety Car active
+													</span>
+												) : null}
+												{selectedOvertakePair.is_vsc ? (
+													<span className="px-2 py-1 rounded-lg bg-yellow-500/12 border border-yellow-500/20 text-[10px] text-yellow-200">
+														VSC active
+													</span>
+												) : null}
+											</div>
+										</div>
+									) : (
+										<div className="h-full flex flex-col justify-center">
+											<p className="text-sm text-gray-300">
+												{overtakeData?.selected_pair_message ||
+													overtakeError ||
+													'Select an attacker and a target to project the next overtake chance.'}
+											</p>
+											<p className="text-xs text-gray-600 mt-2">
+												The attacker must currently be behind the target and both drivers must still be active in the replay state.
+											</p>
+										</div>
+									)}
+								</div>
+							</div>
+
+							<div className="bg-white/3 backdrop-blur-xl rounded-2xl border border-white/6 p-5">
+								<div className="flex items-center justify-between">
+									<div>
+										<h3 className="text-sm font-bold text-white">
+											Live Best Opportunities
+										</h3>
+										<p className="text-[11px] text-gray-500 mt-0.5">
+											Top attacker-target pairs at {formatTime(playbackSecond)} on lap {lapNum}.
+										</p>
+									</div>
+									<div className="text-[10px] text-gray-500 font-mono">
+										{topOvertakePairs.length} pairs
+									</div>
+								</div>
+
+								<div className="mt-4 space-y-2">
+									{topOvertakePairs.length > 0 ? (
+										topOvertakePairs.map((pair) => (
+											<button
+												key={`${pair.attacker_driver}-${pair.target_driver}`}
+												type="button"
+												onClick={() => {
+													setOvertakeAttacker(pair.attacker_driver);
+													setOvertakeTarget(pair.target_driver);
+												}}
+												className={`w-full text-left rounded-xl border px-3 py-3 transition-all ${
+													selectedOvertakePair?.attacker_driver === pair.attacker_driver &&
+													selectedOvertakePair?.target_driver === pair.target_driver
+														? 'bg-blue-500/10 border-blue-500/25'
+														: 'bg-black/25 border-white/8 hover:border-white/15 hover:bg-white/5'
+												}`}
+											>
+												<div className="flex items-center justify-between gap-3">
+													<div>
+														<div className="text-sm font-bold text-white">
+															{pair.attacker_driver} {'->'} {pair.target_driver}
+														</div>
+														<div className="text-[11px] text-gray-500 mt-1">
+															P{pair.attacker_pos} attacking P{pair.target_pos} • Gap {formatGapValue(pair.attacker_gap_ahead)}
+														</div>
+													</div>
+													<div className="text-right">
+														<div className="text-lg font-black text-blue-300">
+															{formatProbability(pair.p_overtake)}
+														</div>
+														<div className="text-[10px] text-gray-600">
+															{pair.flag_type || 'None'}
+														</div>
+													</div>
+												</div>
+											</button>
+										))
+									) : (
+										<div className="rounded-xl border border-white/8 bg-black/20 px-4 py-8 text-center">
+											<p className="text-sm text-gray-400">
+												{overtakeError ||
+													overtakeData?.message ||
+													'No live overtake pairs are available for this replay state yet.'}
+											</p>
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
 					</div>
 				:	null}
 			</div>
 		</div>
 	);
 }
+
+
+
+
+

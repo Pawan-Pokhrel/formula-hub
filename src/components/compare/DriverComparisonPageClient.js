@@ -14,8 +14,10 @@ import {
 } from '@/lib/api/scheduleApi';
 import {
 	getComparisonDataset,
+	getConstructorComparison,
 	getConstructorCareerStats,
 	getDriverCareerStats,
+	getDriverComparison,
 } from '@/lib/api/standingsApi';
 import { getSessionData } from '@/lib/api/trackApi';
 import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
@@ -50,6 +52,7 @@ import {
 } from 'recharts';
 
 const HISTORY_LOG_DEBOUNCE_MS = 1800;
+const OPTIONAL_FETCH_TIMEOUT_MS = 8000;
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HELPERS
@@ -58,6 +61,14 @@ const HISTORY_LOG_DEBOUNCE_MS = 1800;
 function toFixed(v, decimals = 1) {
 	const n = Number(v || 0);
 	return Number.isInteger(n) ? String(n) : n.toFixed(decimals);
+}
+
+function isRequestCanceled(error) {
+	return (
+		error?.name === 'AbortError' ||
+		error?.name === 'CanceledError' ||
+		error?.code === 'ERR_CANCELED'
+	);
 }
 
 const TEAM_CAR_TOKEN = {
@@ -2635,6 +2646,14 @@ export default function DriverComparisonPageClient() {
 		constructors: [],
 		rounds: 0,
 	});
+	const [comparisonData, setComparisonData] = useState({
+		scope: 'season',
+		round: null,
+		rounds: 0,
+		race_name: null,
+		drivers: [],
+		constructors: [],
+	});
 	const [loading, setLoading] = useState(true);
 
 	const [schedule, setSchedule] = useState([]);
@@ -2648,7 +2667,6 @@ export default function DriverComparisonPageClient() {
 		drivers: [],
 		constructors: [],
 	});
-	const [careerStatsLoading, setCareerStatsLoading] = useState(true);
 
 	// Seed from URL params once — state owns selection from here on
 	const [leftKey, setLeftKey] = useState(() => {
@@ -2687,17 +2705,30 @@ export default function DriverComparisonPageClient() {
 	useEffect(() => {
 		let active = true;
 		setLoading(true);
+		const scheduleController = new AbortController();
+		const scheduleTimeout = setTimeout(() => {
+			scheduleController.abort();
+		}, OPTIONAL_FETCH_TIMEOUT_MS);
 
-		Promise.all([
-			getComparisonDataset(year).catch(() => ({
-				drivers: [],
-				constructors: [],
-				rounds: 0,
-			})),
-			getSchedule(year).catch(() => []),
+		Promise.allSettled([
+			getComparisonDataset(year),
+			getSchedule(year, { signal: scheduleController.signal }),
 		])
-			.then(([data, scheduleData]) => {
+			.then(([dataResult, scheduleResult]) => {
 				if (!active) return;
+				const data =
+					dataResult.status === 'fulfilled' ?
+						dataResult.value
+					:	{
+							drivers: [],
+							constructors: [],
+							rounds: 0,
+						};
+				const scheduleData =
+					scheduleResult.status === 'fulfilled' &&
+					Array.isArray(scheduleResult.value) ?
+						scheduleResult.value
+					:	[];
 				setDataset({
 					drivers: Array.isArray(data?.drivers) ? data.drivers : [],
 					constructors:
@@ -2712,10 +2743,13 @@ export default function DriverComparisonPageClient() {
 				}
 			})
 			.finally(() => {
+				clearTimeout(scheduleTimeout);
 				if (active) setLoading(false);
 			});
 		return () => {
 			active = false;
+			clearTimeout(scheduleTimeout);
+			scheduleController.abort();
 		};
 	}, [year]);
 
@@ -2748,12 +2782,11 @@ export default function DriverComparisonPageClient() {
 						resC.value.map(mapKeysToCamel)
 					:	[],
 			});
-			setCareerStatsLoading(false);
 		});
 	}, []);
 
 	useEffect(() => {
-		if (selectedRace === 'all') return;
+		if (selectedRace === 'all' || availableSchedule.length === 0) return;
 		const exists = availableSchedule.some(
 			(race) => String(race?.round) === String(selectedRace)
 		);
@@ -2767,23 +2800,38 @@ export default function DriverComparisonPageClient() {
 		}
 
 		let active = true;
+		const controller = new AbortController();
+		const timeout = setTimeout(() => {
+			controller.abort();
+		}, OPTIONAL_FETCH_TIMEOUT_MS);
 		setTelemetryLoading(true);
 
-		getTelemetrySessionSnapshot({ year, round: effectiveSelectedRace })
+		getTelemetrySessionSnapshot({
+			year,
+			round: effectiveSelectedRace,
+			signal: controller.signal,
+		})
 			.then((data) => {
 				if (!active) return;
 				setRaceTelemetry(data);
 			})
 			.catch((err) => {
+				if (isRequestCanceled(err)) {
+					if (active) setRaceTelemetry(null);
+					return;
+				}
 				console.error('Failed to fetch race telemetry', err);
 				if (active) setRaceTelemetry(null);
 			})
 			.finally(() => {
+				clearTimeout(timeout);
 				if (active) setTelemetryLoading(false);
 			});
 
 		return () => {
 			active = false;
+			clearTimeout(timeout);
+			controller.abort();
 		};
 	}, [year, effectiveSelectedRace]);
 
@@ -2854,6 +2902,19 @@ export default function DriverComparisonPageClient() {
 		[entities, comparisonType]
 	);
 
+	useEffect(() => {
+		if (!validKeys.length) return;
+		const nextLeft = validKeys[0];
+		const nextRight = validKeys.find((k) => k !== nextLeft) || nextLeft;
+
+		if (!leftKey || !validKeys.includes(leftKey)) {
+			setLeftKey(nextLeft);
+		}
+		if (!rightKey || !validKeys.includes(rightKey) || rightKey === nextLeft) {
+			setRightKey(nextRight);
+		}
+	}, [validKeys, leftKey, rightKey]);
+
 	// Resolution: state-first, no URL params after initial seed
 	const resolvedLeft = useMemo(() => {
 		if (!validKeys.length) return '';
@@ -2868,19 +2929,109 @@ export default function DriverComparisonPageClient() {
 		return validKeys.find((k) => k !== resolvedLeft) || resolvedLeft;
 	}, [validKeys, rightKey, resolvedLeft]);
 
-	const leftEntity = useMemo(
-		() =>
-			entities.find((e) => getKey(e, comparisonType) === resolvedLeft) || null,
-		[entities, comparisonType, resolvedLeft]
-	);
-	const rightEntity = useMemo(
-		() =>
-			entities.find((e) => getKey(e, comparisonType) === resolvedRight) || null,
-		[entities, comparisonType, resolvedRight]
-	);
+	const comparisonScope = useMemo(() => {
+		if (viewMode === 'career') return 'career';
+		return effectiveSelectedRace === 'all' ? 'season' : 'race';
+	}, [viewMode, effectiveSelectedRace]);
+
+	useEffect(() => {
+		if (!resolvedLeft || !resolvedRight) {
+			setComparisonData((prev) => ({
+				...prev,
+				scope: comparisonScope,
+				drivers: [],
+				constructors: [],
+			}));
+			return;
+		}
+
+		let active = true;
+		const loadComparison =
+			comparisonType === 'drivers' ?
+				getDriverComparison
+			:	getConstructorComparison;
+
+		loadComparison(year, {
+			left: resolvedLeft,
+			right: resolvedRight,
+			scope: comparisonScope,
+			round:
+				comparisonScope === 'race' ?
+					Number(effectiveSelectedRace)
+				:	undefined,
+		})
+			.then((data) => {
+				if (!active) return;
+				setComparisonData({
+					scope: data?.scope || comparisonScope,
+					round: data?.round ?? null,
+					rounds: Number(data?.rounds || 0),
+					race_name: data?.race_name || null,
+					drivers: Array.isArray(data?.drivers) ? data.drivers : [],
+					constructors:
+						Array.isArray(data?.constructors) ? data.constructors : [],
+				});
+			})
+			.catch((error) => {
+				if (!active) return;
+				console.error('Failed to fetch comparison data', error);
+				setComparisonData({
+					scope: comparisonScope,
+					round:
+						comparisonScope === 'race' ?
+							Number(effectiveSelectedRace)
+						:	null,
+					rounds: 0,
+					race_name: null,
+					drivers: [],
+					constructors: [],
+				});
+			});
+
+		return () => {
+			active = false;
+		};
+	}, [
+		comparisonType,
+		year,
+		comparisonScope,
+		effectiveSelectedRace,
+		resolvedLeft,
+		resolvedRight,
+	]);
+
+	const comparisonRows = useMemo(() => {
+		return comparisonType === 'drivers' ?
+				(Array.isArray(comparisonData.drivers) ? comparisonData.drivers : [])
+			:	(Array.isArray(comparisonData.constructors) ?
+					comparisonData.constructors
+				:	[]);
+	}, [comparisonData, comparisonType]);
+
+	const leftEntity = useMemo(() => {
+		const compared =
+			comparisonRows.find((e) => getKey(e, comparisonType) === resolvedLeft) ||
+			null;
+		return (
+			compared ||
+			entities.find((e) => getKey(e, comparisonType) === resolvedLeft) ||
+			null
+		);
+	}, [comparisonRows, entities, comparisonType, resolvedLeft]);
+	const rightEntity = useMemo(() => {
+		const compared =
+			comparisonRows.find((e) => getKey(e, comparisonType) === resolvedRight) ||
+			null;
+		return (
+			compared ||
+			entities.find((e) => getKey(e, comparisonType) === resolvedRight) ||
+			null
+		);
+	}, [comparisonRows, entities, comparisonType, resolvedRight]);
 
 	// Career catalog entries
 	const leftCat = useMemo(() => {
+		if (viewMode === 'career' && leftEntity) return leftEntity;
 		if (comparisonType === 'drivers') {
 			const dbD = dbCareerStats.drivers.find(
 				(d) =>
@@ -2895,9 +3046,10 @@ export default function DriverComparisonPageClient() {
 				) || null
 			);
 		}
-	}, [leftEntity, comparisonType, dbCareerStats]);
+	}, [leftEntity, comparisonType, dbCareerStats, viewMode]);
 
 	const rightCat = useMemo(() => {
+		if (viewMode === 'career' && rightEntity) return rightEntity;
 		if (comparisonType === 'drivers') {
 			const dbD = dbCareerStats.drivers.find(
 				(d) =>
@@ -2912,7 +3064,7 @@ export default function DriverComparisonPageClient() {
 				) || null
 			);
 		}
-	}, [rightEntity, comparisonType, dbCareerStats]);
+	}, [rightEntity, comparisonType, dbCareerStats, viewMode]);
 
 	const { lc, rc } = useMemo(
 		() => resolveColors(leftEntity, rightEntity),
@@ -3074,6 +3226,8 @@ export default function DriverComparisonPageClient() {
 		(comparisonType === 'drivers' || comparisonType === 'constructors') &&
 		leftCat &&
 		rightCat;
+	const displayedRounds =
+		Number(comparisonData?.rounds || 0) || Number(dataset?.rounds || 0);
 
 	return (
 		<div className="relative min-h-screen bg-[#060607] bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-14 pt-28 text-[15px] text-white md:px-10 lg:px-16">
@@ -3433,7 +3587,7 @@ export default function DriverComparisonPageClient() {
 										<p className="mt-2 text-xs text-white/20">
 											{viewMode === 'career' ?
 												`${metrics.length} lifetime metrics compared`
-											:	`${dataset.rounds} rounds · ${year} season`}
+											:	`${displayedRounds} rounds · ${year} season`}
 										</p>
 									</div>
 
@@ -3465,7 +3619,7 @@ export default function DriverComparisonPageClient() {
 								</div>
 							</>
 						: (
-							telemetryLoading ||
+							(telemetryLoading && !trackData && !raceTelemetry) ||
 							((trackGenStatus?.status === 'generating' ||
 								trackGenStatus?.status === 'loading') &&
 								!trackData &&
@@ -3511,3 +3665,4 @@ export default function DriverComparisonPageClient() {
 		</div>
 	);
 }
+
