@@ -86,7 +86,7 @@ export default function PredictPageClient() {
 	const [error, setError] = useState(null);
 
 	const [replayCfg, setReplayCfg] = useState({
-		year: 2024,
+		year: new Date().getFullYear(),
 		round: 1,
 		start_lap: 4,
 		end_lap: '',
@@ -121,7 +121,7 @@ export default function PredictPageClient() {
 				year: yearParam,
 				round: roundParam,
 			}));
-		} else {
+		} else if (activeTab === 'replay') {
 			// No params? Fetch context from the latest race.
 			getLastRace()
 				.then((race) => {
@@ -139,7 +139,7 @@ export default function PredictPageClient() {
 					setReplayCfg((c) => ({ ...c, year: new Date().getFullYear() }));
 				});
 		}
-	}, [searchParams]);
+	}, [searchParams, activeTab]);
 
 	useEffect(() => {
 		getPredictionMetadata()
@@ -177,10 +177,10 @@ export default function PredictPageClient() {
 			setCircuitsLoading(false);
 		}
 
-		if (replayCfg.year) {
+		if (replayCfg.year && (activeTab === 'replay' || circuits.length === 0)) {
 			fetchCircuits();
 		}
-	}, [replayCfg.year]);
+	}, [replayCfg.year, activeTab]);
 
 	useEffect(() => {
 		if (!replayPlaying || !replayData?.predictions?.length) {
