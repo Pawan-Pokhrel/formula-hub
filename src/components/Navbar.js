@@ -3,9 +3,9 @@
 
 import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import {
-  getDriverImagePath,
-  getTeamCode,
-  getTeamLogoPath,
+	getDriverImagePath,
+	getTeamCode,
+	getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { ROUGH_CONSTRUCTOR_ORDER_2026 } from '@/lib/data/constructorStandingsRough';
@@ -16,12 +16,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FaCalendarAlt,
-  FaChevronDown,
-  FaCog,
-  FaSignOutAlt,
-  FaTrophy,
-  FaUserCircle,
+	FaCalendarAlt,
+	FaChevronDown,
+	FaCog,
+	FaSignOutAlt,
+	FaTrophy,
+	FaUserCircle,
 } from 'react-icons/fa';
 
 const CENTER_LINK_ITEMS = [
@@ -619,7 +619,7 @@ export default function Navbar() {
 			</div>
 
 			{isOpen && (
-				<div className="lg:hidden px-6 pb-5 pt-1 animate-fade-in h-screen bg-black/70 backdrop-blur-xl">
+				<div className="lg:hidden px-6 pb-5 pt-1 animate-fade-in min-h-screen">
 					<div className="rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl p-3 flex flex-col gap-1.5">
 						{MOBILE_LINK_ITEMS.map((item) => {
 							const active = isRouteActive(pathname, item.href);
@@ -681,7 +681,11 @@ export default function Navbar() {
 									href="/login"
 									prefetch={true}
 									onClick={() => setIsOpen(false)}
-									className="mt-1 bg-white/10 px-4 py-2.5 rounded-xl font-bold text-white hover:bg-white/15 transition-all duration-300 text-center cursor-pointer"
+									className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${
+										isRouteActive(pathname, '/login') ?
+											'bg-white/10 text-white'
+										:	'text-gray-200 hover:bg-white/10 hover:text-white'
+									}`}
 								>
 									Login
 								</Link>
