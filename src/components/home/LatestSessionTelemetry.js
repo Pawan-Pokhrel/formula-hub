@@ -1,9 +1,9 @@
 'use client';
 
 import {
-	getCountryCode,
-	getDriverImagePath,
-	getTeamLogoPath,
+  getCountryCode,
+  getDriverImagePath,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getCurrentTelemetrySnapshot } from '@/lib/api/scheduleApi';
 import { useAuth } from '@/providers/AuthProvider';
@@ -13,11 +13,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-	FaBroadcastTower,
-	FaChartLine,
-	FaMapMarkerAlt,
-	FaPlay,
-	FaProjectDiagram,
+  FaBroadcastTower,
+  FaChartLine,
+  FaMapMarkerAlt,
+  FaPlay,
+  FaProjectDiagram,
 } from 'react-icons/fa';
 
 function buildContextQuery(snapshot) {
@@ -92,7 +92,7 @@ export default function LatestSessionTelemetry() {
 
 	return (
 		<section className="relative px-6 py-20 md:px-10 lg:px-16">
-			<div className="mx-auto max-w-7xl rounded-4xl border border-white/10 bg-[radial-gradient(circle_at_15%_0%,rgba(220,38,38,0.18),transparent_36%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(165deg,rgba(10,10,12,0.96),rgba(5,6,8,0.98))] p-6 md:p-8 lg:p-10 shadow-[0_0_50px_rgba(220,38,38,0.05)] backdrop-blur-xl">
+			<div className="mx-auto max-w-[1440px] rounded-4xl border border-white/10 bg-[radial-gradient(circle_at_15%_0%,rgba(220,38,38,0.18),transparent_36%),radial-gradient(circle_at_85%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(165deg,rgba(10,10,12,0.96),rgba(5,6,8,0.98))] p-6 md:p-8 lg:p-10 shadow-[0_0_50px_rgba(220,38,38,0.05)] backdrop-blur-xl">
 				<div className="mb-7 flex flex-wrap items-center justify-between gap-4">
 					<div>
 						<p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">

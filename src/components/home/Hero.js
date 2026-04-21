@@ -4,9 +4,9 @@ import { FaArrowRight } from 'react-icons/fa';
 
 export default function Hero() {
 	return (
-		<section className="relative flex min-h-[90vh] w-full items-center justify-center overflow-hidden">
+		<section className="relative flex min-h-[90vh] w-full  justify-center overflow-hidden 2xl:min-h-[1000px] 2xl:max-h-[1200px]">
 			{/* Massive Background Image Placeholder */}
-			<div className="absolute inset-0 z-0">
+			<div className="absolute inset-0 z-0 max-w-[1720px] mx-auto max-h-[1200px]">
 				{/* 
 					TODO: User will provide the actual image asset.
 					For now, using a highly aesthetic F1-themed placeholder overlay or a placeholder image URL.
@@ -17,33 +17,33 @@ export default function Hero() {
 					fill
 					sizes="100vw"
 					priority
-					className="h-full w-full object-cover object-center opacity-60 brightness-[1.2] mix-blend-screen"
+					className="h-full w-full object-cover object-center opacity-60 brightness-[1.2] mix-blend-screen "
 				/>
 				{/* Gradient Overlays for Readability and Blending */}
 				<div className="absolute inset-0 bg-linear-to-b from-[#050507]/40 via-[#050507]/50 to-[#050507]" />
 				<div className="absolute inset-0 bg-linear-to-r from-[#050507]/80 via-[#050507]/30 to-transparent" />
 			</div>
 
-			<div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16 pt-24">
-				<div className="max-w-3xl">
-					<div className="mb-7 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-red-400 uppercase animate-fade-in backdrop-blur-md">
+			<div className="relative z-10 mx-auto w-full max-w-[1600px] px-6 md:px-10 lg:px-16 pt-24 max-h-[1200px] ">
+				<div className="">
+					<div className="mb-7 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-600/10 px-4 py-1.5 text-xs font-bold tracking-[0.2em] text-red-400 uppercase animate-fade-in backdrop-blur-md max-w-3xl">
 						Race Intelligence Platform
 					</div>
 
-					<h1 className="text-balance text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl animate-fade-in [animation-delay:120ms] uppercase filter drop-shadow-xl">
+					<h1 className="text-balance text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl animate-fade-in [animation-delay:120ms] uppercase filter drop-shadow-xl max-w-3xl">
 						Predict Smarter Races With
 						<span className="block mt-4 mb-2 font-black tracking-[-0.03em] uppercase bg-linear-to-r from-white to-[#a90000] bg-clip-text text-transparent">
 							FormulaHub
 						</span>
 					</h1>
 
-					<p className="mt-8 text-pretty text-lg leading-relaxed text-zinc-300 md:text-xl font-medium animate-fade-in [animation-delay:220ms] drop-shadow-md">
+					<p className="mt-8 text-pretty text-lg leading-relaxed text-zinc-300 md:text-xl font-medium animate-fade-in [animation-delay:220ms] drop-shadow-md max-w-3xl">
 						Analyze race pace, compare driver outcomes, and simulate strategy
 						scenarios in one focused workspace built for students, fans, and
 						analytics teams.
 					</p>
 
-					<div className="mt-12 flex flex-wrap items-center gap-4 animate-fade-in [animation-delay:320ms]">
+					<div className="max-w-4xl mt-12 flex flex-wrap items-center gap-4 animate-fade-in [animation-delay:320ms]">
 						<Link
 							href="/dashboard"
 							prefetch={true}
@@ -77,14 +77,14 @@ export default function Hero() {
 						</Link>
 					</div>
 
-					<div className="mt-16 grid grid-cols-1 gap-3 text-xs font-bold uppercase tracking-wider text-zinc-300 sm:grid-cols-3 animate-fade-in [animation-delay:420ms]">
-						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+					<div className="mt-16 grid grid-cols-1 gap-3 text-xs font-bold uppercase tracking-wider text-zinc-300 sm:grid-cols-3 animate-fade-in [animation-delay:420ms] h-fit">
+						<div className="rounded-xl border border-white/20 backdrop-blur-xl px-4 py-6 flex items-center justify-center text-lg text-center bg-linear-to-br from-black/70 to-red-600/20 shadow-sm shadow-red-100/60">
 							Multi-season race data
 						</div>
-						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+						<div className="rounded-xl border border-white/20 backdrop-blur-xl px-4 py-6 flex items-center justify-center text-lg text-center bg-linear-to-br from-black/70 to-red-600/20 shadow-sm shadow-red-100/60">
 							Lap prediction + strategy simulation
 						</div>
-						<div className="rounded-xl border border-white/10 bg-black/40 backdrop-blur-xl px-4 py-4 flex items-center justify-center text-center">
+						<div className="rounded-xl border border-white/20 backdrop-blur-xl px-4 py-6 flex items-center justify-center text-lg text-center bg-linear-to-br from-black/70 to-red-600/20 shadow-sm shadow-red-100/60">
 							Track analytics and standings insights
 						</div>
 					</div>
