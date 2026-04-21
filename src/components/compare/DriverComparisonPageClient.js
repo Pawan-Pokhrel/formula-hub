@@ -1,23 +1,23 @@
 'use client';
 
 import {
-	getCountryCode,
-	getDriverImagePath,
-	getTeamCode,
-	getTeamLogoPath,
+  getCountryCode,
+  getDriverImagePath,
+  getTeamCode,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { logActivity } from '@/lib/api/historyApi';
 import {
-	getSchedule,
-	getTelemetrySessionSnapshot,
+  getSchedule,
+  getTelemetrySessionSnapshot,
 } from '@/lib/api/scheduleApi';
 import {
-	getComparisonDataset,
-	getConstructorComparison,
-	getConstructorCareerStats,
-	getDriverCareerStats,
-	getDriverComparison,
+  getComparisonDataset,
+  getConstructorCareerStats,
+  getConstructorComparison,
+  getDriverCareerStats,
+  getDriverComparison,
 } from '@/lib/api/standingsApi';
 import { getSessionData } from '@/lib/api/trackApi';
 import { DRIVER_CATALOG } from '@/lib/data/driversCatalog';
@@ -27,28 +27,28 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	FaCarSide,
-	FaChevronDown,
-	FaChevronRight,
-	FaExchangeAlt,
-	FaTrophy,
-	FaUsers,
+  FaCarSide,
+  FaChevronDown,
+  FaChevronRight,
+  FaExchangeAlt,
+  FaTrophy,
+  FaUsers,
 } from 'react-icons/fa';
 import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	Line,
-	LineChart,
-	PolarAngleAxis,
-	PolarGrid,
-	Radar,
-	RadarChart,
-	ReferenceLine,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
 
 const HISTORY_LOG_DEBOUNCE_MS = 1800;
@@ -3233,7 +3233,7 @@ export default function DriverComparisonPageClient() {
 		<div className="relative min-h-screen bg-[#060607] bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-14 pt-28 text-[15px] text-white md:px-10 lg:px-16">
 			<div className="fixed inset-0 z-0 bg-black/90" />
 			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_12%_16%,rgba(239,68,68,0.10),transparent_36%),radial-gradient(circle_at_88%_18%,rgba(255,255,255,0.04),transparent_34%)]" />
-			<div className="relative z-10 mx-auto max-w-7xl space-y-6">
+			<div className="relative z-10 mx-auto max-w-[1440px] space-y-6">
 				{/* ── Header ──────────────────────────────────────── */}
 				<div className="mb-2 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-6 md:p-8">
 					<p className="text-[10px] font-medium uppercase tracking-[0.28em] text-white/20 mb-2">
