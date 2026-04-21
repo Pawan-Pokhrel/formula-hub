@@ -1,4 +1,3 @@
-import { FaTrophy } from 'react-icons/fa';
 
 export default function StandingsHeader({
 	year,
@@ -8,13 +7,12 @@ export default function StandingsHeader({
 	onTabChange,
 }) {
 	return (
-		<div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 mb-8">
+		<div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 mb-8 backdrop-blur-2xl bg-linear-to-r from-red-900/10 to-white/10 rounded-2xl p-4 border border-white/20">
 			<div>
 				<p className="text-[11px] uppercase tracking-[0.24em] text-red-500 font-bold mb-1">
 					Championship Board
 				</p>
 				<h1 className="text-3xl md:text-4xl font-black tracking-wide inline-flex items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">
-					<FaTrophy className="text-red-500" />
 					{year} Season Standings
 				</h1>
 			</div>

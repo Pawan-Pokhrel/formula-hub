@@ -1,8 +1,8 @@
 'use client';
 
 import {
-	getConstructorStandings,
-	getDriverStandings,
+  getConstructorStandings,
+  getDriverStandings,
 } from '@/lib/api/standingsApi';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -59,7 +59,7 @@ export default function StandingsPageClient() {
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
 			<div className="fixed inset-0 bg-black/86 z-0" />
 			<div className="fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_10%,rgba(220,38,38,0.18),transparent_40%),radial-gradient(circle_at_85%_5%,rgba(244,114,182,0.14),transparent_35%)]" />
-			<div className="relative z-10 max-w-7xl mx-auto pb-10">
+			<div className="relative z-10 max-w-[1600px] mx-auto pb-10">
 				<div className="mb-5 rounded-2xl border border-white/20 bg-linear-to-r from-black/45 via-red-950/30 to-black/45 backdrop-blur-2xl p-5 md:p-6">
 					<p className="text-xs uppercase tracking-[0.2em] text-red-300/90 font-semibold mb-1">
 						Season Intelligence
