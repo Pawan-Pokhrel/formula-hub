@@ -2,28 +2,29 @@
 
 import CustomSelect from '@/components/common/CustomSelect';
 import TyreIcon from '@/components/common/TyreIcon';
+import { logActivity } from '@/lib/api/historyApi';
 import {
-	getPredictionMetadata,
-	predictLapTime,
-	simulateRacePredictions,
+  getPredictionMetadata,
+  predictLapTime,
+  simulateRacePredictions,
 } from '@/lib/api/predictionApi';
+import { getLastRace } from '@/lib/api/scheduleApi';
 import { getCircuits } from '@/lib/api/strategyApi';
+import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage, getDriverImage } from '@/utils/f1_images';
 import { getCountryFlag } from '@/utils/flags';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
-	FaBolt,
-	FaClock,
-	FaFlagCheckered,
-	FaInfoCircle,
-	FaPause,
-	FaPlay,
-	FaTachometerAlt,
+  FaBolt,
+  FaClock,
+  FaFlagCheckered,
+  FaInfoCircle,
+  FaPause,
+  FaPlay,
+  FaTachometerAlt,
 } from 'react-icons/fa';
-import { useAuth } from '@/providers/AuthProvider';
-import { logActivity } from '@/lib/api/historyApi';
 
 const TEAM_COLORS = {
 	'Red Bull Racing': '#3671C6',
@@ -76,8 +77,8 @@ export default function PredictPageClient() {
 		lap_number: 10,
 		position: 5,
 		prev_lap_1: 90,
-		prev_lap_2: '',
-		prev_lap_3: '',
+		prev_lap_2: 90,
+		prev_lap_3: 91,
 	});
 
 	const [result, setResult] = useState(null);
@@ -105,11 +106,7 @@ export default function PredictPageClient() {
 
 	useEffect(() => {
 		setMounted(true);
-		setReplayCfg((c) => ({ ...c, year: new Date().getFullYear() }));
-	}, []);
 
-	useEffect(() => {
-		if (!mounted) return;
 		const yearParam = Number(searchParams.get('year'));
 		const roundParam = Number(searchParams.get('round'));
 		const modeParam = searchParams.get('mode');
@@ -117,13 +114,32 @@ export default function PredictPageClient() {
 		if (modeParam === 'replay') {
 			setActiveTab('replay');
 		}
-		if (Number.isInteger(yearParam) && yearParam >= 2018) {
-			setReplayCfg((cfg) => ({ ...cfg, year: yearParam }));
+
+		if (yearParam && roundParam) {
+			setReplayCfg((cfg) => ({
+				...cfg,
+				year: yearParam,
+				round: roundParam,
+			}));
+		} else {
+			// No params? Fetch context from the latest race.
+			getLastRace()
+				.then((race) => {
+					if (race) {
+						setReplayCfg((c) => ({
+							...c,
+							year: race.year || new Date(race.date).getFullYear(),
+							round: race.round,
+						}));
+					} else {
+						setReplayCfg((c) => ({ ...c, year: new Date().getFullYear() }));
+					}
+				})
+				.catch(() => {
+					setReplayCfg((c) => ({ ...c, year: new Date().getFullYear() }));
+				});
 		}
-		if (Number.isInteger(roundParam) && roundParam > 0) {
-			setReplayCfg((cfg) => ({ ...cfg, round: roundParam }));
-		}
-	}, [searchParams, mounted]);
+	}, [searchParams]);
 
 	useEffect(() => {
 		getPredictionMetadata()
@@ -239,15 +255,17 @@ export default function PredictPageClient() {
 		try {
 			const res = await predictLapTime(payload);
 			setResult(res);
-			
+
 			if (isAuthenticated && token) {
 				logActivity(token, {
 					activity_type: 'Prediction',
 					title: `${form.driver} Lap Forecast`,
 					subtitle: `${form.circuit} · ML Analysis`,
-					image_url: getCarImage(form.team) || '/images/cars/2026redbullracingcarright.png',
+					image_url:
+						getCarImage(form.team) ||
+						'/images/cars/2026redbullracingcarright.png',
 					color_hex: TEAM_COLORS[form.team] || '#3671C6',
-					reference_url: '/predict'
+					reference_url: '/predict',
 				}).catch(console.error);
 			}
 		} catch (err) {
@@ -286,7 +304,7 @@ export default function PredictPageClient() {
 				);
 				setReplayLap(minLap || 1);
 			}
-			
+
 			if (isAuthenticated && token && data.predictions?.length) {
 				logActivity(token, {
 					activity_type: 'Simulation',
@@ -294,7 +312,7 @@ export default function PredictPageClient() {
 					subtitle: `${replayCfg.year} Race Replay`,
 					image_url: '/images/cars/2026mercedescarright.png',
 					color_hex: '#27F4D2',
-					reference_url: `/predict?mode=replay&year=${replayCfg.year}&round=${replayCfg.round}`
+					reference_url: `/predict?mode=replay&year=${replayCfg.year}&round=${replayCfg.round}`,
 				}).catch(console.error);
 			}
 		} catch (e) {
@@ -363,42 +381,44 @@ export default function PredictPageClient() {
 			<div className="fixed inset-0 z-0 bg-black/90" />
 			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
 
-			<div className="relative z-10 mx-auto max-w-7xl pb-16">
-				{/* Header */}
-				<div className="mb-8 text-center animate-fade-in pt-4">
-					<p className="text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
-						Machine Learning Inference
-					</p>
-					<h1 className="mt-2 text-4xl font-black uppercase tracking-wider md:text-5xl">
-						Lap Time <span className="text-red-500">Predictor</span>
-					</h1>
-				</div>
+			<div className="relative z-10 mx-auto max-w-[1440px] pb-16">
+				<div className="flex place-content-between backdrop-blur-2xl bg-linear-to-r from-white/10 via-red-100/10 to-black/10 border border-white/10 rounded-xl px-6 py-4 my-8">
+					{/* Header */}
+					<div className="text-center animate-fade-in flex-1">
+						<p className="text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
+							Machine Learning Inference
+						</p>
+						<h1 className="mt-2 text-4xl font-black uppercase tracking-wider md:text-5xl">
+							Lap Time <span className="text-red-500">Predictor</span>
+						</h1>
+					</div>
 
-				{/* Tab Switcher */}
-				<div className="mb-8 flex items-center justify-center">
-					<div className="inline-flex rounded-2xl border border-white/10 bg-black/40 p-1.5 backdrop-blur-xl">
-						{[
-							{ id: 'manual', label: 'Manual Predict', icon: FaBolt },
-							{ id: 'replay', label: 'Race Replay', icon: FaClock },
-						].map((tab) => {
-							const Icon = tab.icon;
-							const active = activeTab === tab.id;
-							return (
-								<button
-									key={tab.id}
-									type="button"
-									onClick={() => setActiveTab(tab.id)}
-									className={`inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
-										active ?
-											'bg-red-600 text-white shadow-lg shadow-red-600/25'
-										:	'text-gray-500 hover:text-gray-300'
-									}`}
-								>
-									<Icon className="text-xs" />
-									{tab.label}
-								</button>
-							);
-						})}
+					{/* Tab Switcher */}
+					<div className="my-4 flex items-center justify-center">
+						<div className="inline-flex rounded-2xl border border-white/10 bg-black/40 p-1.5 backdrop-blur-xl">
+							{[
+								{ id: 'manual', label: 'Manual Predict', icon: FaBolt },
+								{ id: 'replay', label: 'Race Replay', icon: FaClock },
+							].map((tab) => {
+								const Icon = tab.icon;
+								const active = activeTab === tab.id;
+								return (
+									<button
+										key={tab.id}
+										type="button"
+										onClick={() => setActiveTab(tab.id)}
+										className={`inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
+											active ?
+												'bg-red-600 text-white shadow-lg shadow-red-600/25'
+											:	'text-gray-500 hover:text-gray-300'
+										}`}
+									>
+										<Icon className="text-xs" />
+										{tab.label}
+									</button>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 
@@ -565,7 +585,8 @@ export default function PredictPageClient() {
 										min={50}
 										max={200}
 										step={0.1}
-										placeholder="optional"
+                    required
+										placeholder=""
 									/>
 									<NumberField
 										label="3 Laps Ago (s)"
@@ -574,7 +595,8 @@ export default function PredictPageClient() {
 										min={50}
 										max={200}
 										step={0.1}
-										placeholder="optional"
+                    required
+										placeholder=""
 									/>
 								</div>
 							</FormSection>
@@ -681,7 +703,7 @@ export default function PredictPageClient() {
 				{/* ─── REPLAY TAB ─── */}
 				{activeTab === 'replay' && (
 					<div className="animate-fade-in space-y-6">
-						<div className="rounded-2xl border border-white/10 bg-black/50 p-6 backdrop-blur-xl transition-all duration-300">
+						<div className="relative z-30 rounded-2xl border border-white/10 bg-black/50 p-6 backdrop-blur-xl transition-all duration-300">
 							<p className="mb-4 text-[11px] font-bold uppercase tracking-[0.24em] text-red-400/80">
 								Simulation Config
 							</p>
@@ -787,7 +809,7 @@ export default function PredictPageClient() {
 						)}
 
 						{replayData && replayLapRange && (
-							<div className="space-y-4">
+							<div className="relative z-10 space-y-4">
 								<div className="rounded-2xl border border-white/10 bg-black/50 p-5 backdrop-blur-xl space-y-4">
 									<div className="flex flex-col gap-4 justify-between md:flex-row md:items-center">
 										<div className="text-sm text-gray-500">
