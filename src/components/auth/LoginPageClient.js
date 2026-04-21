@@ -2,9 +2,9 @@
 
 import authApi from '@/lib/api/authApi';
 import {
-	buildVerificationHref,
-	getEmailNotVerifiedDetail,
-	getSafeNextPath,
+  buildVerificationHref,
+  getEmailNotVerifiedDetail,
+  getSafeNextPath,
 } from '@/lib/auth/verificationFlow';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
@@ -524,33 +524,33 @@ export default function LoginPage() {
 
 				<button
 					onClick={() => router.push('/')}
-					className="absolute top-8 left-8 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
+					className="absolute top-4 left-4 md:top-8 md:left-8 z-10 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
 				>
-					<FiArrowLeft className="text-white text-2xl" />
+					<FiArrowLeft className="text-white text-xl md:text-2xl" />
 				</button>
 
 				<div className="relative z-10 w-full max-w-2xl">
 					{/* Logo & Title */}
-					<div className="flex flex-col items-center mb-10">
-						<h1 className="text-4xl font-bold text-white tracking-wide">
+					<div className="flex flex-col items-center mb-4 md:mb-10">
+						<h1 className="text-2xl md:text-4xl font-bold text-white tracking-wide">
 							Formula<span className="text-red-500">Hub</span>
 						</h1>
-						<p className="text-white/70 mt-2 text-lg">
+						<p className="text-white/70 mt-2 text-sm md:text-lg">
 							{showForgotPassword
 								? 'Recover your account access'
 								: 'Welcome back to the grid'}
 						</p>
 					</div>
 
-					<div className="rounded-2xl bg-white/5 backdrop-brightness-75 backdrop-blur-md border border-white/10 p-10 shadow-2xl">
+					<div className="rounded-2xl bg-white/5 backdrop-brightness-75 backdrop-blur-md border border-white/10 p-6 md:p-10 shadow-2xl">
 						{showForgotPassword ? (
 							<ForgotPasswordStep
 								onBack={() => setShowForgotPassword(false)}
 							/>
 						) : (
 							<>
-								<div className="text-center mb-8">
-									<h2 className="text-3xl font-bold text-white">
+								<div className="hidden md:block text-center mb-4 md:mb-8">
+									<h2 className="text-2xl md:text-3xl font-bold text-white">
 										Sign In
 									</h2>
 									<p className="text-white/60 mt-2">
@@ -560,7 +560,7 @@ export default function LoginPage() {
 
 								<form
 									onSubmit={handleSubmit(handleLogin)}
-									className="space-y-6"
+									className="space-y-4 md:space-y-6"
 								>
 									{/* Email */}
 									<div>
@@ -649,7 +649,7 @@ export default function LoginPage() {
 									<button
 										type="submit"
 										disabled={!isValid || isSubmitting}
-										className={`w-full py-5 rounded-xl font-semibold text-white transition cursor-pointer ${
+										className={`w-full py-3 md:py-5 rounded-xl font-semibold text-white transition cursor-pointer ${
 											isValid && !isSubmitting
 												? 'bg-red-600 hover:bg-red-700 hover:shadow-2xl hover:shadow-red-600/30'
 												: 'bg-white/20 cursor-not-allowed'
@@ -659,7 +659,7 @@ export default function LoginPage() {
 									</button>
 
 									{/* Divider */}
-									<div className="my-6 flex items-center gap-4 text-white/60">
+									<div className="my-4 md:my-6 flex items-center gap-4 text-white/60">
 										<div className="flex-1 border border-gray-100/40" />
 										<div>or continue with</div>
 										<div className="flex-1 border border-gray-100/40" />
@@ -687,7 +687,7 @@ export default function LoginPage() {
 									</button>
 
 									{/* Register Link */}
-									<p className="text-center text-white/70 mt-10">
+									<p className="text-center text-white/70 mt-10 flex flex-col md:flex-row">
 										Don&apos;t have an account?{' '}
 										<a
 											href="/register"

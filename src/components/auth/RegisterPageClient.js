@@ -3,9 +3,9 @@
 import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import authApi from '@/lib/api/authApi';
 import {
-	buildVerificationHref,
-	getEmailNotVerifiedDetail,
-	getSafeNextPath,
+  buildVerificationHref,
+  getEmailNotVerifiedDetail,
+  getSafeNextPath,
 } from '@/lib/auth/verificationFlow';
 import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
@@ -21,13 +21,13 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { FcGoogle } from 'react-icons/fc';
 import {
-	FiArrowLeft,
-	FiCheck,
-	FiLock,
-	FiMail,
-	FiPhone,
-	FiUpload,
-	FiUser,
+  FiArrowLeft,
+  FiCheck,
+  FiLock,
+  FiMail,
+  FiPhone,
+  FiUpload,
+  FiUser,
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
@@ -512,9 +512,9 @@ export default function RegisterPage() {
 
 				<button
 					onClick={() => router.push('/')}
-					className="absolute top-8 left-8 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
+					className="absolute md:top-8 md:left-8 top-4 left-4 z-10 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
 				>
-					<FiArrowLeft className="text-white text-2xl" />
+					<FiArrowLeft className="text-white text-xl md:text-2xl" />
 				</button>
 
 				<div className="relative z-10 w-full max-w-3xl">
