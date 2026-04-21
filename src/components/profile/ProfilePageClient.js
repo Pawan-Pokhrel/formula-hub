@@ -2,20 +2,20 @@
 
 import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import {
-	getDriverImagePath,
-	getTeamLogoPath,
+  getDriverImagePath,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import authApi from '@/lib/api/authApi';
-import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-	getConstructorStandings,
-	getDriverStandings,
+  getConstructorStandings,
+  getDriverStandings,
 } from '@/lib/api/standingsApi';
+import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import {
-	FAVORITE_DRIVER_LIMIT,
-	FAVORITE_TEAM_LIMIT,
+  FAVORITE_DRIVER_LIMIT,
+  FAVORITE_TEAM_LIMIT,
 } from '@/lib/dashboard/preferences';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
 import { useAuth } from '@/providers/AuthProvider';
@@ -24,13 +24,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaCheckCircle, FaChevronDown } from 'react-icons/fa';
 import {
-	FiCamera,
-	FiCheck,
-	FiLock,
-	FiMail,
-	FiTrash2,
-	FiUser,
-	FiX,
+  FiCamera,
+  FiCheck,
+  FiLock,
+  FiMail,
+  FiTrash2,
+  FiUser,
+  FiX,
 } from 'react-icons/fi';
 
 const FAVORITES_LOCAL_KEY = 'formulahub.profile.favorites.v1';
@@ -1116,9 +1116,9 @@ export default function ProfilePage() {
 				}}
 			/>
 
-			<div className="relative z-10 mx-auto max-w-7xl px-6 pt-28 pb-16 md:px-14 lg:px-24">
+			<div className="relative z-10 mx-auto max-w-[1440] px-6 pt-28 pb-16 md:px-14 lg:px-24">
 				{/* Header */}
-				<div className="mb-10 animate-fade-in">
+				<div className="mb-10 animate-fade-in backdrop-blur-xl bg-white/3 px-8 py-6 rounded-2xl border border-white/10 shadow-2xl ">
 					<div className="flex items-center gap-4 mb-2">
 						<div className="h-0.5 w-8 bg-red-600" />
 						<p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
@@ -1134,7 +1134,7 @@ export default function ProfilePage() {
 					</p>
 				</div>
 
-				<div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-7xl mx-auto relative z-20">
+				<div className="flex flex-col gap-8 animate-fade-in-up w-full max-w-[1440px] mx-auto relative z-20">
 					{/* ─── ROW 1: Favorites ─── */}
 					<div className="flex flex-col gap-6 w-full relative z-50">
 						<div className="relative rounded-3xl border border-white/10 bg-white/3 p-8 backdrop-blur-xl shadow-2xl overflow-visible">

@@ -2,56 +2,56 @@
 
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import {
-	ChampionshipPulseWidget,
-	ConstructorBattleWidget,
-	F1NewsWidget,
-	GeneratedRacesWidget,
-	KpisWidget,
-	LastRaceWidget,
-	NextRaceWidget,
-	SessionResultsWidget,
-	StartingGridWidget,
-	TitleFightWidget,
-	UpcomingSessionsWidget,
-	WeekendStatusWidget,
+    ChampionshipPulseWidget,
+    ConstructorBattleWidget,
+    F1NewsWidget,
+    GeneratedRacesWidget,
+    KpisWidget,
+    LastRaceWidget,
+    NextRaceWidget,
+    SessionResultsWidget,
+    StartingGridWidget,
+    TitleFightWidget,
+    UpcomingSessionsWidget,
+    WeekendStatusWidget,
 } from '@/components/dashboard/widgets';
 import {
-	getCountryCode,
-	getDriverImagePath,
-	getTeamLogoPath,
-	getTrackImagePath,
-	parseRaceDateTime,
+    getCountryCode,
+    getDriverImagePath,
+    getTeamLogoPath,
+    getTrackImagePath,
+    parseRaceDateTime,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import {
-	clearHistory,
-	deleteHistoryItem,
-	getHistory,
+    clearHistory,
+    deleteHistoryItem,
+    getHistory,
 } from '@/lib/api/historyApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-	getCurrentWeekendBrief,
-	getLastRace,
-	getLatestF1News,
-	getNextRace,
-	getSchedule,
+    getCurrentWeekendBrief,
+    getLastRace,
+    getLatestF1News,
+    getNextRace,
+    getSchedule,
 } from '@/lib/api/scheduleApi';
 import {
-	getConstructorStandings,
-	getDriverStandings,
+    getConstructorStandings,
+    getDriverStandings,
 } from '@/lib/api/standingsApi';
-import { getYearSchedule, toggleTrackFavorite } from '@/lib/api/trackApi';
+import { getTrackSessions, getYearSchedule, toggleTrackFavorite } from '@/lib/api/trackApi';
 import {
-	FAVORITE_DRIVER_LIMIT,
-	FAVORITE_TEAM_LIMIT,
-	getDefaultDashboardPreferences,
-	normalizeDashboardPreferences,
-	readLocalDashboardPreferences,
-	writeLocalDashboardPreferences,
+    FAVORITE_DRIVER_LIMIT,
+    FAVORITE_TEAM_LIMIT,
+    getDefaultDashboardPreferences,
+    normalizeDashboardPreferences,
+    readLocalDashboardPreferences,
+    writeLocalDashboardPreferences,
 } from '@/lib/dashboard/preferences';
 import {
-	DEFAULT_WIDGET_ORDER,
-	WIDGET_REGISTRY,
+    DEFAULT_WIDGET_ORDER,
+    WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
 import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage } from '@/utils/f1_images';
@@ -62,21 +62,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-	FaArrowRight,
-	FaBroadcastTower,
-	FaCalendarAlt,
-	FaChartLine,
-	FaClock,
-	FaExchangeAlt,
-	FaHistory,
-	FaList,
-	FaProjectDiagram,
-	FaSpinner,
-	FaStar,
-	FaThLarge,
-	FaTimes,
-	FaTrashAlt,
-	FaTrophy,
+    FaArrowRight,
+    FaBroadcastTower,
+    FaCalendarAlt,
+    FaChartLine,
+    FaClock,
+    FaExchangeAlt,
+    FaHistory,
+    FaList,
+    FaProjectDiagram,
+    FaSpinner,
+    FaStar,
+    FaThLarge,
+    FaTimes,
+    FaTrashAlt,
+    FaTrophy,
 } from 'react-icons/fa';
 
 const CARD_HISTORY_LIMIT = 25;
@@ -240,15 +240,18 @@ export default function DashboardPage() {
 	const [constructorStandings, setConstructorStandings] = useState([]);
 	const [weekendBrief, setWeekendBrief] = useState(null);
 	const [f1News, setF1News] = useState([]);
+	const [allTrackSessions, setAllTrackSessions] = useState([]);
 
-	const generatedRaces = useMemo(
-		() =>
-			trackSchedule
-				.filter((race) => race.is_past && race.has_data)
-				.slice()
-				.sort((a, b) => Number(b.round || 0) - Number(a.round || 0)),
-		[trackSchedule]
-	);
+	const generatedRaces = useMemo(() => {
+		return allTrackSessions
+			.slice()
+			.sort((a, b) => {
+				const yearA = Number(a.year || 0);
+				const yearB = Number(b.year || 0);
+				if (yearB !== yearA) return yearB - yearA;
+				return Number(b.round || 0) - Number(a.round || 0);
+			});
+	}, [allTrackSessions]);
 
 	const [favoriteDrivers, setFavoriteDrivers] = useState(
 		defaultPreferences.favoriteDrivers
@@ -291,6 +294,7 @@ export default function DashboardPage() {
 					constructors,
 					weekend,
 					news,
+					allSessions,
 				] = await Promise.all([
 					getNextRace().catch(() => null),
 					getLastRace().catch(() => null),
@@ -300,6 +304,7 @@ export default function DashboardPage() {
 					getConstructorStandings(currentYear).catch(() => []),
 					getCurrentWeekendBrief().catch(() => null),
 					getLatestF1News(8).catch(() => []),
+					getTrackSessions().catch(() => []),
 				]);
 
 				setNextRace(next);
@@ -312,6 +317,7 @@ export default function DashboardPage() {
 				);
 				setWeekendBrief(weekend || null);
 				setF1News(Array.isArray(news) ? news : []);
+				setAllTrackSessions(Array.isArray(allSessions) ? allSessions : []);
 			} finally {
 				setLoading(false);
 			}
@@ -699,6 +705,19 @@ export default function DashboardPage() {
 					};
 				})
 			);
+			setAllTrackSessions((prev) =>
+				prev.map((item) => {
+					const itemYear = Number(item.year || currentYear);
+					const itemRound = Number(item.round);
+					if (itemYear !== raceYear || itemRound !== raceRound) {
+						return item;
+					}
+					return {
+						...item,
+						is_favorite: Boolean(result?.is_favorite),
+					};
+				})
+			);
 		} catch {
 			// Keep current dashboard view if favorite toggle fails.
 		}
@@ -878,14 +897,27 @@ export default function DashboardPage() {
 	const trackRaceByYearRound = useMemo(() => {
 		const source = trackSchedule.length > 0 ? trackSchedule : schedule;
 		const map = new Map();
+
+		// Start with the full schedule to establish current year rounds
 		source.forEach((race) => {
 			const round = Number(race?.round || 0);
 			const raceYear = Number(race?.year || currentYear);
 			if (!round || !raceYear) return;
 			map.set(`${raceYear}_${round}`, race);
 		});
+
+		// Layer in all track sessions (including historical ones)
+		allTrackSessions.forEach((session) => {
+			const round = Number(session?.round || 0);
+			const raceYear = Number(session?.year || 0);
+			if (!round || !raceYear) return;
+			const key = `${raceYear}_${round}`;
+			// If session has data, we prioritize this entry
+			map.set(key, { ...map.get(key), ...session, has_data: true });
+		});
+
 		return map;
-	}, [trackSchedule, schedule, currentYear]);
+	}, [trackSchedule, schedule, allTrackSessions, currentYear]);
 
 	const historyItemsToRender = useMemo(() => {
 		const maxItems =

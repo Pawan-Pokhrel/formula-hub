@@ -1,31 +1,31 @@
 'use client';
 
 import {
-	getCountryCode,
-	getDriverImagePath,
-	getTeamLogoPath,
-	getTrackImagePath,
+    getCountryCode,
+    getDriverImagePath,
+    getTeamLogoPath,
+    getTrackImagePath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetrySessionSnapshot } from '@/lib/api/scheduleApi';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-	FaBolt,
-	FaBroadcastTower,
-	FaCalendarAlt,
-	FaChartLine,
-	FaChevronRight,
-	FaClock,
-	FaExternalLinkAlt,
-	FaFlagCheckered,
-	FaGlobe,
-	FaMapMarkerAlt,
-	FaNewspaper,
-	FaProjectDiagram,
-	FaStar,
-	FaTrophy,
-	FaWaveSquare,
+    FaBolt,
+    FaBroadcastTower,
+    FaCalendarAlt,
+    FaChartLine,
+    FaChevronRight,
+    FaClock,
+    FaExternalLinkAlt,
+    FaFlagCheckered,
+    FaGlobe,
+    FaMapMarkerAlt,
+    FaNewspaper,
+    FaProjectDiagram,
+    FaStar,
+    FaTrophy,
+    FaWaveSquare,
 } from 'react-icons/fa';
 import DashboardCard from './DashboardCard';
 
