@@ -6,7 +6,7 @@ export function formatLap(sec) {
 }
 
 export function formatGap(sec) {
-	if (sec === null || sec === undefined || sec === 0) return '\u2014';
+	if (sec === null || sec === undefined || sec === 0) return '2014';
 	if (sec > 60) return '+1 LAP';
 	return `+${sec.toFixed(1)}s`;
 }

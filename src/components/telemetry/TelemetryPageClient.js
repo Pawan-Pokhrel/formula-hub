@@ -2,14 +2,14 @@
 
 import TyreIcon from '@/components/common/TyreIcon';
 import {
-	getCountryCode,
-	getTeamLogoPath,
+  getCountryCode,
+  getTeamLogoPath,
 } from '@/components/schedule/scheduleHelpers';
 import {
-	getCurrentTelemetrySnapshot,
-	getSchedule,
-	getTelemetryHistoryEvents,
-	getTelemetrySessionSnapshot,
+  getCurrentTelemetrySnapshot,
+  getSchedule,
+  getTelemetryHistoryEvents,
+  getTelemetrySessionSnapshot,
 } from '@/lib/api/scheduleApi';
 import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
@@ -17,11 +17,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-	FaChartLine,
-	FaChevronDown,
-	FaMapMarkerAlt,
-	FaProjectDiagram,
-	FaStopwatch,
+  FaChartLine,
+  FaChevronDown,
+  FaMapMarkerAlt,
+  FaProjectDiagram,
+  FaStopwatch,
 } from 'react-icons/fa';
 import DriverBandsPagination from './DriverBandsPagination';
 import { getTelemetryDriverImage } from './telemetryUiUtils';
@@ -640,7 +640,7 @@ export default function TelemetryPageClient() {
 
 	return (
 		<div className="min-h-screen bg-[#060607] px-4 pb-14 pt-28 text-white md:px-10">
-			<div className="mx-auto max-w-7xl space-y-6">
+			<div className="mx-auto max-w-[1440px] space-y-6">
 				<header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-6 md:p-8">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">
 						F1 Live Hub

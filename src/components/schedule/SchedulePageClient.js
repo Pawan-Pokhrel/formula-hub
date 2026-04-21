@@ -4,7 +4,6 @@ import { getLastRace, getNextRace } from '@/lib/api/scheduleApi';
 import { getYearSchedule } from '@/lib/api/trackApi';
 import { useAuth } from '@/providers/AuthProvider';
 import { useEffect, useMemo, useState } from 'react';
-import { FaCalendarAlt } from 'react-icons/fa';
 
 import ScheduleHeroCards from '@/components/schedule/ScheduleHeroCards';
 import ScheduleTable from '@/components/schedule/ScheduleTable';
@@ -60,10 +59,9 @@ export default function SchedulePage() {
 	return (
 		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
 			<div className="fixed inset-0 bg-black/90 z-0" />
-			<div className="relative z-10 max-w-[1500px] mx-auto pb-10 animate-fade-in">
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+			<div className="relative z-10 max-w-[1600px] mx-auto pb-10 animate-fade-in">
+				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5 backdrop-blur-2xl bg-linear-to-r from-red-700/10 to-white/10 rounded-2xl p-4 border border-white/20">
 					<h1 className="text-3xl md:text-4xl font-black uppercase tracking-wide inline-flex items-center gap-3">
-						<FaCalendarAlt className="text-red-500" />
 						Race Schedule
 					</h1>
 
