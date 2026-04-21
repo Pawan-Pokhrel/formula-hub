@@ -19,7 +19,7 @@ export default function FlagBanner({ currentFlags }) {
 					: flag.type === 'VSC' ?
 						'\uD83D\uDFE1 VIRTUAL SAFETY CAR'
 					:	'\uD83D\uDD34 RED FLAG'}{' '}
-					\u2014 {flag.message}
+					{flag.message}
 				</div>
 			))}
 		</div>

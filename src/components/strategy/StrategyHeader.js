@@ -1,9 +1,9 @@
-import {
-	getCountryCode,
-	getTrackImagePath,
-} from '@/components/schedule/scheduleHelpers';
 import SafeImage from '@/components/common/SafeImage';
-import { FaCog, FaFlagCheckered, FaMapMarkerAlt } from 'react-icons/fa';
+import {
+  getCountryCode,
+  getTrackImagePath,
+} from '@/components/schedule/scheduleHelpers';
+import { FaCog, FaMapMarkerAlt } from 'react-icons/fa';
 
 export default function StrategyHeader({
 	raceData,
@@ -27,12 +27,11 @@ export default function StrategyHeader({
 						className="object-cover opacity-25"
 					/>
 				)}
-				<div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/65 to-black/80" />
+				<div className="absolute inset-0 bg-linear-to-r from-red-100/10 via-red-200/10 to-black/80" />
 
 				<div className="relative flex items-start justify-between gap-4">
 					<div>
 						<h1 className="text-2xl md:text-3xl font-bold uppercase tracking-wider flex items-center gap-3">
-							<FaFlagCheckered className="text-red-600" />
 							<span className="bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
 								Strategy Command Center
 							</span>

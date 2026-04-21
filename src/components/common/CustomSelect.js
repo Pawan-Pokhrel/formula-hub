@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 
 export default function CustomSelect({
