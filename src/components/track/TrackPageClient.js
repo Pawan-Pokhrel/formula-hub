@@ -48,7 +48,14 @@ import {
 /* ================================================================== */
 /*  Helpers                                                            */
 /* ================================================================== */
-function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, disabled }) {
+function CustomOvertakeDropdown({
+	label,
+	value,
+	options,
+	onChange,
+	placeholder,
+	disabled,
+}) {
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdownRef = useRef(null);
 
@@ -65,7 +72,10 @@ function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, 
 	const selectedOption = options.find((o) => o.abbr === value);
 
 	return (
-		<div className="relative w-full" ref={dropdownRef}>
+		<div
+			className="relative w-full"
+			ref={dropdownRef}
+		>
 			<div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 block mb-1.5">
 				{label}
 			</div>
@@ -75,14 +85,15 @@ function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, 
 				disabled={disabled}
 				className={`flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-left transition-colors hover:border-red-500/50 hover:bg-black/60 focus:bg-white/5 disabled:opacity-50`}
 			>
-				{selectedOption ? (
+				{selectedOption ?
 					<div className="flex items-center gap-3">
 						<div className="relative h-6 w-6 overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-sm">
-							<img
+							<Image
 								src={`/images/drivers/${selectedOption.abbr}.png`}
 								alt={selectedOption.abbr}
-								className="h-full w-full object-cover object-top"
-								onError={(e) => { e.target.style.display = 'none'; }}
+								fill
+								className="object-cover object-top"
+								onError={() => setImgSrc('/images/default.png')}
 							/>
 						</div>
 						<div className="flex flex-col">
@@ -90,18 +101,21 @@ function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, 
 								{selectedOption.abbr}
 							</span>
 							<span className="text-[9px] font-mono text-gray-400 mt-0.5 uppercase">
-								{selectedOption.currentPosition ? `P${selectedOption.currentPosition}` : `G${selectedOption.gridPosition}`}
+								{selectedOption.currentPosition ?
+									`P${selectedOption.currentPosition}`
+								:	`G${selectedOption.gridPosition}`}
 							</span>
 						</div>
 					</div>
-				) : (
-					<span className="text-sm text-gray-500 py-1">{placeholder}</span>
-				)}
-				<FaChevronDown className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} size={12} />
+				:	<span className="text-sm text-gray-500 py-1">{placeholder}</span>}
+				<FaChevronDown
+					className={`text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+					size={12}
+				/>
 			</button>
 
 			{isOpen && (
-				<div className="absolute left-0 right-0 top-[100%] z-50 mt-2 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#121215] shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-3xl styled-scrollbar">
+				<div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#121215] shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-3xl styled-scrollbar">
 					{options.map((option) => (
 						<button
 							key={option.abbr}
@@ -112,11 +126,14 @@ function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, 
 							className="flex w-full items-center gap-3 border-b border-white/5 py-2.5 px-3 text-left transition hover:bg-red-600/20 active:bg-red-600/40"
 						>
 							<div className="relative h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-white/10">
-								<img
+								<Image
 									src={`/images/drivers/${option.abbr}.png`}
 									alt={option.abbr}
-									className="h-full w-full object-cover object-top"
-									onError={(e) => { e.target.style.display = 'none'; }}
+									fill
+									className="object-cover object-top"
+									onError={(e) => {
+										e.currentTarget.style.display = 'none';
+									}}
 								/>
 							</div>
 							<div className="flex flex-col">
@@ -124,7 +141,9 @@ function CustomOvertakeDropdown({ label, value, options, onChange, placeholder, 
 									{option.abbr}
 								</span>
 								<span className="text-[10px] font-mono text-gray-400 mt-0.5">
-									{option.currentPosition ? `P${option.currentPosition}` : `G${option.gridPosition}`}
+									{option.currentPosition ?
+										`P${option.currentPosition}`
+									:	`G${option.gridPosition}`}
 								</span>
 							</div>
 						</button>
@@ -158,7 +177,11 @@ function formatGapValue(
 	if (sec == null || !Number.isFinite(Number(sec))) return fallback;
 	const numeric = Math.abs(Number(sec)) < zeroFloor ? 0 : Number(sec);
 	if (numeric === 0) return `${showPlus ? '+' : ''}0.000`;
-	const sign = numeric > 0 ? (showPlus ? '+' : '') : '-';
+	const sign =
+		numeric > 0 ?
+			showPlus ? '+'
+			:	''
+		:	'-';
 	return `${sign}${Math.abs(numeric).toFixed(3)}`;
 }
 
@@ -170,7 +193,10 @@ function formatProbability(prob) {
 const CAUTION_CROWN_TYPES = new Set(['Yellow', 'DoubleYellow', 'SC', 'VSC']);
 
 function shouldShowLeaderCrown(flags) {
-	return Array.isArray(flags) && flags.some((flag) => CAUTION_CROWN_TYPES.has(flag?.type));
+	return (
+		Array.isArray(flags) &&
+		flags.some((flag) => CAUTION_CROWN_TYPES.has(flag?.type))
+	);
 }
 
 function isRaceOrderEntryActive(entry) {
@@ -640,7 +666,8 @@ function DriverPicker({
 	onSelect,
 	placeholder,
 }) {
-	const selectedOption = options.find((option) => option.abbr === value) || null;
+	const selectedOption =
+		options.find((option) => option.abbr === value) || null;
 
 	return (
 		<div className="relative">
@@ -693,7 +720,8 @@ function DriverPicker({
 						<p className="text-[11px] text-gray-500">
 							Choose from active drivers only.
 						</p>
-					</div>}
+					</div>
+				}
 				<FaChevronDown
 					className={`shrink-0 text-[12px] text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
 				/>
@@ -869,7 +897,8 @@ function precomputeRacePositions(data) {
 				continue;
 			}
 
-			const isRetired = abbr in retiredAtSecond && timeSec > retiredAtSecond[abbr];
+			const isRetired =
+				abbr in retiredAtSecond && timeSec > retiredAtSecond[abbr];
 			const secondLevelPos = Number(timingRow.position?.[timingIndex]);
 			const gapAhead = Number(timingRow.gap_ahead?.[timingIndex]);
 			const gapLeader = Number(timingRow.gap_leader?.[timingIndex]);
@@ -908,12 +937,18 @@ function precomputeRacePositions(data) {
 
 			board.push({
 				abbr,
-				laps: Number.isFinite(progressLaps) ? Math.max(1, Math.floor(progressLaps)) : currentLap,
+				laps:
+					Number.isFinite(progressLaps) ?
+						Math.max(1, Math.floor(progressLaps))
+					:	currentLap,
 				progressLaps: Number.isFinite(progressLaps) ? progressLaps : currentLap,
 				active: !isRetired,
 				status: dynamicStatus,
 				officialPos,
-				gridPosition: getDriverSortPosition(drvInfo, officialPos || driverCount),
+				gridPosition: getDriverSortPosition(
+					drvInfo,
+					officialPos || driverCount
+				),
 				gapAhead: Number.isFinite(gapAhead) ? gapAhead : null,
 				gapLeader: Number.isFinite(gapLeader) ? gapLeader : null,
 			});
@@ -1237,7 +1272,9 @@ function drawDrivers(
 
 	const hasSelection = !!selectedDriver;
 	const battleDriverSet =
-		activeBattle ? new Set([activeBattle.attacker, activeBattle.target]) : new Set();
+		activeBattle ?
+			new Set([activeBattle.attacker, activeBattle.target])
+		:	new Set();
 	const renderedCoords = {};
 
 	const ordered = Object.keys(drivers)
@@ -1431,7 +1468,10 @@ function drawDrivers(
 
 			ctx.font = 'bold 10px Inter, system-ui, sans-serif';
 			const labelWidth = ctx.measureText(label).width + 16;
-			const labelX = Math.max(8, Math.min(w - labelWidth - 8, midX - labelWidth / 2));
+			const labelX = Math.max(
+				8,
+				Math.min(w - labelWidth - 8, midX - labelWidth / 2)
+			);
 			const labelY = Math.max(10, midY);
 
 			ctx.beginPath();
@@ -1480,7 +1520,7 @@ export default function TrackPage() {
 	const [schedule, setSchedule] = useState([]);
 	const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
 	const [scheduleError, setScheduleError] = useState('');
-	
+
 	const [selectedRace, setSelectedRace] = useState(null);
 
 	/* ── Visualization state ── */
@@ -1550,7 +1590,9 @@ export default function TrackPage() {
 	}, [selectedDriver]);
 	useEffect(() => {
 		const handleFullscreenChange = () => {
-			setIsReplayFullscreen(document.fullscreenElement === replayShellRef.current);
+			setIsReplayFullscreen(
+				document.fullscreenElement === replayShellRef.current
+			);
 		};
 		document.addEventListener('fullscreenchange', handleFullscreenChange);
 		return () =>
@@ -1578,7 +1620,10 @@ export default function TrackPage() {
 
 	const currentBoard = useMemo(() => {
 		if (!sessionData || !racePositions?.length) return null;
-		const boardIndex = getTimingSampleIndex(playbackSecond, racePositions.length - 1);
+		const boardIndex = getTimingSampleIndex(
+			playbackSecond,
+			racePositions.length - 1
+		);
 		return racePositions[boardIndex] || null;
 	}, [playbackSecond, racePositions, sessionData]);
 
@@ -1698,7 +1743,7 @@ export default function TrackPage() {
 
 	useEffect(() => {
 		const deepLink = deepLinkSelectionRef.current;
-		if (!deepLink ) return;
+		if (!deepLink) return;
 		if (Number(selectedYear) !== deepLink.year) return;
 
 		const race = schedule.find((item) => item.round === deepLink.round);
@@ -1962,8 +2007,12 @@ export default function TrackPage() {
 			if (!container) return;
 
 			const rect = container.getBoundingClientRect();
-			let x = ((e.clientX - rect.left - dragHUDOffset.current.x + rect.width * 0) / rect.width) * 100;
-			let y = ((e.clientY - rect.top - dragHUDOffset.current.y) / rect.height) * 100;
+			let x =
+				((e.clientX - rect.left - dragHUDOffset.current.x + rect.width * 0) /
+					rect.width) *
+				100;
+			let y =
+				((e.clientY - rect.top - dragHUDOffset.current.y) / rect.height) * 100;
 
 			// Clamp bounds
 			x = Math.max(5, Math.min(95, x));
@@ -2026,7 +2075,10 @@ export default function TrackPage() {
 		for (let idx = 1; idx < currentBoard.length; idx++) {
 			const attacker = currentBoard[idx];
 			const target = currentBoard[idx - 1];
-			if (!isRaceOrderEntryActive(attacker) || !isRaceOrderEntryActive(target)) {
+			if (
+				!isRaceOrderEntryActive(attacker) ||
+				!isRaceOrderEntryActive(target)
+			) {
 				continue;
 			}
 
@@ -2047,7 +2099,13 @@ export default function TrackPage() {
 		}
 
 		return pairs.sort((a, b) => a.gap - b.gap);
-	}, [completedLaps, currentBoard, isNeutralizedRaceState, lapNum, sessionData]);
+	}, [
+		completedLaps,
+		currentBoard,
+		isNeutralizedRaceState,
+		lapNum,
+		sessionData,
+	]);
 
 	const activeBattle = useMemo(
 		() => adjacentBattles.find((pair) => pair.gap <= 1.2) || null,
@@ -2084,7 +2142,10 @@ export default function TrackPage() {
 	}, [driverCount, posMap, sessionData]);
 
 	const activeGridDriverOptions = useMemo(
-		() => gridDriverOptions.filter((driver) => activeRaceDriverCodes.has(driver.abbr)),
+		() =>
+			gridDriverOptions.filter((driver) =>
+				activeRaceDriverCodes.has(driver.abbr)
+			),
 		[activeRaceDriverCodes, gridDriverOptions]
 	);
 
@@ -2103,7 +2164,9 @@ export default function TrackPage() {
 		const selectionStillValid =
 			(!overtakeAttacker || isDriverSelectableForOvertake(attackerEntry)) &&
 			(!overtakeTarget || isDriverSelectableForOvertake(targetEntry)) &&
-			(!overtakeAttacker || !overtakeTarget || (attackerEntry?.position > targetEntry?.position));
+			(!overtakeAttacker ||
+				!overtakeTarget ||
+				attackerEntry?.position > targetEntry?.position);
 
 		if (!selectionStillValid) {
 			queueMicrotask(() => {
@@ -2114,10 +2177,7 @@ export default function TrackPage() {
 	}, [currentBoard, overtakeAttacker, overtakeTarget]);
 
 	useEffect(() => {
-		if (
-			!sessionData ||
-			!selectedRace
-		) {
+		if (!sessionData || !selectedRace) {
 			queueMicrotask(() => {
 				setOvertakeLoading(false);
 				setOvertakeData(null);
@@ -2132,7 +2192,9 @@ export default function TrackPage() {
 		// Either specify both different drivers or specify neither to get 'Top N' defaults.
 		if (fetchAttacker && fetchTarget && fetchAttacker === fetchTarget) {
 			queueMicrotask(() => {
-				setOvertakeError('Choose two different drivers for the overtake simulation.');
+				setOvertakeError(
+					'Choose two different drivers for the overtake simulation.'
+				);
 			});
 			fetchAttacker = undefined;
 			fetchTarget = undefined;
@@ -2203,7 +2265,8 @@ export default function TrackPage() {
 		);
 		return immediateBattles.length > 0 ? immediateBattles : activePairs;
 	}, [activeRaceDriverCodes, overtakeData]);
-	const displayedOvertakePair = selectedOvertakePair || topOvertakePairs[0] || null;
+	const displayedOvertakePair =
+		selectedOvertakePair || topOvertakePairs[0] || null;
 
 	const isVisualizing = !!selectedRace;
 
@@ -2214,11 +2277,8 @@ export default function TrackPage() {
 
 			<div className="relative z-10 max-w-[1600px] mx-auto pb-12">
 				{/* ────── Header ────── */}
-				<div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+				<div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 backdrop-blur-2xl bg-linear-to-r from-red-300/10 to-black/10 border border-white/10 rounded-xl px-6 py-4 w-full">
 					<div className="flex items-center gap-4 animate-fade-in">
-						<div className="w-12 h-12 rounded-xl bg-red-600/20 border border-red-600/30 flex items-center justify-center">
-							<FaFlagCheckered className="text-red-500 text-xl" />
-						</div>
 						<div>
 							<h1 className="text-3xl font-bold uppercase tracking-wider leading-none">
 								Live Track
@@ -2312,7 +2372,10 @@ export default function TrackPage() {
 						{isLoadingSchedule ?
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
 								{Array.from({ length: 12 }).map((_, i) => (
-									<div key={i} className="h-[130px] rounded-xl border border-white/5 bg-white/5 animate-pulse flex flex-col p-4 justify-between">
+									<div
+										key={i}
+										className="h-[130px] rounded-xl border border-white/5 bg-white/5 animate-pulse flex flex-col p-4 justify-between"
+									>
 										<div className="flex justify-between items-start">
 											<div className="h-3 w-20 bg-white/10 rounded" />
 											<div className="h-4 w-12 bg-white/10 rounded-full" />
@@ -2329,7 +2392,7 @@ export default function TrackPage() {
 							<div className="flex flex-col items-center justify-center h-64 text-center">
 								<FaExclamationTriangle className="text-3xl text-red-500/50 mb-4" />
 								<p className="text-red-400 text-sm">{scheduleError}</p>
-								<button 
+								<button
 									onClick={() => setSelectedYear(selectedYear)} // Trigger retry
 									className="mt-4 text-xs text-gray-400 hover:text-white underline"
 								>
@@ -2491,7 +2554,7 @@ export default function TrackPage() {
 						{selectedRace && (
 							<div className="bg-white/3 backdrop-blur-xl rounded-2xl border border-white/6 px-6 py-4 mb-6 flex items-center gap-4">
 								<div className="w-10 h-10 rounded-xl bg-red-600/15 border border-red-600/20 flex items-center justify-center shrink-0">
-									<FaFlagCheckered className="text-red-500/80 text-sm" />
+									<FaFlagCheckered className="text-white/80 text-sm" />
 								</div>
 								<div>
 									<span className="font-bold text-white text-sm">
@@ -2674,92 +2737,105 @@ export default function TrackPage() {
 						{/* F1 Broadcast Layout: Tower | Canvas | Overlays */}
 						<div
 							ref={replayShellRef}
-							className={isReplayFullscreen ? 'h-full w-full bg-[#050505] p-3 sm:p-4' : ''}
+							className={
+								isReplayFullscreen ?
+									'h-full w-full bg-[#050505] p-3 sm:p-4'
+								:	''
+							}
 						>
 							<div
 								className={`grid gap-0 rounded-2xl overflow-hidden shadow-2xl border border-white/6 ${
-									showTimingTower ? 'grid-cols-1 xl:grid-cols-[270px_minmax(0,1fr)]' : 'grid-cols-1'
+									showTimingTower ?
+										'grid-cols-1 xl:grid-cols-[270px_minmax(0,1fr)]'
+									:	'grid-cols-1'
 								} ${isReplayFullscreen ? 'h-full' : ''}`}
 							>
-							{/* ===== LEFT: F1-Style Driver Tower ===== */}
-							{showTimingTower && (
-								<div className="bg-[#0d0d0d] xl:border-r border-white/8 flex flex-col overflow-hidden">
-								{/* Tower Header */}
-								<div className="px-3 py-2.5 border-b border-white/8 bg-[#111] shrink-0">
-									<div className="flex items-center justify-between">
-										<h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-											Race Order
-										</h3>
-										<div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/6">
-											<span className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">
-												{isPreRaceState ? 'Grid' : 'Lap'}
-											</span>
-											<span className="text-[12px] font-bold text-white tabular-nums">
-												{isPreRaceState ? 'Q' : lapNum}
-											</span>
-											{!isPreRaceState && (
-												<span className="text-[9px] text-gray-600">
-													/ {totalLaps}
-												</span>
-											)}
+								{/* ===== LEFT: F1-Style Driver Tower ===== */}
+								{showTimingTower && (
+									<div className="bg-[#0d0d0d] xl:border-r border-white/8 flex flex-col overflow-hidden">
+										{/* Tower Header */}
+										<div className="px-3 py-2.5 border-b border-white/8 bg-[#111] shrink-0">
+											<div className="flex items-center justify-between">
+												<h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+													Race Order
+												</h3>
+												<div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 border border-white/6">
+													<span className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">
+														{isPreRaceState ? 'Grid' : 'Lap'}
+													</span>
+													<span className="text-[12px] font-bold text-white tabular-nums">
+														{isPreRaceState ? 'Q' : lapNum}
+													</span>
+													{!isPreRaceState && (
+														<span className="text-[9px] text-gray-600">
+															/ {totalLaps}
+														</span>
+													)}
+												</div>
+											</div>
 										</div>
-									</div>
-								</div>
 
-								{/* Driver Rows */}
-								<div
-									className="flex-1 overflow-y-auto relative"
-									style={{
-										minHeight: isReplayFullscreen ? 0 : Math.min(driverCount * ROW_H, 600),
-									}}
-								>
-									{Object.entries(sessionData.drivers).map(([abbr, info]) => {
-										const pe = posMap[abbr];
-										const pos = pe?.position ?? driverCount;
-										const isLeader = pos === 1;
-										const isSel = abbr === selectedDriver;
-										const isBattleDriver = battleDrivers.has(abbr);
-										const isActive = pe?.active !== false;
-										const drvStatus = pe?.status || '';
-										const isDNF = drvStatus === 'DNF';
-										const isDNS = drvStatus === 'DNS';
-										const isDSQ = drvStatus === 'DSQ';
-										const isRetired = isDNF || isDNS || isDSQ;
+										{/* Driver Rows */}
+										<div
+											className="flex-1 overflow-y-auto relative"
+											style={{
+												minHeight:
+													isReplayFullscreen ? 0 : (
+														Math.min(driverCount * ROW_H, 600)
+													),
+											}}
+										>
+											{Object.entries(sessionData.drivers).map(
+												([abbr, info]) => {
+													const pe = posMap[abbr];
+													const pos = pe?.position ?? driverCount;
+													const isLeader = pos === 1;
+													const isSel = abbr === selectedDriver;
+													const isBattleDriver = battleDrivers.has(abbr);
+													const isActive = pe?.active !== false;
+													const drvStatus = pe?.status || '';
+													const isDNF = drvStatus === 'DNF';
+													const isDNS = drvStatus === 'DNS';
+													const isDSQ = drvStatus === 'DSQ';
+													const isRetired = isDNF || isDNS || isDSQ;
 
-										const lastLap =
-											isPreRaceState ?
-												null
-											:	getLastLapTime(sessionData.lap_times, abbr, lapNum);
-										const isFastestOverall =
-											!isPreRaceState &&
-											visibleFastestLap?.abbr === abbr;
+													const lastLap =
+														isPreRaceState ? null : (
+															getLastLapTime(
+																sessionData.lap_times,
+																abbr,
+																lapNum
+															)
+														);
+													const isFastestOverall =
+														!isPreRaceState && visibleFastestLap?.abbr === abbr;
 
-										const driverIdx =
-											currentBoard?.findIndex((e) => e.abbr === abbr) ?? -1;
-										const gap =
-											pe?.gapAhead ??
-											computeGapToAhead(
-												sessionData.lap_times,
-												currentBoard,
-												driverIdx,
-												lapNum
-											);
+													const driverIdx =
+														currentBoard?.findIndex((e) => e.abbr === abbr) ??
+														-1;
+													const gap =
+														pe?.gapAhead ??
+														computeGapToAhead(
+															sessionData.lap_times,
+															currentBoard,
+															driverIdx,
+															lapNum
+														);
 
-										return (
-											<div
-												key={abbr}
-												className="absolute left-0 right-0 transition-[top] duration-500 ease-out cursor-pointer"
-												style={{
-													top: `${(pos - 1) * ROW_H}px`,
-													height: `${ROW_H}px`,
-												}}
-												onClick={() => handleDriverClick(abbr)}
-											>
-												<div
-													className={`flex items-center h-full mx-1 px-1.5 rounded-lg transition-all duration-200
+													return (
+														<div
+															key={abbr}
+															className="absolute left-0 right-0 transition-[top] duration-500 ease-out cursor-pointer"
+															style={{
+																top: `${(pos - 1) * ROW_H}px`,
+																height: `${ROW_H}px`,
+															}}
+															onClick={() => handleDriverClick(abbr)}
+														>
+															<div
+																className={`flex items-center h-full mx-1 px-1.5 rounded-lg transition-all duration-200
 														${
-															isSel ?
-																'bg-white/10 ring-1 ring-white/20'
+															isSel ? 'bg-white/10 ring-1 ring-white/20'
 															: isBattleDriver ?
 																'bg-red-500/8 ring-1 ring-red-400/20 hover:bg-red-500/12'
 															:	'hover:bg-white/5'
@@ -2770,644 +2846,685 @@ export default function TrackPage() {
 															: !isActive ? 'opacity-75'
 															: ''
 														}`}
-												>
-													{/* Position */}
-													<div
-														className={`w-6 text-center shrink-0 text-[11px] font-black tabular-nums ${isLeader ? 'text-white' : 'text-gray-500'}`}
-													>
-														{isDNS ?
-															<span className="text-[7px] text-gray-600">
-																DNS
-															</span>
-														: isDSQ ?
-															<span className="text-[7px] text-red-500">
-																DSQ
-															</span>
-														: isDNF ?
-															<FaSkullCrossbones className="text-red-500/60 text-[8px] mx-auto" />
-														:	pos}
-													</div>
-
-													{/* Team color bar */}
-													<div
-														className="w-[3px] h-5 rounded-full shrink-0 mx-1"
-														style={{
-															backgroundColor: isRetired ? '#444' : info.color,
-														}}
-													/>
-
-													{/* Driver info */}
-													<div className="flex-1 min-w-0">
-														<div className="flex items-center gap-1">
-															<span
-																className={`text-[11px] font-bold leading-none ${
-																	isSel ? 'text-white'
-																	: isRetired ? 'text-gray-300'
-																	: 'text-gray-200'
-																}`}
 															>
-																{abbr}
-															</span>
-															{showLeaderCrown && isLeader && (
-																<FaCrown className="text-[9px] text-yellow-300 shrink-0" />
-															)}
-															{isBattleDriver && (
-																<span
-																	className={`rounded-full px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.18em] ${
-																		activeBattle?.intensity === 'intense' ?
-																			'border border-red-400/25 bg-red-500/10 text-red-200'
-																		:	'border border-amber-400/25 bg-amber-500/10 text-amber-100'
-																	}`}
+																{/* Position */}
+																<div
+																	className={`w-6 text-center shrink-0 text-[11px] font-black tabular-nums ${isLeader ? 'text-white' : 'text-gray-500'}`}
 																>
-																	Battle P{activeBattle?.position}
-																</span>
-															)}
-															{isFastestOverall && (
-																<FaStopwatch
-																	className="text-[9px] text-purple-400 shrink-0"
-																	title="Fastest lap"
+																	{isDNS ?
+																		<span className="text-[7px] text-gray-600">
+																			DNS
+																		</span>
+																	: isDSQ ?
+																		<span className="text-[7px] text-red-500">
+																			DSQ
+																		</span>
+																	: isDNF ?
+																		<FaSkullCrossbones className="text-red-500/60 text-[8px] mx-auto" />
+																	:	pos}
+																</div>
+
+																{/* Team color bar */}
+																<div
+																	className="w-[3px] h-5 rounded-full shrink-0 mx-1"
+																	style={{
+																		backgroundColor:
+																			isRetired ? '#444' : info.color,
+																	}}
 																/>
-															)}
-															{isDNF && (
-																<span className="text-[6px] font-bold text-red-400/85">
-																	DNF
-																</span>
-															)}
-															{isDNS && (
-																<span className="text-[6px] font-bold text-gray-400">
-																	DNS
-																</span>
-															)}
-														</div>
-														{!isRetired && lastLap != null && lapNum > 0 && (
-															<span
-																className={`text-[10px] font-semibold font-mono leading-none mt-0.5 block tabular-nums ${isFastestOverall ? 'text-purple-400' : isBattleDriver ? 'text-red-100' : 'text-gray-300'}`}
-															>
-																{formatLapTime(lastLap)}
-															</span>
-														)}
-													</div>
 
-													{/* Interval */}
-													<div className="shrink-0 text-right">
-														{isPreRaceState && !isRetired ?
-															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-white/8 bg-white/4 px-2 py-1 text-[8px] font-bold text-gray-300/90 leading-none tracking-[0.2em]">
-																GRID
-															</span>
-														: isLeader && !isRetired ?
-															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-1 text-[8px] font-bold text-yellow-300 leading-none tracking-[0.18em]">
-																LEAD
-															</span>
-														: !isLeader && !isRetired && gap != null ?
-															<span
-																className={`inline-flex min-w-[3.9rem] justify-end rounded-md border px-2 py-1 text-[10px] font-semibold font-mono leading-none tabular-nums tracking-[0.06em] ${
-																	isBattleDriver && activeBattle?.intensity === 'intense' ?
-																		'border-red-400/25 bg-red-500/12 text-red-50'
-																	: isBattleDriver ?
-																		'border-amber-400/25 bg-amber-500/10 text-amber-50'
-																	:	'border-white/8 bg-white/4 text-gray-100'
-																}`}
-															>
-																{formatGapValue(gap)}
-															</span>
-														: isRetired && isDNF && info.laps_completed ?
-															<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-red-500/15 bg-red-500/8 px-2 py-1 text-[8px] font-mono text-red-300/75 leading-none">
-																L{info.laps_completed}
-															</span>
-														:	null}
-													</div>
-
-													{isSel && (
-														<div
-															className="w-1 h-1 rounded-full ml-1 shrink-0"
-															style={{
-																backgroundColor: info.color,
-																boxShadow: `0 0 6px ${info.color}`,
-															}}
-														/>
-													)}
-												</div>
-											</div>
-										);
-									})}
-								</div>
-
-								{/* Tower Footer: Selected driver detail */}
-								{selectedDriver && sessionData.drivers[selectedDriver] && (
-									<div className="px-3 py-2 border-t border-white/8 bg-[#111] shrink-0">
-										<div className="flex items-center gap-2">
-											<div
-												className="relative w-6 h-6 rounded-full overflow-hidden shrink-0 border"
-												style={{
-													borderColor:
-														sessionData.drivers[selectedDriver].color,
-												}}
-											>
-												<Image
-													src={`/images/drivers/${selectedDriver}.png`}
-													alt={selectedDriver}
-													fill
-													sizes="24px"
-													className="object-cover"
-													onError={(e) => {
-														e.target.style.display = 'none';
-													}}
-												/>
-											</div>
-											<div className="flex-1 min-w-0">
-												<span className="text-[10px] font-bold text-white">
-													{selectedDriver}
-												</span>
-												<span className="text-[8px] text-gray-500 ml-1">
-													{sessionData.drivers[selectedDriver].team}
-												</span>
-											</div>
-											<button
-												onClick={() => setSelectedDriver(null)}
-												className="text-gray-600 hover:text-white transition-colors"
-											>
-												<FaTimes className="text-[8px]" />
-											</button>
-										</div>
-										{(() => {
-											const bestLap = getBestLapTime(
-												sessionData.lap_times,
-												selectedDriver,
-												completedLaps
-											);
-											const lastLapSel = getLastLapTime(
-												sessionData.lap_times,
-												selectedDriver,
-												isPreRaceState ? 0 : lapNum
-											);
-											return bestLap || lastLapSel ?
-													<div className="flex items-center gap-3 mt-1 text-[8px] text-gray-400">
-														{lastLapSel != null && (
-															<span>
-																Last:{' '}
-																<span className="text-gray-300 font-mono">
-																	{formatLapTime(lastLapSel)}
-																</span>
-															</span>
-														)}
-														{bestLap != null && (
-															<span>
-																Best:{' '}
-																<span className="text-green-400 font-mono">
-																	{formatLapTime(bestLap)}
-																</span>
-															</span>
-														)}
-													</div>
-												:	null;
-										})()}
-									</div>
-								)}
-							</div>
-							)}
-
-							{/* ===== RIGHT: Canvas + Overlays ===== */}
-							<div className="relative bg-[#0a0a0a] overflow-hidden min-w-0">
-								{/* Canvas container */}
-								<div
-									style={isReplayFullscreen ? { height: '100%' } : { aspectRatio: '16 / 9' }}
-									className={`w-full relative group ${isReplayFullscreen ? 'h-full min-h-[420px]' : ''} ${!controlsVisible ? 'cursor-none' : ''}`}
-									onMouseMove={() => {
-										setControlsVisible(true);
-										clearTimeout(controlsTimerRef.current);
-										if (playRef.current) {
-											controlsTimerRef.current = setTimeout(
-												() => setControlsVisible(false),
-												3000
-											);
-										}
-									}}
-									onMouseLeave={() => {
-										clearTimeout(controlsTimerRef.current);
-										if (playRef.current) setControlsVisible(false);
-									}}
-								>
-									<canvas
-										ref={canvasRef}
-										style={{ display: 'block', width: '100%', height: '100%' }}
-									/>
-
-									<div className="absolute top-3 right-3 z-30 flex items-center gap-2">
-										<button
-											type="button"
-											onClick={() => setShowTimingTower((prev) => !prev)}
-											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
-												showTimingTower ?
-													'border-cyan-400/25 bg-cyan-400/10 text-cyan-100'
-												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
-											}`}
-										>
-											Tower
-										</button>
-										<button
-											type="button"
-											onClick={() => setShowRaceInsights((prev) => !prev)}
-											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
-												showRaceInsights ?
-													'border-red-400/25 bg-red-400/10 text-red-100'
-												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
-											}`}
-										>
-											Insights
-										</button>
-										<button
-											type="button"
-											onClick={() => setShowBattleHUD((prev) => !prev)}
-											className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
-												showBattleHUD ?
-													'border-amber-400/25 bg-amber-400/10 text-amber-100'
-												:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
-											}`}
-										>
-											Battle
-										</button>
-										<button
-											type="button"
-											onClick={toggleReplayFullscreen}
-											className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/55 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-100 transition-all hover:border-white/20 hover:bg-black/70"
-										>
-											{isReplayFullscreen ?
-												<FaCompress className="text-[10px]" />
-											:	<FaExpand className="text-[10px]" />}
-											{isReplayFullscreen ? 'Exit' : 'Fullscreen'}
-										</button>
-									</div>
-
-									{activeBattle && showBattleHUD && (
-										<div 
-											className={`absolute z-40 transition-shadow duration-300 ${isDraggingHUD ? 'scale-[1.02] shadow-2xl cursor-grabbing' : 'cursor-grab'}`}
-											style={{ 
-												left: `${battleHUDPos.x}%`, 
-												top: `${battleHUDPos.y}%`,
-												transform: 'translateX(-50%)',
-												userSelect: 'none'
-											}}
-											onMouseDown={handleHUDMouseDown}
-										>
-											<div
-												className={`flex items-center gap-3 rounded-2xl px-3 py-2 shadow-2xl backdrop-blur-md relative group/hud ${
-													activeBattle.intensity === 'intense' ?
-														'border border-red-400/20 bg-black/82'
-													:	'border border-amber-400/20 bg-black/78'
-												}`}
-											>
-												{/* Close tool */}
-												<button
-													onClick={(e) => {
-														e.stopPropagation();
-														setShowBattleHUD(false);
-													}}
-													className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover/hud:opacity-100 transition-opacity z-50 hover:bg-red-500"
-												>
-													<FaTimes className="text-[7px]" />
-												</button>
-
-												<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
-													<Image
-														src={getTelemetryDriverImage(activeBattle.target, 2026) || `/images/drivers/${activeBattle.target}.png`}
-														alt={activeBattle.target}
-														fill
-														sizes="48px"
-														className="object-cover object-top pointer-events-none"
-													/>
-												</div>
-												<div className="min-w-[10rem] text-center">
-													<div
-														className={`text-[9px] font-bold uppercase tracking-[0.24em] ${
-															activeBattle.intensity === 'intense' ?
-																'text-red-200/80'
-															:	'text-amber-200/80'
-														}`}
-													>
-														Battle for P{activeBattle.position}
-													</div>
-													<div className="mt-1 text-sm font-black text-white">
-														{activeBattle.target} vs {activeBattle.attacker}
-													</div>
-													<div
-														className={`mt-0.5 text-[10px] font-mono ${
-															activeBattle.intensity === 'intense' ?
-																'text-red-100/85'
-															:	'text-amber-100/85'
-														}`}
-													>
-														Gap {formatGapValue(activeBattle.gap)}
-													</div>
-												</div>
-												<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
-													<Image
-														src={getTelemetryDriverImage(activeBattle.attacker, 2026) || `/images/drivers/${activeBattle.attacker}.png`}
-														alt={activeBattle.attacker}
-														fill
-														sizes="48px"
-														className="object-cover object-top pointer-events-none"
-													/>
-												</div>
-											</div>
-										</div>
-									)}
-
-									{/* Weather overlay — top left of canvas */}
-									{currentWeather && (
-										<div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-lg px-2.5 py-1.5 border border-white/8 text-[9px]">
-											{(
-												currentWeather.rainfall &&
-												parseFloat(currentWeather.rainfall) > 0
-											) ?
-												<FaCloudRain className="text-blue-400 text-[8px]" />
-											:	<FaSun className="text-yellow-400 text-[8px]" />}
-											{currentWeather.air_temp != null && (
-												<span className="text-gray-200 font-medium">
-													{currentWeather.air_temp}°C
-												</span>
-											)}
-											{currentWeather.track_temp != null && (
-												<span className="text-gray-500">
-													Trk {currentWeather.track_temp}°C
-												</span>
-											)}
-											{currentWeather.humidity != null && (
-												<span className="text-gray-500 flex items-center gap-0.5">
-													<FaTint className="text-blue-400/60 text-[6px]" />
-													{currentWeather.humidity}%
-												</span>
-											)}
-											{currentWeather.wind_speed != null && (
-												<span className="text-gray-500 flex items-center gap-0.5">
-													<FaWind className="text-cyan-400/60 text-[6px]" />
-													{currentWeather.wind_speed}km/h
-												</span>
-											)}
-											{currentWeather.rainfall &&
-												parseFloat(currentWeather.rainfall) > 0 && (
-													<span className="text-blue-300 font-bold flex items-center gap-0.5">
-														<FaCloudRain className="text-[6px]" />
-														Rain
-													</span>
-												)}
-										</div>
-									)}
-
-									{/* Race Insights overlay — top right of canvas */}
-									{showRaceInsights && visibleInsights.length > 0 && (
-										<div
-											className={`absolute top-14 right-3 z-20 overflow-y-auto bg-black/70 backdrop-blur-md rounded-xl border border-white/8 shadow-2xl ${
-												isReplayFullscreen ? 'w-[24rem] max-h-[68%]' : 'w-80 max-h-[56%]'
-											}`}
-										>
-											<div className="px-4 py-3 border-b border-white/10 flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur-md z-10 rounded-t-xl">
-												<h4 className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300 flex items-center gap-2">
-													<FaFlag className="text-[7px] text-red-500" />
-													Race Insights
-												</h4>
-												<span className="text-[9px] text-gray-500 font-mono">
-													{visibleInsights.length}
-												</span>
-											</div>
-											<div className="px-2 py-2">
-												{[...visibleInsights]
-													.reverse()
-													.slice(0, 20)
-													.map((evt, i) => {
-														const iconMap = {
-															flag: <FaFlagCheckered className="text-[7px]" />,
-															exchange: (
-																<FaExchangeAlt className="text-[7px]" />
-															),
-															tachometer: (
-																<FaTachometerAlt className="text-[7px]" />
-															),
-															wrench: <FaWrench className="text-[7px]" />,
-															exclamation: (
-																<FaExclamationTriangle className="text-[7px]" />
-															),
-															times: <FaTimes className="text-[7px]" />,
-															skull: (
-																<FaSkullCrossbones className="text-[7px]" />
-															),
-															checkered: (
-																<FaFlagCheckered className="text-[7px]" />
-															),
-															trophy: <FaTrophy className="text-[7px]" />,
-														};
-														const typeColorMap = {
-															race_start: 'border-green-500/20',
-															overtake: 'border-blue-500/15',
-															fastest_lap: 'border-purple-500/20',
-															pit_stop: 'border-amber-500/15',
-															hazard: 'border-red-500/20',
-															retirement: 'border-red-500/15',
-															milestone: 'border-white/8',
-														};
-														return (
-															<div
-																key={`${evt.type}-${evt.time_sec}-${i}`}
-																className={`mb-1.5 rounded-lg border bg-white/4 px-3 py-2 transition-all ${typeColorMap[evt.type] || 'border-white/6'}`}
-															>
-																<div className="flex items-start gap-2">
-																	<div
-																		className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-																		style={{
-																			backgroundColor:
-																				(evt.color || '#666') + '15',
-																			color: evt.color || '#999',
-																		}}
-																	>
-																		{iconMap[evt.icon] || (
-																			<FaFlag className="text-[7px]" />
+																{/* Driver info */}
+																<div className="flex-1 min-w-0">
+																	<div className="flex items-center gap-1">
+																		<span
+																			className={`text-[11px] font-bold leading-none ${
+																				isSel ? 'text-white'
+																				: isRetired ? 'text-gray-300'
+																				: 'text-gray-200'
+																			}`}
+																		>
+																			{abbr}
+																		</span>
+																		{showLeaderCrown && isLeader && (
+																			<FaCrown className="text-[9px] text-yellow-300 shrink-0" />
+																		)}
+																		{isBattleDriver && (
+																			<span
+																				className={`rounded-full px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.18em] ${
+																					(
+																						activeBattle?.intensity ===
+																						'intense'
+																					) ?
+																						'border border-red-400/25 bg-red-500/10 text-red-200'
+																					:	'border border-amber-400/25 bg-amber-500/10 text-amber-100'
+																				}`}
+																			>
+																				Battle P{activeBattle?.position}
+																			</span>
+																		)}
+																		{isFastestOverall && (
+																			<FaStopwatch
+																				className="text-[9px] text-purple-400 shrink-0"
+																				title="Fastest lap"
+																			/>
+																		)}
+																		{isDNF && (
+																			<span className="text-[6px] font-bold text-red-400/85">
+																				DNF
+																			</span>
+																		)}
+																		{isDNS && (
+																			<span className="text-[6px] font-bold text-gray-400">
+																				DNS
+																			</span>
 																		)}
 																	</div>
-																	<div className="flex-1 min-w-0">
-																		<div className="flex items-center gap-1.5">
+																	{!isRetired &&
+																		lastLap != null &&
+																		lapNum > 0 && (
 																			<span
-																				className="text-[10px] font-bold leading-none"
-																				style={{ color: evt.color || '#ccc' }}
+																				className={`text-[10px] font-semibold font-mono leading-none mt-0.5 block tabular-nums ${
+																					isFastestOverall ? 'text-purple-400'
+																					: isBattleDriver ? 'text-red-100'
+																					: 'text-gray-300'
+																				}`}
 																			>
-																				{evt.title}
+																				{formatLapTime(lastLap)}
 																			</span>
-																			<span className="text-[8px] text-gray-500 font-mono">
-																				L{evt.lap}
-																			</span>
+																		)}
+																</div>
+
+																{/* Interval */}
+																<div className="shrink-0 text-right">
+																	{isPreRaceState && !isRetired ?
+																		<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-white/8 bg-white/4 px-2 py-1 text-[8px] font-bold text-gray-300/90 leading-none tracking-[0.2em]">
+																			GRID
+																		</span>
+																	: isLeader && !isRetired ?
+																		<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-1 text-[8px] font-bold text-yellow-300 leading-none tracking-[0.18em]">
+																			LEAD
+																		</span>
+																	: !isLeader && !isRetired && gap != null ?
+																		<span
+																			className={`inline-flex min-w-[3.9rem] justify-end rounded-md border px-2 py-1 text-[10px] font-semibold font-mono leading-none tabular-nums tracking-[0.06em] ${
+																				(
+																					isBattleDriver &&
+																					activeBattle?.intensity === 'intense'
+																				) ?
+																					'border-red-400/25 bg-red-500/12 text-red-50'
+																				: isBattleDriver ?
+																					'border-amber-400/25 bg-amber-500/10 text-amber-50'
+																				:	'border-white/8 bg-white/4 text-gray-100'
+																			}`}
+																		>
+																			{formatGapValue(gap)}
+																		</span>
+																	: isRetired && isDNF && info.laps_completed ?
+																		<span className="inline-flex min-w-[3.7rem] justify-center rounded-md border border-red-500/15 bg-red-500/8 px-2 py-1 text-[8px] font-mono text-red-300/75 leading-none">
+																			L{info.laps_completed}
+																		</span>
+																	:	null}
+																</div>
+
+																{isSel && (
+																	<div
+																		className="w-1 h-1 rounded-full ml-1 shrink-0"
+																		style={{
+																			backgroundColor: info.color,
+																			boxShadow: `0 0 6px ${info.color}`,
+																		}}
+																	/>
+																)}
+															</div>
+														</div>
+													);
+												}
+											)}
+										</div>
+
+										{/* Tower Footer: Selected driver detail */}
+										{selectedDriver && sessionData.drivers[selectedDriver] && (
+											<div className="px-3 py-2 border-t border-white/8 bg-[#111] shrink-0">
+												<div className="flex items-center gap-2">
+													<div
+														className="relative w-6 h-6 rounded-full overflow-hidden shrink-0 border"
+														style={{
+															borderColor:
+																sessionData.drivers[selectedDriver].color,
+														}}
+													>
+														<Image
+															src={`/images/drivers/${selectedDriver}.png`}
+															alt={selectedDriver}
+															fill
+															sizes="24px"
+															className="object-cover"
+															onError={(e) => {
+																e.target.style.display = 'none';
+															}}
+														/>
+													</div>
+													<div className="flex-1 min-w-0">
+														<span className="text-[10px] font-bold text-white">
+															{selectedDriver}
+														</span>
+														<span className="text-[8px] text-gray-500 ml-1">
+															{sessionData.drivers[selectedDriver].team}
+														</span>
+													</div>
+													<button
+														onClick={() => setSelectedDriver(null)}
+														className="text-gray-600 hover:text-white transition-colors"
+													>
+														<FaTimes className="text-[8px]" />
+													</button>
+												</div>
+												{(() => {
+													const bestLap = getBestLapTime(
+														sessionData.lap_times,
+														selectedDriver,
+														completedLaps
+													);
+													const lastLapSel = getLastLapTime(
+														sessionData.lap_times,
+														selectedDriver,
+														isPreRaceState ? 0 : lapNum
+													);
+													return bestLap || lastLapSel ?
+															<div className="flex items-center gap-3 mt-1 text-[8px] text-gray-400">
+																{lastLapSel != null && (
+																	<span>
+																		Last:{' '}
+																		<span className="text-gray-300 font-mono">
+																			{formatLapTime(lastLapSel)}
+																		</span>
+																	</span>
+																)}
+																{bestLap != null && (
+																	<span>
+																		Best:{' '}
+																		<span className="text-green-400 font-mono">
+																			{formatLapTime(bestLap)}
+																		</span>
+																	</span>
+																)}
+															</div>
+														:	null;
+												})()}
+											</div>
+										)}
+									</div>
+								)}
+
+								{/* ===== RIGHT: Canvas + Overlays ===== */}
+								<div className="relative bg-[#0a0a0a] overflow-hidden min-w-0">
+									{/* Canvas container */}
+									<div
+										style={
+											isReplayFullscreen ?
+												{ height: '100%' }
+											:	{ aspectRatio: '16 / 9' }
+										}
+										className={`w-full relative group ${isReplayFullscreen ? 'h-full min-h-[420px]' : ''} ${!controlsVisible ? 'cursor-none' : ''}`}
+										onMouseMove={() => {
+											setControlsVisible(true);
+											clearTimeout(controlsTimerRef.current);
+											if (playRef.current) {
+												controlsTimerRef.current = setTimeout(
+													() => setControlsVisible(false),
+													3000
+												);
+											}
+										}}
+										onMouseLeave={() => {
+											clearTimeout(controlsTimerRef.current);
+											if (playRef.current) setControlsVisible(false);
+										}}
+									>
+										<canvas
+											ref={canvasRef}
+											style={{
+												display: 'block',
+												width: '100%',
+												height: '100%',
+											}}
+										/>
+
+										<div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+											<button
+												type="button"
+												onClick={() => setShowTimingTower((prev) => !prev)}
+												className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+													showTimingTower ?
+														'border-cyan-400/25 bg-cyan-400/10 text-cyan-100'
+													:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+												}`}
+											>
+												Tower
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowRaceInsights((prev) => !prev)}
+												className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+													showRaceInsights ?
+														'border-red-400/25 bg-red-400/10 text-red-100'
+													:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+												}`}
+											>
+												Insights
+											</button>
+											<button
+												type="button"
+												onClick={() => setShowBattleHUD((prev) => !prev)}
+												className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-all ${
+													showBattleHUD ?
+														'border-amber-400/25 bg-amber-400/10 text-amber-100'
+													:	'border-white/10 bg-black/45 text-gray-300 hover:text-white'
+												}`}
+											>
+												Battle
+											</button>
+											<button
+												type="button"
+												onClick={toggleReplayFullscreen}
+												className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/55 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-100 transition-all hover:border-white/20 hover:bg-black/70"
+											>
+												{isReplayFullscreen ?
+													<FaCompress className="text-[10px]" />
+												:	<FaExpand className="text-[10px]" />}
+												{isReplayFullscreen ? 'Exit' : 'Fullscreen'}
+											</button>
+										</div>
+
+										{activeBattle && showBattleHUD && (
+											<div
+												className={`absolute z-40 transition-shadow duration-300 ${isDraggingHUD ? 'scale-[1.02] shadow-2xl cursor-grabbing' : 'cursor-grab'}`}
+												style={{
+													left: `${battleHUDPos.x}%`,
+													top: `${battleHUDPos.y}%`,
+													transform: 'translateX(-50%)',
+													userSelect: 'none',
+												}}
+												onMouseDown={handleHUDMouseDown}
+											>
+												<div
+													className={`flex items-center gap-3 rounded-2xl px-3 py-2 shadow-2xl backdrop-blur-md relative group/hud ${
+														activeBattle.intensity === 'intense' ?
+															'border border-red-400/20 bg-black/82'
+														:	'border border-amber-400/20 bg-black/78'
+													}`}
+												>
+													{/* Close tool */}
+													<button
+														onClick={(e) => {
+															e.stopPropagation();
+															setShowBattleHUD(false);
+														}}
+														className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover/hud:opacity-100 transition-opacity z-50 hover:bg-red-500"
+													>
+														<FaTimes className="text-[7px]" />
+													</button>
+
+													<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+														<Image
+															src={
+																getTelemetryDriverImage(
+																	activeBattle.target,
+																	2026
+																) ||
+																`/images/drivers/${activeBattle.target}.png`
+															}
+															alt={activeBattle.target}
+															fill
+															sizes="48px"
+															className="object-cover object-top pointer-events-none"
+														/>
+													</div>
+													<div className="min-w-40 text-center">
+														<div
+															className={`text-[9px] font-bold uppercase tracking-[0.24em] ${
+																activeBattle.intensity === 'intense' ?
+																	'text-red-200/80'
+																:	'text-amber-200/80'
+															}`}
+														>
+															Battle for P{activeBattle.position}
+														</div>
+														<div className="mt-1 text-sm font-black text-white">
+															{activeBattle.target} vs {activeBattle.attacker}
+														</div>
+														<div
+															className={`mt-0.5 text-[10px] font-mono ${
+																activeBattle.intensity === 'intense' ?
+																	'text-red-100/85'
+																:	'text-amber-100/85'
+															}`}
+														>
+															Gap {formatGapValue(activeBattle.gap)}
+														</div>
+													</div>
+													<div className="relative h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-black/50 shrink-0">
+														<Image
+															src={
+																getTelemetryDriverImage(
+																	activeBattle.attacker,
+																	2026
+																) ||
+																`/images/drivers/${activeBattle.attacker}.png`
+															}
+															alt={activeBattle.attacker}
+															fill
+															sizes="48px"
+															className="object-cover object-top pointer-events-none"
+														/>
+													</div>
+												</div>
+											</div>
+										)}
+
+										{/* Weather overlay — top left of canvas */}
+										{currentWeather && (
+											<div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-md rounded-lg px-2.5 py-1.5 border border-white/8 text-[9px]">
+												{(
+													currentWeather.rainfall &&
+													parseFloat(currentWeather.rainfall) > 0
+												) ?
+													<FaCloudRain className="text-blue-400 text-[8px]" />
+												:	<FaSun className="text-yellow-400 text-[8px]" />}
+												{currentWeather.air_temp != null && (
+													<span className="text-gray-200 font-medium">
+														{currentWeather.air_temp}°C
+													</span>
+												)}
+												{currentWeather.track_temp != null && (
+													<span className="text-gray-500">
+														Trk {currentWeather.track_temp}°C
+													</span>
+												)}
+												{currentWeather.humidity != null && (
+													<span className="text-gray-500 flex items-center gap-0.5">
+														<FaTint className="text-blue-400/60 text-[6px]" />
+														{currentWeather.humidity}%
+													</span>
+												)}
+												{currentWeather.wind_speed != null && (
+													<span className="text-gray-500 flex items-center gap-0.5">
+														<FaWind className="text-cyan-400/60 text-[6px]" />
+														{currentWeather.wind_speed}km/h
+													</span>
+												)}
+												{currentWeather.rainfall &&
+													parseFloat(currentWeather.rainfall) > 0 && (
+														<span className="text-blue-300 font-bold flex items-center gap-0.5">
+															<FaCloudRain className="text-[6px]" />
+															Rain
+														</span>
+													)}
+											</div>
+										)}
+
+										{/* Race Insights overlay — top right of canvas */}
+										{showRaceInsights && visibleInsights.length > 0 && (
+											<div
+												className={`absolute top-14 right-3 z-20 overflow-y-auto bg-black/70 backdrop-blur-md rounded-xl border border-white/8 shadow-2xl ${
+													isReplayFullscreen ?
+														'w-[24rem] max-h-[68%]'
+													:	'w-80 max-h-[56%]'
+												}`}
+											>
+												<div className="px-4 py-3 border-b border-white/10 flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur-md z-10 rounded-t-xl">
+													<h4 className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300 flex items-center gap-2">
+
+														Race Insights
+													</h4>
+													<span className="text-[9px] text-gray-500 font-mono">
+														{visibleInsights.length}
+													</span>
+												</div>
+												<div className="px-2 py-2">
+													{[...visibleInsights]
+														.reverse()
+														.slice(0, 20)
+														.map((evt, i) => {
+															const iconMap = {
+																flag: (
+																	<FaFlagCheckered className="text-[7px]" />
+																),
+																exchange: (
+																	<FaExchangeAlt className="text-[7px]" />
+																),
+																tachometer: (
+																	<FaTachometerAlt className="text-[7px]" />
+																),
+																wrench: <FaWrench className="text-[7px]" />,
+																exclamation: (
+																	<FaExclamationTriangle className="text-[7px]" />
+																),
+																times: <FaTimes className="text-[7px]" />,
+																skull: (
+																	<FaSkullCrossbones className="text-[7px]" />
+																),
+																checkered: (
+																	<FaFlagCheckered className="text-[7px]" />
+																),
+																trophy: <FaTrophy className="text-[7px]" />,
+															};
+															const typeColorMap = {
+																race_start: 'border-green-500/20',
+																overtake: 'border-blue-500/15',
+																fastest_lap: 'border-purple-500/20',
+																pit_stop: 'border-amber-500/15',
+																hazard: 'border-red-500/20',
+																retirement: 'border-red-500/15',
+																milestone: 'border-white/8',
+															};
+															return (
+																<div
+																	key={`${evt.type}-${evt.time_sec}-${i}`}
+																	className={`mb-1.5 rounded-lg border bg-white/4 px-3 py-2 transition-all ${typeColorMap[evt.type] || 'border-white/6'}`}
+																>
+																	<div className="flex items-start gap-2">
+																		<div
+																			className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+																			style={{
+																				backgroundColor:
+																					(evt.color || '#666') + '15',
+																				color: evt.color || '#999',
+																			}}
+																		>
+																			{iconMap[evt.icon] || (
+																				<FaFlag className="text-[7px]" />
+																			)}
 																		</div>
-																		<p className="mt-1 text-[9px] text-gray-300 leading-snug">
-																			{evt.detail}
-																		</p>
+																		<div className="flex-1 min-w-0">
+																			<div className="flex items-center gap-1.5">
+																				<span
+																					className="text-[10px] font-bold leading-none"
+																					style={{ color: evt.color || '#ccc' }}
+																				>
+																					{evt.title}
+																				</span>
+																				<span className="text-[8px] text-gray-500 font-mono">
+																					L{evt.lap}
+																				</span>
+																			</div>
+																			<p className="mt-1 text-[9px] text-gray-300 leading-snug">
+																				{evt.detail}
+																			</p>
+																		</div>
 																	</div>
 																</div>
-															</div>
-														);
-													})}
+															);
+														})}
+												</div>
 											</div>
-										</div>
-									)}
+										)}
 
-									{/* Playback Controls overlay — bottom of canvas */}
-									<div
-										className={`absolute bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/80 via-black/40 to-transparent pt-10 pb-3 px-4 transition-opacity duration-500 ${controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-										style={{ cursor: 'default' }}
-									>
-										{/* Timeline */}
-										<div className="flex items-center gap-2 mb-2">
-											<span className="text-[10px] font-mono text-gray-400 w-12 text-right shrink-0 tabular-nums">
-												{formatTime(displayTime)}
-											</span>
-											<div className="relative flex-1">
-												<input
-													type="range"
-													min={0}
-													max={maxTime}
-													step={0.5}
-													value={displayTime}
-													onChange={handleSeek}
-													className="w-full h-1 rounded-full appearance-none cursor-pointer bg-white/10
+										{/* Playback Controls overlay — bottom of canvas */}
+										<div
+											className={`absolute bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/80 via-black/40 to-transparent pt-10 pb-3 px-4 transition-opacity duration-500 ${controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+											style={{ cursor: 'default' }}
+										>
+											{/* Timeline */}
+											<div className="flex items-center gap-2 mb-2">
+												<span className="text-[10px] font-mono text-gray-400 w-12 text-right shrink-0 tabular-nums">
+													{formatTime(displayTime)}
+												</span>
+												<div className="relative flex-1">
+													<input
+														type="range"
+														min={0}
+														max={maxTime}
+														step={0.5}
+														value={displayTime}
+														onChange={handleSeek}
+														className="w-full h-1 rounded-full appearance-none cursor-pointer bg-white/10
 														[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-500 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-red-500/40
 														[&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-red-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white"
-													style={{
-														background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${maxTime > 0 ? (displayTime / maxTime) * 100 : 0}%, rgba(255,255,255,0.1) ${maxTime > 0 ? (displayTime / maxTime) * 100 : 0}%, rgba(255,255,255,0.1) 100%)`,
-													}}
-												/>
-											</div>
-											<span className="text-[10px] font-mono text-gray-600 w-12 shrink-0 tabular-nums">
-												{formatTime(maxTime)}
-											</span>
-										</div>
-
-										{/* Transport + Lap + Speed */}
-										<div className="flex items-center justify-between">
-											{/* Transport controls */}
-											<div className="flex items-center gap-0.5">
-												<button
-													onClick={handleRestart}
-													className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-													title="Restart"
-												>
-													<FaRedo className="text-[9px]" />
-												</button>
-												<button
-													onClick={() => {
-														timeRef.current = Math.max(0, timeRef.current - 5);
-														setDisplayTime(timeRef.current);
-													}}
-													className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-													title="Rewind 5s (←)"
-												>
-													<FaFastBackward className="text-[8px]" />
-												</button>
-												<button
-													onClick={togglePlay}
-													className="w-10 h-10 flex items-center justify-center bg-red-600 hover:bg-red-500 active:scale-95 rounded-full transition-all shadow-lg shadow-red-600/30 mx-1"
-													title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-												>
-													{isPlaying ?
-														<FaPause className="text-xs text-white" />
-													:	<FaPlay className="text-xs text-white ml-0.5" />}
-												</button>
-												<button
-													onClick={() => {
-														timeRef.current = Math.min(
-															timeRef.current + 5,
-															dataRef.current?.info?.duration_sec ?? Infinity
-														);
-														setDisplayTime(timeRef.current);
-													}}
-													className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-													title="Forward 5s (→)"
-												>
-													<FaFastForward className="text-[8px]" />
-												</button>
-											</div>
-
-											{/* Lap navigation */}
-											<div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 border border-white/8">
-												<button
-													onClick={() => jumpToLap(lapNum - 1)}
-													disabled={lapNum <= 1}
-													className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-white transition-all disabled:opacity-20"
-												>
-													<FaStepBackward className="text-[8px]" />
-												</button>
-												<div className="flex items-center gap-1 px-1">
-													<span className="text-[8px] text-gray-600 uppercase tracking-wider font-medium">
-														Lap
-													</span>
-													<input
-														type="number"
-														min={1}
-														max={totalLaps}
-														value={lapInput || lapNum}
-														onChange={(e) => setLapInput(e.target.value)}
-														onBlur={() => {
-															const v = parseInt(lapInput);
-															if (v >= 1 && v <= totalLaps) jumpToLap(v);
-															setLapInput('');
+														style={{
+															background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${maxTime > 0 ? (displayTime / maxTime) * 100 : 0}%, rgba(255,255,255,0.1) ${maxTime > 0 ? (displayTime / maxTime) * 100 : 0}%, rgba(255,255,255,0.1) 100%)`,
 														}}
-														onKeyDown={(e) => {
-															if (e.key === 'Enter') {
+													/>
+												</div>
+												<span className="text-[10px] font-mono text-gray-600 w-12 shrink-0 tabular-nums">
+													{formatTime(maxTime)}
+												</span>
+											</div>
+
+											{/* Transport + Lap + Speed */}
+											<div className="flex items-center justify-between">
+												{/* Transport controls */}
+												<div className="flex items-center gap-0.5">
+													<button
+														onClick={handleRestart}
+														className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+														title="Restart"
+													>
+														<FaRedo className="text-[9px]" />
+													</button>
+													<button
+														onClick={() => {
+															timeRef.current = Math.max(
+																0,
+																timeRef.current - 5
+															);
+															setDisplayTime(timeRef.current);
+														}}
+														className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+														title="Rewind 5s (←)"
+													>
+														<FaFastBackward className="text-[8px]" />
+													</button>
+													<button
+														onClick={togglePlay}
+														className="w-10 h-10 flex items-center justify-center bg-red-600 hover:bg-red-500 active:scale-95 rounded-full transition-all shadow-lg shadow-red-600/30 mx-1"
+														title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+													>
+														{isPlaying ?
+															<FaPause className="text-xs text-white" />
+														:	<FaPlay className="text-xs text-white ml-0.5" />}
+													</button>
+													<button
+														onClick={() => {
+															timeRef.current = Math.min(
+																timeRef.current + 5,
+																dataRef.current?.info?.duration_sec ?? Infinity
+															);
+															setDisplayTime(timeRef.current);
+														}}
+														className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+														title="Forward 5s (→)"
+													>
+														<FaFastForward className="text-[8px]" />
+													</button>
+												</div>
+
+												{/* Lap navigation */}
+												<div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1 border border-white/8">
+													<button
+														onClick={() => jumpToLap(lapNum - 1)}
+														disabled={lapNum <= 1}
+														className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-white transition-all disabled:opacity-20"
+													>
+														<FaStepBackward className="text-[8px]" />
+													</button>
+													<div className="flex items-center gap-1 px-1">
+														<span className="text-[8px] text-gray-600 uppercase tracking-wider font-medium">
+															Lap
+														</span>
+														<input
+															type="number"
+															min={1}
+															max={totalLaps}
+															value={lapInput || lapNum}
+															onChange={(e) => setLapInput(e.target.value)}
+															onBlur={() => {
 																const v = parseInt(lapInput);
 																if (v >= 1 && v <= totalLaps) jumpToLap(v);
 																setLapInput('');
-																e.target.blur();
-															}
-														}}
-														className="w-8 bg-transparent text-center text-white font-bold text-[11px] focus:outline-none focus:bg-white/6 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-													/>
-													<span className="text-gray-600 text-[11px] font-medium">
-														/ {totalLaps}
-													</span>
-												</div>
-												<button
-													onClick={() => jumpToLap(lapNum + 1)}
-													disabled={lapNum >= totalLaps}
-													className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-white transition-all disabled:opacity-20"
-												>
-													<FaStepForward className="text-[8px]" />
-												</button>
-											</div>
-
-											{/* Speed selector */}
-											<div className="flex items-center bg-white/5 rounded-lg border border-white/8 overflow-hidden">
-												{SPEEDS.map((s) => (
+															}}
+															onKeyDown={(e) => {
+																if (e.key === 'Enter') {
+																	const v = parseInt(lapInput);
+																	if (v >= 1 && v <= totalLaps) jumpToLap(v);
+																	setLapInput('');
+																	e.target.blur();
+																}
+															}}
+															className="w-8 bg-transparent text-center text-white font-bold text-[11px] focus:outline-none focus:bg-white/6 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														/>
+														<span className="text-gray-600 text-[11px] font-medium">
+															/ {totalLaps}
+														</span>
+													</div>
 													<button
-														key={s}
-														onClick={() => setSpeed(s)}
-														className={`px-2 py-1 text-[10px] font-bold transition-all ${speed === s ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+														onClick={() => jumpToLap(lapNum + 1)}
+														disabled={lapNum >= totalLaps}
+														className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-white transition-all disabled:opacity-20"
 													>
-														{s}×
+														<FaStepForward className="text-[8px]" />
 													</button>
-												))}
-											</div>
-										</div>
+												</div>
 
-										{/* Keyboard hints */}
-										<div className="flex items-center justify-center gap-4 mt-1.5 text-[8px] text-gray-600/50 select-none">
-											<span>
-												<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
-													Space
-												</kbd>{' '}
-												Play
-											</span>
-											<span>
-												<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
-													← →
-												</kbd>{' '}
-												±5s
-											</span>
-											<span>
-												<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
-													Esc
-												</kbd>{' '}
-												Deselect
-											</span>
+												{/* Speed selector */}
+												<div className="flex items-center bg-white/5 rounded-lg border border-white/8 overflow-hidden">
+													{SPEEDS.map((s) => (
+														<button
+															key={s}
+															onClick={() => setSpeed(s)}
+															className={`px-2 py-1 text-[10px] font-bold transition-all ${speed === s ? 'bg-red-600 text-white' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+														>
+															{s}×
+														</button>
+													))}
+												</div>
+											</div>
+
+											{/* Keyboard hints */}
+											<div className="flex items-center justify-center gap-4 mt-1.5 text-[8px] text-gray-600/50 select-none">
+												<span>
+													<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
+														Space
+													</kbd>{' '}
+													Play
+												</span>
+												<span>
+													<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
+														← →
+													</kbd>{' '}
+													±5s
+												</span>
+												<span>
+													<kbd className="px-1 py-0.5 rounded bg-white/5 text-gray-600 font-mono text-[7px]">
+														Esc
+													</kbd>{' '}
+													Deselect
+												</span>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 						</div>
 
 						<div className="mt-5 grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-5">
@@ -3433,13 +3550,19 @@ export default function TrackPage() {
 												Model {overtakeMeta?.best_model_name || '—'}
 											</span>
 											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
-												Horizon {overtakeData?.horizon_laps || overtakeMeta?.horizon_laps || '—'} laps
+												Horizon{' '}
+												{overtakeData?.horizon_laps ||
+													overtakeMeta?.horizon_laps ||
+													'—'}{' '}
+												laps
 											</span>
 											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
 												Mode {overtakeData?.source_mode || '—'}
 											</span>
 											<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] font-medium text-gray-300">
-												Features {(overtakeMeta?.numeric_features?.length || 0) + (overtakeMeta?.categorical_features?.length || 0)}
+												Features{' '}
+												{(overtakeMeta?.numeric_features?.length || 0) +
+													(overtakeMeta?.categorical_features?.length || 0)}
 											</span>
 										</div>
 									</div>
@@ -3450,7 +3573,8 @@ export default function TrackPage() {
 													ROC AUC
 												</div>
 												<div className="text-sm font-bold text-white mt-1">
-													{overtakeMeta.test_metrics.roc_auc?.toFixed?.(3) || '—'}
+													{overtakeMeta.test_metrics.roc_auc?.toFixed?.(3) ||
+														'—'}
 												</div>
 											</div>
 											<div className="rounded-xl bg-black/30 border border-white/8 px-3 py-2">
@@ -3458,7 +3582,8 @@ export default function TrackPage() {
 													PR AUC
 												</div>
 												<div className="text-sm font-bold text-white mt-1">
-													{overtakeMeta.test_metrics.pr_auc?.toFixed?.(3) || '—'}
+													{overtakeMeta.test_metrics.pr_auc?.toFixed?.(3) ||
+														'—'}
 												</div>
 											</div>
 										</div>
@@ -3496,7 +3621,7 @@ export default function TrackPage() {
 										</div>
 									)}
 
-									{selectedOvertakePair ? (
+									{selectedOvertakePair ?
 										<div>
 											<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 												<div>
@@ -3504,12 +3629,17 @@ export default function TrackPage() {
 														Selected Pair
 													</div>
 													<div className="text-xl font-bold text-white mt-1">
-														{selectedOvertakePair.attacker_driver} vs {selectedOvertakePair.target_driver}
+														{selectedOvertakePair.attacker_driver} vs{' '}
+														{selectedOvertakePair.target_driver}
 													</div>
 													<p className="text-sm text-gray-400 mt-1">
-														P{selectedOvertakePair.attacker_pos} attacking P{selectedOvertakePair.target_pos}
-														{' '}with {selectedOvertakePair.cars_between} car
-														{selectedOvertakePair.cars_between === 1 ? '' : 's'} between.
+														P{selectedOvertakePair.attacker_pos} attacking P
+														{selectedOvertakePair.target_pos} with{' '}
+														{selectedOvertakePair.cars_between} car
+														{selectedOvertakePair.cars_between === 1 ?
+															''
+														:	's'}{' '}
+														between.
 													</p>
 												</div>
 												<div className="rounded-2xl bg-blue-500/12 border border-blue-500/20 px-4 py-3 min-w-[180px]">
@@ -3528,7 +3658,9 @@ export default function TrackPage() {
 														Striking Distance
 													</div>
 													<div className="text-sm font-mono text-white mt-1">
-														{formatGapValue(selectedOvertakePair.attacker_gap_ahead)}
+														{formatGapValue(
+															selectedOvertakePair.attacker_gap_ahead
+														)}
 													</div>
 												</div>
 												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
@@ -3544,9 +3676,12 @@ export default function TrackPage() {
 														Lap Time Delta
 													</div>
 													<div className="text-sm font-mono text-white mt-1">
-														{formatGapValue(selectedOvertakePair.pace_advantage, {
-															showPlus: true,
-														})}
+														{formatGapValue(
+															selectedOvertakePair.pace_advantage,
+															{
+																showPlus: true,
+															}
+														)}
 													</div>
 												</div>
 												<div className="rounded-xl bg-white/4 border border-white/8 px-3 py-2">
@@ -3567,32 +3702,35 @@ export default function TrackPage() {
 													Target tyre {selectedOvertakePair.target_compound}
 												</span>
 												<span className="px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-[10px] text-gray-300">
-													DRS proxy {selectedOvertakePair.drs_window_proxy ? 'Open' : 'Out of range'}
+													DRS proxy{' '}
+													{selectedOvertakePair.drs_window_proxy ?
+														'Open'
+													:	'Out of range'}
 												</span>
-												{selectedOvertakePair.is_sc ? (
+												{selectedOvertakePair.is_sc ?
 													<span className="px-2 py-1 rounded-lg bg-yellow-500/12 border border-yellow-500/20 text-[10px] text-yellow-200">
 														Safety Car active
 													</span>
-												) : null}
-												{selectedOvertakePair.is_vsc ? (
+												:	null}
+												{selectedOvertakePair.is_vsc ?
 													<span className="px-2 py-1 rounded-lg bg-yellow-500/12 border border-yellow-500/20 text-[10px] text-yellow-200">
 														VSC active
 													</span>
-												) : null}
+												:	null}
 											</div>
 										</div>
-									) : (
-										<div className="h-full flex flex-col justify-center">
+									:	<div className="h-full flex flex-col justify-center">
 											<p className="text-sm text-gray-300">
 												{overtakeData?.selected_pair_message ||
 													overtakeError ||
 													'Select an attacker and a target to project the next overtake chance.'}
 											</p>
 											<p className="text-xs text-gray-600 mt-2">
-												The attacker must currently be behind the target and both drivers must still be active in the replay state.
+												The attacker must currently be behind the target and
+												both drivers must still be active in the replay state.
 											</p>
 										</div>
-									)}
+									}
 								</div>
 							</div>
 
@@ -3603,7 +3741,8 @@ export default function TrackPage() {
 											Live Best Opportunities
 										</h3>
 										<p className="text-[11px] text-gray-500 mt-0.5">
-											Top attacker-target pairs at {formatTime(playbackSecond)} on lap {lapNum}.
+											Top attacker-target pairs at {formatTime(playbackSecond)}{' '}
+											on lap {lapNum}.
 										</p>
 									</div>
 									<div className="text-[10px] text-gray-500 font-mono">
@@ -3612,7 +3751,7 @@ export default function TrackPage() {
 								</div>
 
 								<div className="mt-4 space-y-2">
-									{topOvertakePairs.length > 0 ? (
+									{topOvertakePairs.length > 0 ?
 										topOvertakePairs.map((pair) => (
 											<button
 												key={`${pair.attacker_driver}-${pair.target_driver}`}
@@ -3622,10 +3761,14 @@ export default function TrackPage() {
 													setOvertakeTarget(pair.target_driver);
 												}}
 												className={`w-full text-left rounded-xl border px-3 py-3 transition-all ${
-													selectedOvertakePair?.attacker_driver === pair.attacker_driver &&
-													selectedOvertakePair?.target_driver === pair.target_driver
-														? 'bg-blue-500/10 border-blue-500/25'
-														: 'bg-black/25 border-white/8 hover:border-white/15 hover:bg-white/5'
+													(
+														selectedOvertakePair?.attacker_driver ===
+															pair.attacker_driver &&
+														selectedOvertakePair?.target_driver ===
+															pair.target_driver
+													) ?
+														'bg-blue-500/10 border-blue-500/25'
+													:	'bg-black/25 border-white/8 hover:border-white/15 hover:bg-white/5'
 												}`}
 											>
 												<div className="flex items-center justify-between gap-3">
@@ -3634,7 +3777,8 @@ export default function TrackPage() {
 															{pair.attacker_driver} {'->'} {pair.target_driver}
 														</div>
 														<div className="text-[11px] text-gray-500 mt-1">
-															P{pair.attacker_pos} attacking P{pair.target_pos} • Gap {formatGapValue(pair.attacker_gap_ahead)}
+															P{pair.attacker_pos} attacking P{pair.target_pos}{' '}
+															• Gap {formatGapValue(pair.attacker_gap_ahead)}
 														</div>
 													</div>
 													<div className="text-right">
@@ -3648,15 +3792,14 @@ export default function TrackPage() {
 												</div>
 											</button>
 										))
-									) : (
-										<div className="rounded-xl border border-white/8 bg-black/20 px-4 py-8 text-center">
+									:	<div className="rounded-xl border border-white/8 bg-black/20 px-4 py-8 text-center">
 											<p className="text-sm text-gray-400">
 												{overtakeError ||
 													overtakeData?.message ||
 													'No live overtake pairs are available for this replay state yet.'}
 											</p>
 										</div>
-									)}
+									}
 								</div>
 							</div>
 						</div>
@@ -3666,8 +3809,3 @@ export default function TrackPage() {
 		</div>
 	);
 }
-
-
-
-
-
