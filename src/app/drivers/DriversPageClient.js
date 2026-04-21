@@ -2,23 +2,23 @@
 
 import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
 import {
-	getConstructorStandings,
-	getDriverStandings,
+  getConstructorStandings,
+  getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-	ROUGH_CONSTRUCTOR_ORDER_2026,
-	readConstructorRankCache,
-	writeConstructorRankCache,
+  ROUGH_CONSTRUCTOR_ORDER_2026,
+  readConstructorRankCache,
+  writeConstructorRankCache,
 } from '@/lib/data/constructorStandingsRough';
 import {
-	CURRENT_SEASON,
-	DRIVER_CATALOG,
-	getAllTeams,
+  CURRENT_SEASON,
+  DRIVER_CATALOG,
+  getAllTeams,
 } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FaArrowRight, FaChevronDown, FaSearch, FaUsers } from 'react-icons/fa';
+import { FaArrowRight, FaChevronDown, FaSearch } from 'react-icons/fa';
 
 const NATIONALITY_FLAG_MAP = {
 	australian: 'aus',
@@ -383,7 +383,6 @@ export default function DriversPage() {
 				<div className="mb-6 md:mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
 					<div>
 						<h1 className="text-3xl md:text-4xl font-black uppercase tracking-wide inline-flex items-center gap-3">
-							<FaUsers className="text-red-500" />
 							F1 Drivers 2026
 						</h1>
 						<p className="mt-2 text-sm text-gray-300 max-w-2xl">
