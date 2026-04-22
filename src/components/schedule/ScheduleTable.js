@@ -98,7 +98,7 @@ export default function ScheduleTable({
 
 	return (
 		<div className="bg-black/60 backdrop-blur-2xl rounded-2xl border border-white/20 overflow-hidden">
-			<div className="overflow-x-auto h-[calc(100vh-320px)]">
+			<div className="max-h-[70vh] overflow-x-auto overflow-y-auto md:h-[calc(100vh-320px)] md:max-h-none">
 				<table className="w-full text-left border-collapse">
 					<thead className="sticky top-0 z-10 bg-black/80 text-gray-300 uppercase text-sm backdrop-blur-xl">
 						<tr>

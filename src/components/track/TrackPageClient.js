@@ -1508,18 +1508,21 @@ export default function TrackPage() {
 		initialDeepLinkYear >= 2018 &&
 		Number.isInteger(initialDeepLinkRound) &&
 		initialDeepLinkRound > 0;
+	const defaultSelectedYear =
+		hasInitialDeepLink ?
+			String(initialDeepLinkYear)
+		:	String(Math.min(new Date().getFullYear(), 2026));
 
 	const { token, isAuthenticated } = useAuth();
 
 	/* ── Selection state ── */
-	const [selectedYear, setSelectedYear] = useState(
-		hasInitialDeepLink ?
-			String(initialDeepLinkYear)
-		:	String(Math.min(new Date().getFullYear(), 2026))
-	);
+	const [selectedYear, setSelectedYear] = useState(defaultSelectedYear);
 	const [schedule, setSchedule] = useState([]);
-	const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+	const [isLoadingSchedule, setIsLoadingSchedule] = useState(
+		Boolean(defaultSelectedYear)
+	);
 	const [scheduleError, setScheduleError] = useState('');
+	const [scheduleRequestKey, setScheduleRequestKey] = useState(0);
 
 	const [selectedRace, setSelectedRace] = useState(null);
 
@@ -1568,6 +1571,62 @@ export default function TrackPage() {
 	const boardRef = useRef(null);
 	const activeFlagsRef = useRef([]);
 	const activeBattleRef = useRef(null);
+
+	const resetRaceViewState = useCallback(() => {
+		setSessionData(null);
+		setSelectedDriver(null);
+		setGenStatus(null);
+		setOvertakeData(null);
+		setOvertakeLoading(false);
+		setOvertakeError('');
+		setOvertakeAttacker('');
+		setOvertakeTarget('');
+		setOpenDriverPicker(null);
+		setIsPlaying(false);
+		timeRef.current = 0;
+		setDisplayTime(0);
+	}, []);
+
+	const selectRace = useCallback(
+		(raceSelection) => {
+			if (!raceSelection?.year || !raceSelection?.round) return;
+			resetRaceViewState();
+			setSelectedRace({
+				year: Number(raceSelection.year),
+				round: Number(raceSelection.round),
+			});
+		},
+		[resetRaceViewState]
+	);
+
+	const handleYearChange = useCallback(
+		(nextYear, { forceReload = false } = {}) => {
+			setSchedule([]);
+			setScheduleError('');
+			setSelectedRace(null);
+			resetRaceViewState();
+
+			if (!nextYear) {
+				setIsLoadingSchedule(false);
+				setSelectedYear('');
+				return;
+			}
+
+			if (nextYear === selectedYear) {
+				if (forceReload) {
+					setIsLoadingSchedule(true);
+					setScheduleRequestKey((prev) => prev + 1);
+				} else {
+					setIsLoadingSchedule(false);
+				}
+				return;
+			}
+
+			setIsLoadingSchedule(true);
+			setSelectedYear(nextYear);
+		},
+		[resetRaceViewState, selectedYear]
+	);
 
 	/* sync refs */
 	useEffect(() => {
@@ -1701,21 +1760,7 @@ export default function TrackPage() {
 
 	/* ── Fetch schedule when year changes ── */
 	useEffect(() => {
-		if (!selectedYear) {
-			setSchedule([]);
-			setScheduleError('');
-			return;
-		}
-
-		// In industrial approach, we clear previous state but keep a separate loading indicator
-		// to avoid flickering "No races found" messages.
-		setSchedule([]);
-		setSelectedRace(null);
-		setSessionData(null);
-		setGenStatus(null);
-		setIsPlaying(false);
-		setIsLoadingSchedule(true);
-		setScheduleError('');
+		if (!selectedYear) return;
 
 		const controller = new AbortController();
 
@@ -1739,7 +1784,7 @@ export default function TrackPage() {
 		return () => {
 			controller.abort();
 		};
-	}, [selectedYear]);
+	}, [selectedYear, scheduleRequestKey]);
 
 	useEffect(() => {
 		const deepLink = deepLinkSelectionRef.current;
@@ -1749,26 +1794,15 @@ export default function TrackPage() {
 		const race = schedule.find((item) => item.round === deepLink.round);
 		if (!race) return;
 
-		setSelectedRace({ year: deepLink.year, round: deepLink.round });
+		selectRace({ year: deepLink.year, round: deepLink.round });
 		deepLinkSelectionRef.current = null;
-	}, [schedule, selectedYear]);
+	}, [schedule, selectRace, selectedYear]);
 
 	/* ── Fetch session data when a race is selected ── */
 	useEffect(() => {
 		if (!selectedRace) return;
 		const { year, round } = selectedRace;
 		const controller = new AbortController();
-
-		setSessionData(null);
-		setSelectedDriver(null);
-		setGenStatus(null);
-		setOvertakeData(null);
-		setOvertakeError('');
-		setOvertakeAttacker('');
-		setOvertakeTarget('');
-		setIsPlaying(false);
-		timeRef.current = 0;
-		setDisplayTime(0);
 
 		getSessionData(year, round, {
 			signal: controller.signal,
@@ -1960,17 +1994,13 @@ export default function TrackPage() {
 
 	const handleSelectRace = useCallback((race) => {
 		if (!race.is_past) return;
-		setSelectedRace({ year: race.year, round: race.round });
-	}, []);
+		selectRace({ year: race.year, round: race.round });
+	}, [selectRace]);
 
 	const handleBackToList = useCallback(() => {
 		setSelectedRace(null);
-		setSessionData(null);
-		setGenStatus(null);
-		setIsPlaying(false);
-		timeRef.current = 0;
-		setDisplayTime(0);
-	}, []);
+		resetRaceViewState();
+	}, [resetRaceViewState]);
 
 	const handleToggleFavorite = useCallback(async (event, race) => {
 		event.stopPropagation();
@@ -2302,7 +2332,7 @@ export default function TrackPage() {
 
 						<select
 							value={selectedYear}
-							onChange={(e) => setSelectedYear(e.target.value)}
+							onChange={(e) => handleYearChange(e.target.value)}
 							className="bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/20 text-white rounded-xl px-5 py-2.5 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/25 transition-all cursor-pointer"
 						>
 							<option
@@ -2393,7 +2423,9 @@ export default function TrackPage() {
 								<FaExclamationTriangle className="text-3xl text-red-500/50 mb-4" />
 								<p className="text-red-400 text-sm">{scheduleError}</p>
 								<button
-									onClick={() => setSelectedYear(selectedYear)} // Trigger retry
+									onClick={() =>
+										handleYearChange(selectedYear, { forceReload: true })
+									}
 									className="mt-4 text-xs text-gray-400 hover:text-white underline"
 								>
 									Try again
@@ -2613,7 +2645,7 @@ export default function TrackPage() {
 												</p>
 											</div>
 											<button
-												onClick={() => setSelectedRace({ ...selectedRace })}
+												onClick={() => selectRace(selectedRace)}
 												className="text-xs bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-xl transition-all active:scale-95 shadow-lg shadow-red-600/20"
 											>
 												Try again

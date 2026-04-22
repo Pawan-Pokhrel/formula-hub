@@ -353,12 +353,12 @@ export default function TeamsPage() {
 	}, [constructors]);
 
 	return (
-		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
+		<div className="min-h-screen bg-black bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 			<div className="fixed inset-0 bg-black/90 z-0" />
 			<div className="relative z-10 max-w-[1800px] mx-auto pb-12 animate-fade-in">
 				<div className="mb-8 md:mb-10">
 					<h1
-						className="text-[2.2rem] md:text-[3.05rem] font-semibold tracking-[-0.015em] leading-[0.96] text-white"
+						className="text-[1.9rem] font-semibold leading-[0.96] tracking-[-0.015em] text-white sm:text-[2.3rem] md:text-[3.05rem]"
 						style={{
 							fontFamily: 'Sora, Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
 						}}
@@ -371,7 +371,7 @@ export default function TeamsPage() {
 				</div>
 
 				{isLoading ?
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{ROUGH_CONSTRUCTOR_ORDER_2026.map((teamName) => {
 							const color = getTeamColor(teamName);
 							return (
@@ -385,7 +385,7 @@ export default function TeamsPage() {
 							);
 						})}
 					</div>
-				:	<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				:	<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{teamRows.map((team) => {
 							const rawTeamName = team?.team_name || 'Unknown Team';
 							const teamKey = getTeamKey(rawTeamName);
@@ -402,7 +402,7 @@ export default function TeamsPage() {
 								<Link
 									key={teamKey}
 									href={`/teams/${getTeamSlug(rawTeamName)}`}
-									className="group relative block min-h-[290px] rounded-2xl border border-white/14 overflow-hidden p-6 pt-7 transition-transform duration-200 hover:-translate-y-0.5"
+									className="group relative block min-h-[320px] overflow-hidden rounded-2xl border border-white/14 p-5 pt-6 transition-transform duration-200 hover:-translate-y-0.5 sm:min-h-[290px] sm:p-6 sm:pt-7"
 									style={{
 										background: `linear-gradient(115deg, ${hexToRgba(darkenHexColor(teamColor, 0.52), 0.95)} 0%, ${hexToRgba(teamColor, 0.88)} 52%, ${hexToRgba(teamColor, 0.76)} 100%)`,
 										boxShadow: `inset 0 0 0 1px ${hexToRgba(teamColor, 0.35)}`,
@@ -425,7 +425,7 @@ export default function TeamsPage() {
 										}}
 									/>
 
-									<div className="relative z-10 flex items-start justify-between gap-5 pb-24 md:pb-32">
+									<div className="relative z-10 flex flex-col gap-4 pb-28 sm:flex-row sm:items-start sm:justify-between sm:gap-5 sm:pb-32">
 										<div className="min-w-0">
 											<h2 className="text-3xl md:text-[2.4rem] font-semibold leading-[0.95] tracking-[-0.01em] text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.28)]">
 												{teamName}
@@ -478,7 +478,7 @@ export default function TeamsPage() {
 											</div>
 										</div>
 
-										<div className="flex shrink-0 flex-col items-end gap-3">
+										<div className="flex w-full shrink-0 flex-col items-start gap-3 sm:w-auto sm:items-end">
 											{teamLogo && (
 												<div className="relative mr-1 h-13 w-13 md:h-14 md:w-14 rounded-full border border-white/25 bg-black/25 p-3">
 													<Image
@@ -490,7 +490,7 @@ export default function TeamsPage() {
 												</div>
 											)}
 
-											<div className="inline-flex flex-wrap items-center justify-end gap-2 mt-[34px]">
+											<div className="mt-0 inline-flex flex-wrap items-center justify-start gap-2 sm:mt-[34px] sm:justify-end">
 												<span className="rounded-full border border-white/25 bg-black/25 px-3 py-1 text-xs font-semibold text-white/95 inline-flex items-center gap-2">
 													<FaTrophy className="text-[10px] text-yellow-300" />P
 													{team?.position || '-'}
@@ -515,7 +515,7 @@ export default function TeamsPage() {
 									/>
 
 									{hasCarImage && (
-										<div className="absolute left-4 right-14 bottom-2 z-10 h-[40%]">
+										<div className="absolute bottom-2 left-3 right-3 z-10 h-[32%] sm:left-4 sm:right-14 sm:h-[40%]">
 											<Image
 												src={carImage}
 												alt={`${teamName} car`}

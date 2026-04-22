@@ -180,7 +180,7 @@ export default function PredictPageClient() {
 		if (replayCfg.year && (activeTab === 'replay' || circuits.length === 0)) {
 			fetchCircuits();
 		}
-	}, [replayCfg.year, activeTab]);
+	}, [replayCfg.year, activeTab, circuits.length]);
 
 	useEffect(() => {
 		if (!replayPlaying || !replayData?.predictions?.length) {
@@ -348,7 +348,7 @@ export default function PredictPageClient() {
 	/* ─── Loading / Error States ─── */
 	if (metaLoading) {
 		return (
-			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
+			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 				<div className="fixed inset-0 z-0 bg-black/90" />
 				<div className="relative z-10 flex items-center justify-center pt-32">
 					<div className="flex flex-col items-center gap-4">
@@ -362,7 +362,7 @@ export default function PredictPageClient() {
 
 	if (metaError) {
 		return (
-			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-6 pt-24 text-white md:px-12 lg:px-20">
+			<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 				<div className="fixed inset-0 z-0 bg-black/90" />
 				<div className="relative z-10 flex items-center justify-center pt-32">
 					<div className="rounded-2xl border border-red-500/25 bg-red-500/10 p-8 text-center backdrop-blur-xl max-w-md">
@@ -377,24 +377,24 @@ export default function PredictPageClient() {
 
 	/* ─── Main Render ─── */
 	return (
-		<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-20 text-white md:px-12 lg:px-20">
+		<div className="relative min-h-screen overflow-hidden bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-20 text-white sm:px-5 md:px-8 xl:px-12">
 			<div className="fixed inset-0 z-0 bg-black/90" />
 			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_8%_12%,rgba(239,68,68,0.10),transparent_38%),radial-gradient(circle_at_90%_8%,rgba(255,255,255,0.06),transparent_32%)]" />
 
 			<div className="relative z-10 mx-auto max-w-[1440px] pb-16">
-				<div className="flex place-content-between backdrop-blur-2xl bg-linear-to-r from-white/10 via-red-100/10 to-black/10 border border-white/10 rounded-xl px-6 py-4 my-8">
+				<div className="my-6 flex flex-col gap-4 rounded-xl border border-white/10 bg-linear-to-r from-white/10 via-red-100/10 to-black/10 px-4 py-4 backdrop-blur-2xl sm:my-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
 					{/* Header */}
 					<div className="text-center animate-fade-in flex-1">
 						<p className="text-[11px] font-bold uppercase tracking-[0.3em] text-red-400/80">
 							Machine Learning Inference
 						</p>
-						<h1 className="mt-2 text-4xl font-black uppercase tracking-wider md:text-5xl">
+						<h1 className="mt-2 text-3xl font-black uppercase tracking-wider sm:text-4xl md:text-5xl">
 							Lap Time <span className="text-red-500">Predictor</span>
 						</h1>
 					</div>
 
 					{/* Tab Switcher */}
-					<div className="my-4 flex items-center justify-center">
+					<div className="flex items-center justify-center lg:my-0">
 						<div className="inline-flex rounded-2xl border border-white/10 bg-black/40 p-1.5 backdrop-blur-xl">
 							{[
 								{ id: 'manual', label: 'Manual Predict', icon: FaBolt },
@@ -424,7 +424,7 @@ export default function PredictPageClient() {
 
 				{/* ─── MANUAL TAB ─── */}
 				{activeTab === 'manual' && (
-					<div className="grid grid-cols-1 gap-6 animate-fade-in lg:grid-cols-[1fr_380px]">
+					<div className="grid grid-cols-1 gap-6 animate-fade-in xl:grid-cols-[minmax(0,1fr)_380px]">
 						<form
 							onSubmit={handleSubmit}
 							className="space-y-4"
@@ -516,7 +516,7 @@ export default function PredictPageClient() {
 								title="Tyre Strategy"
 								accent="border-l-yellow-500"
 							>
-								<div className="grid grid-cols-3 gap-4">
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 									<NumberField
 										label="Tyre Life"
 										value={form.tyre_life}
@@ -547,7 +547,7 @@ export default function PredictPageClient() {
 								title="Race Context"
 								accent="border-l-cyan-500"
 							>
-								<div className="mb-4 grid grid-cols-2 gap-4">
+								<div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
 									<NumberField
 										label="Lap Number"
 										value={form.lap_number}

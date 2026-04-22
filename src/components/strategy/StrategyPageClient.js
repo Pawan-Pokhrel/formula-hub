@@ -368,7 +368,7 @@ export default function StrategyPageClient() {
 				</div>
 
 				{error && (
-					<div className="px-6 md:px-12 py-2">
+					<div className="px-4 py-2 sm:px-5 md:px-8 xl:px-12">
 						<div className="max-w-[1600px] mx-auto">
 							<div className="bg-red-500/10 border border-red-500/30 rounded-xl px-5 py-3 flex items-center gap-3">
 								<FaExclamationTriangle className="text-red-500 shrink-0" />
@@ -388,7 +388,7 @@ export default function StrategyPageClient() {
 				{loading && !raceData && <RaceLoadingSkeleton />}
 
 				{raceData && (
-					<div className="px-4 md:px-8 lg:px-12 pb-12 pt-2">
+					<div className="px-4 pb-12 pt-2 sm:px-5 md:px-8 xl:px-12">
 						<div className="max-w-[1600px] mx-auto space-y-4">
 							<PlaybackBar
 								currentLap={currentLap}
@@ -408,7 +408,7 @@ export default function StrategyPageClient() {
 
 							<FlagBanner currentFlags={currentFlags} />
 
-							<div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(380px,440px)] gap-4">
+							<div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
 								<div
 									className="space-y-4 transition-[opacity,transform,filter] duration-500 ease-out"
 									style={{
@@ -447,7 +447,7 @@ export default function StrategyPageClient() {
 								</div>
 
 								<div
-									className="space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin scrollbar-thumb-red-500/40 scrollbar-track-white/5 transition-[opacity,transform] duration-500 ease-out"
+									className="space-y-4 transition-[opacity,transform] duration-500 ease-out xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1 scrollbar-thin scrollbar-thumb-red-500/40 scrollbar-track-white/5"
 									style={{
 										opacity: playing ? 0.97 + lapProgress * 0.03 : 1,
 										transform:

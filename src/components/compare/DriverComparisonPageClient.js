@@ -3230,16 +3230,16 @@ export default function DriverComparisonPageClient() {
 		Number(comparisonData?.rounds || 0) || Number(dataset?.rounds || 0);
 
 	return (
-		<div className="relative min-h-screen bg-[#060607] bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-14 pt-28 text-[15px] text-white md:px-10 lg:px-16">
+		<div className="relative min-h-screen bg-[#060607] bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pb-10 pt-24 text-[15px] text-white sm:px-5 sm:pt-28 md:px-8 xl:px-12">
 			<div className="fixed inset-0 z-0 bg-black/90" />
 			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_12%_16%,rgba(239,68,68,0.10),transparent_36%),radial-gradient(circle_at_88%_18%,rgba(255,255,255,0.04),transparent_34%)]" />
 			<div className="relative z-10 mx-auto max-w-[1440px] space-y-6">
 				{/* ── Header ──────────────────────────────────────── */}
-				<div className="mb-2 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-6 md:p-8">
+				<div className="mb-2 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-5 sm:p-6 md:p-8">
 					<p className="text-[10px] font-medium uppercase tracking-[0.28em] text-white/20 mb-2">
 						FormulaHub · Analysis
 					</p>
-					<h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+					<h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
 						Head-to-Head
 					</h1>
 					<p className="mt-2 text-sm text-white/30 max-w-lg">
@@ -3305,7 +3305,7 @@ export default function DriverComparisonPageClient() {
 
 				{/* ── Controls ────────────────────────────────────── */}
 				<div
-					className={`relative z-50 rounded-2xl border border-white/10 bg-black/55 p-4 backdrop-blur-2xl md:grid md:items-end md:gap-3 md:p-5 overflow-visible ${viewMode === 'season' ? 'md:grid-cols-[1fr_40px_1fr_90px_260px]' : 'md:grid-cols-[1fr_40px_1fr]'}`}
+					className={`relative z-50 grid grid-cols-1 gap-3 overflow-visible rounded-2xl border border-white/10 bg-black/55 p-4 backdrop-blur-2xl md:p-5 xl:items-end ${viewMode === 'season' ? 'xl:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)_90px_260px]' : 'xl:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)]'}`}
 				>
 					<EntityDropdown
 						label={comparisonType === 'drivers' ? 'Driver A' : 'Constructor A'}
@@ -3319,7 +3319,7 @@ export default function DriverComparisonPageClient() {
 						disabled={loading || entities.length < 2}
 					/>
 
-					<div className="flex items-end justify-center pb-1">
+					<div className="flex justify-center xl:items-end xl:justify-center xl:pb-1">
 						<button
 							type="button"
 							onClick={() => {

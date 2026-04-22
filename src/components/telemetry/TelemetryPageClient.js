@@ -639,13 +639,13 @@ export default function TelemetryPageClient() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#060607] px-4 pb-14 pt-28 text-white md:px-10">
+		<div className="min-h-screen bg-[#060607] px-4 pb-14 pt-24 text-white sm:px-5 sm:pt-28 md:px-8 xl:px-12">
 			<div className="mx-auto max-w-[1440px] space-y-6">
 				<header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_12%_18%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(255,255,255,0.06),transparent_30%),linear-gradient(170deg,rgba(12,12,14,0.98),rgba(6,7,9,0.98))] p-6 md:p-8">
 					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">
 						F1 Live Hub
 					</p>
-					<h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-5xl">
+					<h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl">
 						Race Control Telemetry
 					</h1>
 
@@ -740,15 +740,15 @@ export default function TelemetryPageClient() {
 						</div>
 					}
 
-					<div className="mt-5 flex flex-col items-end gap-2">
+					<div className="mt-5 flex flex-col items-start gap-2 md:items-end">
 						<p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-zinc-500">
 							Action Rail
 						</p>
-						<div className="flex flex-wrap justify-end gap-3">
+						<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap md:justify-end">
 							<button
 								type="button"
 								onClick={() => openProtectedRoute(trackHref, 'Track')}
-								className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+								className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
 							>
 								<FaProjectDiagram />
 								Go To Track Visualization
@@ -756,7 +756,7 @@ export default function TelemetryPageClient() {
 							<button
 								type="button"
 								onClick={() => openProtectedRoute(predictHref, 'Predict')}
-								className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+								className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
 							>
 								<FaChartLine />
 								Simulate Lap Times
@@ -764,7 +764,7 @@ export default function TelemetryPageClient() {
 							<button
 								type="button"
 								onClick={() => openProtectedRoute(strategyHref, 'Strategy')}
-								className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+								className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:w-auto"
 							>
 								<FaChartLine />
 								Pit Strategy
@@ -810,7 +810,7 @@ export default function TelemetryPageClient() {
 										/>
 									</div>
 
-									<div className="relative overflow-hidden rounded-xl border border-red-500/25 bg-black">
+									<div className="relative overflow-x-auto overflow-y-hidden rounded-xl border border-red-500/25 bg-black">
 										<div
 											className="pointer-events-none absolute inset-0"
 											style={{
@@ -821,7 +821,7 @@ export default function TelemetryPageClient() {
 										<div className="pointer-events-none absolute -left-24 top-6 h-24 w-[72%] rounded-[999px] bg-red-500/20 blur-2xl rotate-14" />
 										<div className="pointer-events-none absolute left-[16%] top-[44%] h-20 w-[70%] rounded-[999px] bg-red-700/18 blur-2xl -rotate-10" />
 										<div className="pointer-events-none absolute -right-20 bottom-4 h-24 w-[64%] rounded-[999px] bg-red-400/16 blur-[44px] rotate-16" />
-										<table className="relative z-10 min-w-full text-sm">
+										<table className="relative z-10 min-w-[760px] text-sm md:min-w-full">
 											<thead className="text-[10px] uppercase tracking-[0.14em] text-zinc-400">
 												<tr>
 													<th className="px-3 py-2 text-left">Lap</th>

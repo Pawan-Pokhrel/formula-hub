@@ -681,7 +681,7 @@ export default function Navbar() {
 									href="/login"
 									prefetch={true}
 									onClick={() => setIsOpen(false)}
-									className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${
+									className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 text-center bg-white/8 mb-1 cursor-pointer ${
 										isRouteActive(pathname, '/login') ?
 											'bg-white/10 text-white'
 										:	'text-gray-200 hover:bg-white/10 hover:text-white'

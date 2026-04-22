@@ -7,21 +7,21 @@ export default function StandingsHeader({
 	onTabChange,
 }) {
 	return (
-		<div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5 mb-8 backdrop-blur-2xl bg-linear-to-r from-red-900/10 to-white/10 rounded-2xl p-4 border border-white/20">
+		<div className="mb-8 flex flex-col gap-5 rounded-2xl border border-white/20 bg-linear-to-r from-red-900/10 to-white/10 p-4 backdrop-blur-2xl xl:flex-row xl:items-end xl:justify-between">
 			<div>
 				<p className="text-[11px] uppercase tracking-[0.24em] text-red-500 font-bold mb-1">
 					Championship Board
 				</p>
-				<h1 className="text-3xl md:text-4xl font-black tracking-wide inline-flex items-center gap-3 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">
+				<h1 className="inline-flex items-center gap-3 text-2xl font-black tracking-wide text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)] sm:text-3xl md:text-4xl">
 					{year} Season Standings
 				</h1>
 			</div>
 
-			<div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<select
 					value={year}
 					onChange={(e) => onYearChange(Number(e.target.value))}
-					className="bg-black/60 backdrop-blur-2xl border border-white/20 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-red-500 transition-colors"
+					className="w-full rounded-xl border border-white/20 bg-black/60 px-4 py-2.5 text-white backdrop-blur-2xl transition-colors focus:outline-none focus:border-red-500 sm:w-auto"
 				>
 					{years.map((y) => (
 						<option
@@ -34,10 +34,10 @@ export default function StandingsHeader({
 					))}
 				</select>
 
-				<div className="bg-black/60 backdrop-blur-2xl rounded-xl p-1 flex border border-white/20">
+				<div className="flex rounded-xl border border-white/20 bg-black/60 p-1 backdrop-blur-2xl">
 					<button
 						onClick={() => onTabChange('drivers')}
-						className={`px-5 py-2 rounded-lg transition-all text-sm font-semibold uppercase tracking-[0.14em] ${
+						className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-[0.14em] transition-all sm:flex-none sm:px-5 ${
 							activeTab === 'drivers' ?
 								'bg-red-600 text-white shadow-lg shadow-red-600/20'
 							:	'text-gray-400 hover:text-white hover:bg-white/5'
@@ -47,7 +47,7 @@ export default function StandingsHeader({
 					</button>
 					<button
 						onClick={() => onTabChange('constructors')}
-						className={`px-5 py-2 rounded-lg transition-all text-sm font-semibold uppercase tracking-[0.14em] ${
+						className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-[0.14em] transition-all sm:flex-none sm:px-5 ${
 							activeTab === 'constructors' ?
 								'bg-red-600 text-white shadow-lg shadow-red-600/20'
 							:	'text-gray-400 hover:text-white hover:bg-white/5'

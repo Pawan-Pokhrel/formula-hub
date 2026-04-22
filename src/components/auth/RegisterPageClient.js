@@ -3,9 +3,9 @@
 import CachedAvatarImage from '@/components/common/CachedAvatarImage';
 import authApi from '@/lib/api/authApi';
 import {
-  buildVerificationHref,
-  getEmailNotVerifiedDetail,
-  getSafeNextPath,
+	buildVerificationHref,
+	getEmailNotVerifiedDetail,
+	getSafeNextPath,
 } from '@/lib/auth/verificationFlow';
 import { primeAvatarCache } from '@/lib/avatar/avatarCache';
 import { getApiErrorMessage } from '@/lib/errors/getApiErrorMessage';
@@ -21,13 +21,13 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { FcGoogle } from 'react-icons/fc';
 import {
-  FiArrowLeft,
-  FiCheck,
-  FiLock,
-  FiMail,
-  FiPhone,
-  FiUpload,
-  FiUser,
+	FiArrowLeft,
+	FiCheck,
+	FiLock,
+	FiMail,
+	FiPhone,
+	FiUpload,
+	FiUser,
 } from 'react-icons/fi';
 import { LuEye, LuEyeOff } from 'react-icons/lu';
 import * as yup from 'yup';
@@ -512,15 +512,15 @@ export default function RegisterPage() {
 
 				<button
 					onClick={() => router.push('/')}
-					className="absolute md:top-8 md:left-8 top-4 left-4 z-10 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
+					className="absolute top-4 left-4 md:top-8 md:left-8 z-10 flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition cursor-pointer"
 				>
 					<FiArrowLeft className="text-white text-xl md:text-2xl" />
 				</button>
 
-				<div className="relative z-10 w-full max-w-3xl">
+				<div className="relative z-10 w-full max-w-2xl">
 					{/* Logo & Title */}
 					<div className="flex flex-col items-center mb-4">
-						<h1 className="text-4xl font-bold text-white tracking-wide">
+						<h1 className="text-2xl md:text-4xl font-bold text-white tracking-wide">
 							Formula<span className="text-red-500">Hub</span>
 						</h1>
 						<p className="text-white/70 text-[15px] mt-1">
@@ -530,7 +530,7 @@ export default function RegisterPage() {
 						</p>
 					</div>
 
-					<div className="rounded-2xl bg-white/5 backdrop-blur-xl backdrop-brightness-80 border border-white/10 px-8 py-5 shadow-2xl">
+					<div className="rounded-2xl bg-white/5 backdrop-brightness-75 backdrop-blur-md border border-white/10 p-6 md:p-10 shadow-2xl">
 						{showVerification ?
 							<VerificationStep
 								email={verificationEmail}
@@ -539,7 +539,7 @@ export default function RegisterPage() {
 								initialResendCooldown={verificationCodeJustSent ? 30 : 0}
 							/>
 						:	<>
-								<div className="text-center mb-4">
+								<div className="hidden md:block text-center mb-4 md:mb-8">
 									<h2 className="text-2xl font-bold text-white">
 										Create Account
 									</h2>

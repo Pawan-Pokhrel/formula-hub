@@ -57,18 +57,18 @@ export default function SchedulePage() {
 	}, [year]);
 
 	return (
-		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
+		<div className="min-h-screen bg-black bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 			<div className="fixed inset-0 bg-black/90 z-0" />
 			<div className="relative z-10 max-w-[1600px] mx-auto pb-10 animate-fade-in">
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5 backdrop-blur-2xl bg-linear-to-r from-red-700/10 to-white/10 rounded-2xl p-4 border border-white/20">
-					<h1 className="text-3xl md:text-4xl font-black uppercase tracking-wide inline-flex items-center gap-3">
+				<div className="mb-5 flex flex-col gap-4 rounded-2xl border border-white/20 bg-linear-to-r from-red-700/10 to-white/10 p-4 backdrop-blur-2xl sm:flex-row sm:items-center sm:justify-between">
+					<h1 className="inline-flex items-center gap-3 text-2xl font-black uppercase tracking-wide sm:text-3xl md:text-4xl">
 						Race Schedule
 					</h1>
 
 					<select
 						value={year}
 						onChange={(e) => setYear(Number(e.target.value))}
-						className="bg-black/60 backdrop-blur-2xl border border-white/20 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-red-500/50"
+						className="w-full rounded-xl border border-white/20 bg-black/60 px-4 py-2.5 text-white backdrop-blur-2xl focus:outline-none focus:border-red-500/50 sm:w-auto"
 					>
 						{years.map((y) => (
 							<option

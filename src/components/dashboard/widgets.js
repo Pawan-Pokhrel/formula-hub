@@ -1,31 +1,31 @@
 'use client';
 
 import {
-    getCountryCode,
-    getDriverImagePath,
-    getTeamLogoPath,
-    getTrackImagePath,
+	getCountryCode,
+	getDriverImagePath,
+	getTeamLogoPath,
+	getTrackImagePath,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetrySessionSnapshot } from '@/lib/api/scheduleApi';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-    FaBolt,
-    FaBroadcastTower,
-    FaCalendarAlt,
-    FaChartLine,
-    FaChevronRight,
-    FaClock,
-    FaExternalLinkAlt,
-    FaFlagCheckered,
-    FaGlobe,
-    FaMapMarkerAlt,
-    FaNewspaper,
-    FaProjectDiagram,
-    FaStar,
-    FaTrophy,
-    FaWaveSquare,
+	FaBolt,
+	FaBroadcastTower,
+	FaCalendarAlt,
+	FaChartLine,
+	FaChevronRight,
+	FaClock,
+	FaExternalLinkAlt,
+	FaFlagCheckered,
+	FaGlobe,
+	FaMapMarkerAlt,
+	FaNewspaper,
+	FaProjectDiagram,
+	FaStar,
+	FaTrophy,
+	FaWaveSquare,
 } from 'react-icons/fa';
 import DashboardCard from './DashboardCard';
 
@@ -916,7 +916,7 @@ export function LastRaceWidget({ lastRace, formatDate }) {
 										<p className="text-base font-black text-white">
 											{driver.driver_name}
 										</p>
-										<div className="mt-1 inline-flex items-center gap-2">
+										<div className="my-1 mb-6 inline-flex items-center gap-2">
 											{getTeamLogoPath(driver.team_name) && (
 												<div className="relative h-5 w-5 overflow-hidden rounded-sm bg-white/10 p-0.5">
 													<Image
@@ -1210,41 +1210,122 @@ export function StartingGridWidget({ weekendBrief }) {
 
 export function F1NewsWidget({ newsItems }) {
 	const items = Array.isArray(newsItems) ? newsItems : [];
+	const cardAccents = [
+		'from-red-600/30 via-red-500/8 to-black/70',
+		'from-cyan-500/28 via-cyan-400/8 to-black/70',
+		'from-orange-500/28 via-amber-300/8 to-black/70',
+		'from-blue-500/28 via-blue-300/8 to-black/70',
+	];
+
+	const formatPublishedAt = (value) => {
+		if (!value) return null;
+		const parsed = new Date(value);
+		if (Number.isNaN(parsed.getTime())) return null;
+		return parsed.toLocaleString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit',
+		});
+	};
+
+	const getArticleHost = (link) => {
+		if (!link) return 'News Feed';
+		try {
+			return new URL(link).hostname.replace(/^www\./, '');
+		} catch {
+			return 'News Feed';
+		}
+	};
 
 	return (
 		<DashboardCard
-			title="F1 News Wire"
-			subtitle="Latest paddock headlines"
-			rightSlot={<FaNewspaper className="text-cyan-200" />}
+			title="Latest News"
+			subtitle="Formula1.com headlines, surfaced for race-day scanning"
+			rightSlot={
+				<span className="inline-flex items-center gap-2 rounded-full border border-red-400/35 bg-red-500/12 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-red-100">
+					<FaNewspaper className="text-[11px]" />
+					News Feed
+				</span>
+			}
 		>
 			{items.length === 0 ?
-				<p className="text-sm text-gray-300">No fresh headlines right now.</p>
-			:	<div className="space-y-2.5">
-					{items.slice(0, 8).map((item, index) => (
-						<a
-							key={`${item.link}-${index}`}
-							href={item.link}
-							target="_blank"
-							rel="noreferrer"
-							className="group block rounded-xl border border-white/15 bg-black/40 p-3 transition-colors hover:border-cyan-300/35 hover:bg-black/50"
-						>
-							<p className="line-clamp-2 text-sm font-semibold text-white transition-colors group-hover:text-cyan-100">
-								{item.title}
-							</p>
-							<p className="mt-1 text-xs text-gray-300 line-clamp-2">
-								{item.summary || 'Open for full story'}
-							</p>
-							<div className="mt-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-gray-400">
-								<span>{item.source || 'News'}</span>
-								{item.published_utc && (
-									<span>
-										{new Date(item.published_utc).toLocaleDateString()}
-									</span>
-								)}
-								<FaExternalLinkAlt className="text-[10px]" />
-							</div>
-						</a>
-					))}
+				<div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-white/12 bg-black/30 px-6 py-10 text-center">
+					<div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/12 bg-white/5">
+						<FaNewspaper className="text-2xl text-red-200" />
+					</div>
+					<p className="text-base font-semibold text-white">
+						No fresh headlines right now.
+					</p>
+					<p className="mt-2 max-w-md text-sm text-gray-400">
+						When the feed updates, the latest Formula1.com stories will appear
+						here with source metadata and article imagery when available.
+					</p>
+				</div>
+			:	<div className="grid h-full grid-cols-1 gap-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3 content-start">
+					{items.map((item, index) => {
+						const publishedLabel = formatPublishedAt(item.published_utc);
+						return (
+							<a
+								key={`${item.link}-${index}`}
+								href={item.link}
+								target="_blank"
+								rel="noreferrer"
+								className="group/news flex min-h-[390px] flex-col overflow-hidden rounded-2xl border border-white/12 bg-black/35 transition-all duration-300 hover:border-red-400/30 hover:bg-black/45 hover:shadow-[0_18px_40px_rgba(239,68,68,0.12)]"
+							>
+								<div className="relative h-56 overflow-hidden border-b border-white/10 md:h-60">
+									<div
+										className={`absolute inset-0 bg-linear-to-br ${cardAccents[index % cardAccents.length]}`}
+									/>
+									{item.image_url && (
+										<Image
+											src={item.image_url}
+											alt={item.title || 'F1 news article image'}
+											fill
+											sizes="(min-width: 1280px) 26vw, (min-width: 768px) 42vw, 100vw"
+											className="object-cover transition-transform duration-500 group-hover/news:scale-105"
+											onError={(event) => {
+												event.currentTarget.style.display = 'none';
+											}}
+										/>
+									)}
+									<div className="absolute inset-0 bg-linear-to-t from-black via-black/35 to-transparent" />
+									<div className="absolute left-4 top-4 right-4 flex items-start justify-between gap-3">
+										<span className="inline-flex items-center rounded-full border border-white/15 bg-black/55 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/85 backdrop-blur-md">
+											{item.source || 'Formula1.com'}
+										</span>
+										{publishedLabel && (
+											<span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[10px] font-medium text-gray-200 backdrop-blur-md">
+												{publishedLabel}
+											</span>
+										)}
+									</div>
+									<div className="absolute bottom-4 left-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-red-100">
+										<FaNewspaper className="text-[10px]" />
+										Paddock Dispatch
+									</div>
+								</div>
+
+								<div className="flex flex-1 flex-col space-y-3 p-4">
+									<h3 className="line-clamp-2 text-lg font-bold leading-tight text-white transition-colors group-hover/news:text-red-100">
+										{item.title}
+									</h3>
+									<p className="line-clamp-4 text-sm leading-6 text-gray-300">
+										{item.summary || 'Open the article for the full story.'}
+									</p>
+									<div className="mt-auto flex items-center justify-between gap-3 border-t border-white/8 pt-3">
+										<span className="text-[11px] uppercase tracking-[0.14em] text-gray-500">
+											{getArticleHost(item.link)}
+										</span>
+										<span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-red-200">
+											Open Story
+											<FaExternalLinkAlt className="text-[10px]" />
+										</span>
+									</div>
+								</div>
+							</a>
+						);
+					})}
 				</div>
 			}
 		</DashboardCard>

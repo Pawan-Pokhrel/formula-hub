@@ -1,57 +1,62 @@
 'use client';
 
 import DashboardShell from '@/components/dashboard/DashboardShell';
+
 import {
-    ChampionshipPulseWidget,
-    ConstructorBattleWidget,
-    F1NewsWidget,
-    GeneratedRacesWidget,
-    KpisWidget,
-    LastRaceWidget,
-    NextRaceWidget,
-    SessionResultsWidget,
-    StartingGridWidget,
-    TitleFightWidget,
-    UpcomingSessionsWidget,
-    WeekendStatusWidget,
+  ChampionshipPulseWidget,
+  ConstructorBattleWidget,
+  F1NewsWidget,
+  GeneratedRacesWidget,
+  KpisWidget,
+  LastRaceWidget,
+  NextRaceWidget,
+  SessionResultsWidget,
+  StartingGridWidget,
+  TitleFightWidget,
+  UpcomingSessionsWidget,
+  WeekendStatusWidget,
 } from '@/components/dashboard/widgets';
 import {
-    getCountryCode,
-    getDriverImagePath,
-    getTeamLogoPath,
-    getTrackImagePath,
-    parseRaceDateTime,
+  getCountryCode,
+  getDriverImagePath,
+  getTeamLogoPath,
+  getTrackImagePath,
+  parseRaceDateTime,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import {
-    clearHistory,
-    deleteHistoryItem,
-    getHistory,
+  clearHistory,
+  deleteHistoryItem,
+  getHistory,
 } from '@/lib/api/historyApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-    getCurrentWeekendBrief,
-    getLastRace,
-    getLatestF1News,
-    getNextRace,
-    getSchedule,
+  getCurrentWeekendBrief,
+  getLastRace,
+  getLatestF1News,
+  getNextRace,
+  getSchedule,
 } from '@/lib/api/scheduleApi';
 import {
-    getConstructorStandings,
-    getDriverStandings,
+  getConstructorStandings,
+  getDriverStandings,
 } from '@/lib/api/standingsApi';
-import { getTrackSessions, getYearSchedule, toggleTrackFavorite } from '@/lib/api/trackApi';
 import {
-    FAVORITE_DRIVER_LIMIT,
-    FAVORITE_TEAM_LIMIT,
-    getDefaultDashboardPreferences,
-    normalizeDashboardPreferences,
-    readLocalDashboardPreferences,
-    writeLocalDashboardPreferences,
+  getTrackSessions,
+  getYearSchedule,
+  toggleTrackFavorite,
+} from '@/lib/api/trackApi';
+import {
+  FAVORITE_DRIVER_LIMIT,
+  FAVORITE_TEAM_LIMIT,
+  getDefaultDashboardPreferences,
+  normalizeDashboardPreferences,
+  readLocalDashboardPreferences,
+  writeLocalDashboardPreferences,
 } from '@/lib/dashboard/preferences';
 import {
-    DEFAULT_WIDGET_ORDER,
-    WIDGET_REGISTRY,
+  DEFAULT_WIDGET_ORDER,
+  WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
 import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage } from '@/utils/f1_images';
@@ -62,21 +67,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-    FaArrowRight,
-    FaBroadcastTower,
-    FaCalendarAlt,
-    FaChartLine,
-    FaClock,
-    FaExchangeAlt,
-    FaHistory,
-    FaList,
-    FaProjectDiagram,
-    FaSpinner,
-    FaStar,
-    FaThLarge,
-    FaTimes,
-    FaTrashAlt,
-    FaTrophy,
+  FaArrowRight,
+  FaBroadcastTower,
+  FaCalendarAlt,
+  FaChartLine,
+  FaClock,
+  FaExchangeAlt,
+  FaHistory,
+  FaList,
+  FaProjectDiagram,
+  FaSpinner,
+  FaStar,
+  FaThLarge,
+  FaTimes,
+  FaTrashAlt,
+  FaTrophy,
 } from 'react-icons/fa';
 
 const CARD_HISTORY_LIMIT = 25;
@@ -89,9 +94,14 @@ const DASHBOARD_ASPECTS = [
 		widgets: ['kpis', 'championship-pulse', 'constructor-battle'],
 	},
 	{
+		id: 'news',
+		label: 'Latest News',
+		widgets: ['f1-news'],
+	},
+	{
 		id: 'operations',
 		label: 'Race Ops',
-		widgets: ['weekend-status', 'session-results', 'starting-grid', 'f1-news'],
+		widgets: ['weekend-status', 'session-results', 'starting-grid'],
 	},
 	{
 		id: 'championship',
@@ -116,11 +126,13 @@ const ASPECT_WIDGET_SPANS = {
 		'championship-pulse': 'md:col-span-1 md:min-h-[460px]',
 		'constructor-battle': 'md:col-span-1 md:min-h-[460px]',
 	},
+	news: {
+		'f1-news': 'md:col-span-2 md:min-h-[920px]',
+	},
 	operations: {
 		'weekend-status': 'md:col-span-2',
 		'session-results': 'md:col-span-2',
 		'starting-grid': 'md:col-span-1 md:min-h-[520px]',
-		'f1-news': 'md:col-span-1 md:min-h-[520px]',
 		'last-race': 'md:col-span-2 md:min-h-[620px]',
 		'next-race': 'md:col-span-1',
 		'upcoming-sessions': 'md:col-span-1',
@@ -243,14 +255,12 @@ export default function DashboardPage() {
 	const [allTrackSessions, setAllTrackSessions] = useState([]);
 
 	const generatedRaces = useMemo(() => {
-		return allTrackSessions
-			.slice()
-			.sort((a, b) => {
-				const yearA = Number(a.year || 0);
-				const yearB = Number(b.year || 0);
-				if (yearB !== yearA) return yearB - yearA;
-				return Number(b.round || 0) - Number(a.round || 0);
-			});
+		return allTrackSessions.slice().sort((a, b) => {
+			const yearA = Number(a.year || 0);
+			const yearB = Number(b.year || 0);
+			if (yearB !== yearA) return yearB - yearA;
+			return Number(b.round || 0) - Number(a.round || 0);
+		});
 	}, [allTrackSessions]);
 
 	const [favoriteDrivers, setFavoriteDrivers] = useState(
@@ -260,6 +270,8 @@ export default function DashboardPage() {
 		defaultPreferences.favoriteTeams
 	);
 	const [activeAspect, setActiveAspect] = useState('overview');
+	const [isAspectNavOpen, setIsAspectNavOpen] = useState(false);
+	const [isQuickLinksOpen, setIsQuickLinksOpen] = useState(false);
 	const [activityView, setActivityView] = useState('cards');
 	const [prefsHydrated, setPrefsHydrated] = useState(false);
 	const [userHistory, setUserHistory] = useState([]);
@@ -303,7 +315,7 @@ export default function DashboardPage() {
 					getDriverStandings(currentYear).catch(() => []),
 					getConstructorStandings(currentYear).catch(() => []),
 					getCurrentWeekendBrief().catch(() => null),
-					getLatestF1News(8).catch(() => []),
+					getLatestF1News(18).catch(() => []),
 					getTrackSessions().catch(() => []),
 				]);
 
@@ -639,10 +651,19 @@ export default function DashboardPage() {
 			DASHBOARD_ASPECTS[0],
 		[activeAspect]
 	);
+	const visibleAspects = useMemo(
+		() =>
+			DASHBOARD_ASPECTS.filter(
+				(aspect) =>
+					(aspect.id !== 'saved' && aspect.id !== 'activities') ||
+					isAuthenticated
+			),
+		[isAuthenticated]
+	);
 	const isLiveRaceWeekend = Boolean(weekendBrief?.is_race_week);
 	const activeWidgetIds = useMemo(() => {
 		if (activeAspect === 'operations' && !isLiveRaceWeekend) {
-			return ['last-race', 'next-race', 'upcoming-sessions', 'f1-news'];
+			return ['last-race', 'next-race', 'upcoming-sessions'];
 		}
 		if (activeAspect === 'saved') {
 			return ['saved-races'];
@@ -656,7 +677,6 @@ export default function DashboardPage() {
 				'last-race': 'md:col-span-2',
 				'next-race': 'md:col-span-1',
 				'upcoming-sessions': 'md:col-span-1',
-				'f1-news': 'md:col-span-2',
 			};
 		}
 		if (activeAspect === 'saved') {
@@ -683,6 +703,11 @@ export default function DashboardPage() {
 			if (prev.length >= FAVORITE_TEAM_LIMIT) return prev;
 			return [...prev, teamName];
 		});
+	};
+
+	const handleAspectSelect = (aspectId) => {
+		setActiveAspect(aspectId);
+		setIsAspectNavOpen(false);
 	};
 
 	const handleToggleGeneratedRaceSave = async (race) => {
@@ -1184,7 +1209,23 @@ export default function DashboardPage() {
 							:	'Race Dashboard'}
 						</h1>
 					</div>
-					<div className="flex flex-wrap items-center gap-2">
+
+					{/* Mobile Quick Links Drawer Toggle */}
+					<div className="md:hidden">
+						<button
+							type="button"
+							onClick={() => setIsQuickLinksOpen((prev) => !prev)}
+							className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-black/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-xl transition-all hover:border-white/30 hover:bg-white/10"
+						>
+							<FaThLarge className="text-[11px] text-red-300" />
+							Quick Links
+							<span className="text-[10px] text-gray-400">
+								{isQuickLinksOpen ? 'Hide' : 'Show'}
+							</span>
+						</button>
+					</div>
+
+					<div className="hidden flex-wrap items-center gap-2 md:flex">
 						<Link
 							href={compareHref}
 							prefetch={true}
@@ -1209,12 +1250,138 @@ export default function DashboardPage() {
 					</div>
 				</div>
 
-				<div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-xl">
-					{DASHBOARD_ASPECTS.filter(
-						(aspect) =>
-							(aspect.id !== 'saved' && aspect.id !== 'activities') ||
-							isAuthenticated
-					).map((aspect) => {
+				{/* Mobile Quick Links Drawer */}
+				{isQuickLinksOpen && (
+					<>
+						{/* Overlay */}
+						<div
+							className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+							role="button"
+							onClick={() => setIsQuickLinksOpen(false)}
+							aria-label="Close quick links drawer"
+						/>
+						{/* Drawer */}
+						<div className="fixed bottom-0 left-0 right-0 z-50 md:hidden animate-slide-up">
+							<div className="mx-auto max-w-sm rounded-t-2xl border border-white/10 bg-black/95 p-5 shadow-2xl backdrop-blur-xl">
+								<div className="flex items-center justify-between mb-4">
+									<span className="text-xs font-bold uppercase tracking-[0.14em] text-white">
+										Quick Links
+									</span>
+									<button
+										onClick={() => setIsQuickLinksOpen(false)}
+										className="rounded-full p-2 text-white hover:bg-white/10"
+										aria-label="Close"
+									>
+										<FaTimes />
+									</button>
+								</div>
+								<div className="grid grid-cols-1 gap-3">
+									<Link
+										href={compareHref}
+										prefetch={true}
+										className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-black/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur-xl transition-all hover:border-white/30 hover:bg-white/10"
+									>
+										Compare Drivers
+									</Link>
+									<Link
+										href="/schedule"
+										prefetch={true}
+										className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-xs font-semibold text-red-100 backdrop-blur-xl transition-all hover:bg-red-500/20"
+									>
+										Full Schedule
+									</Link>
+									<Link
+										href="/standings"
+										prefetch={true}
+										className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-500/25 bg-red-500/12 px-4 py-3 text-xs font-semibold text-red-100 backdrop-blur-xl transition-all hover:bg-red-500/20"
+									>
+										Standings
+									</Link>
+								</div>
+							</div>
+						</div>
+					</>
+				)}
+
+				<div className="md:hidden rounded-2xl border border-white/10 bg-black/40 p-3 backdrop-blur-xl">
+					<button
+						type="button"
+						onClick={() => setIsAspectNavOpen((prev) => !prev)}
+						className="flex w-full items-center justify-between rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-left text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors hover:border-red-400/30 hover:bg-white/8"
+					>
+						<span className="inline-flex items-center gap-2">
+							<FaList className="text-[11px] text-red-300" />
+							{aspectConfig.label}
+						</span>
+						<span className="text-[10px] text-gray-400">
+							{isAspectNavOpen ? 'Hide' : 'Browse'}
+						</span>
+					</button>
+					{isAspectNavOpen && (
+						<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+							{visibleAspects.map((aspect) => {
+								const active = activeAspect === aspect.id;
+								const isSaved = aspect.id === 'saved';
+								const isActivities = aspect.id === 'activities';
+								return (
+									<button
+										key={aspect.id}
+										type="button"
+										onClick={() => handleAspectSelect(aspect.id)}
+										className={`inline-flex w-full items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em] transition-all duration-200 ${
+											active ?
+												'border-red-400/45 bg-red-500/20 text-red-100 shadow-[0_0_14px_rgba(239,68,68,0.18)]'
+											:	'border-white/10 bg-transparent text-gray-300 hover:border-red-400/35 hover:text-red-100'
+										}`}
+									>
+										<span className="inline-flex items-center gap-2">
+											{isSaved && (
+												<FaStar
+													className={`text-[9px] ${
+														active ? 'text-red-300' : 'text-red-600'
+													}`}
+												/>
+											)}
+											{isActivities && (
+												<FaHistory
+													className={`text-[9px] ${
+														active ? 'text-red-300' : 'text-red-600'
+													}`}
+												/>
+											)}
+											{aspect.label}
+										</span>
+										{isSaved && generatedRaces.length > 0 && (
+											<span
+												className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+													active ?
+														'bg-red-500/30 text-red-100'
+													:	'bg-white/10 text-gray-500'
+												}`}
+											>
+												{generatedRaces.length}
+											</span>
+										)}
+										{isActivities && userHistory.length > 0 && (
+											<span
+												className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+													active ?
+														'bg-red-500/30 text-red-100'
+													:	'bg-white/10 text-gray-500'
+												}`}
+											>
+												{userHistory.length}
+											</span>
+										)}
+									</button>
+								);
+							})}
+						</div>
+					)}
+				</div>
+
+				<div className="hidden flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-xl md:flex">
+					{visibleAspects.map((aspect) => {
 						const active = activeAspect === aspect.id;
 						const isSaved = aspect.id === 'saved';
 						const isActivities = aspect.id === 'activities';
@@ -1222,7 +1389,7 @@ export default function DashboardPage() {
 							<button
 								key={aspect.id}
 								type="button"
-								onClick={() => setActiveAspect(aspect.id)}
+								onClick={() => handleAspectSelect(aspect.id)}
 								className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-200 ${
 									active ?
 										'border-red-400/45 bg-red-500/20 text-red-100 shadow-[0_0_14px_rgba(239,68,68,0.18)]'
@@ -1355,7 +1522,7 @@ export default function DashboardPage() {
 												>
 													{/* Top section: Team Color Gradient & Driver Info */}
 													<div
-														className="relative p-6 px-7 pb-20"
+														className="relative p-4 sm:p-6 sm:px-7 pb-20"
 														style={{
 															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
 														}}
@@ -1379,7 +1546,7 @@ export default function DashboardPage() {
 																	<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">
 																		Favorite Driver
 																	</p>
-																	<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">
+																	<h3 className="text-[17px] md:text-[22px] font-black leading-none text-white drop-shadow-md">
 																		{drv.driver_name}
 																	</h3>
 																	<p className="mt-2 flex items-center gap-2 text-xs font-bold text-white/95 drop-shadow-md">
@@ -1410,7 +1577,7 @@ export default function DashboardPage() {
 														</div>
 
 														{/* Unobstructed Car Image sitting perfectly on the dividing line */}
-														<div className="absolute -bottom-6 -right-5 h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														<div className="absolute -bottom-5 sm:-bottom-6 left-0 sm:-right-5 h-32 sm:h-40 w-full sm:w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}
@@ -1500,7 +1667,7 @@ export default function DashboardPage() {
 												>
 													{/* Top section */}
 													<div
-														className="relative p-6 px-7 pb-20"
+														className="relative p-4 sm:p-6 sm:px-7 pb-20"
 														style={{
 															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
 														}}
@@ -1524,7 +1691,7 @@ export default function DashboardPage() {
 																	<p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 shadow-sm">
 																		Favorite Team
 																	</p>
-																	<h3 className="text-[22px] font-black leading-none text-white drop-shadow-md">
+																	<h3 className="text-[17px] sm:text-[22px] font-black leading-none text-white drop-shadow-md">
 																		{teamName}
 																	</h3>
 																	<p className="mt-2 text-xs font-bold text-white/95 drop-shadow-md">
@@ -1545,7 +1712,7 @@ export default function DashboardPage() {
 														</div>
 
 														{/* Separated Car Image */}
-														<div className="absolute -bottom-6 -right-5 h-40 w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														<div className="absolute -bottom-5 sm:-bottom-6 left-0 sm:-right-5 h-32 sm:h-40 w-full sm:w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}

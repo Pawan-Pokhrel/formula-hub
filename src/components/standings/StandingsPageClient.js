@@ -56,7 +56,7 @@ export default function StandingsPageClient() {
 	);
 
 	return (
-		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
+		<div className="min-h-screen bg-black bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 			<div className="fixed inset-0 bg-black/86 z-0" />
 			<div className="fixed inset-0 z-0 bg-[radial-gradient(circle_at_20%_10%,rgba(220,38,38,0.18),transparent_40%),radial-gradient(circle_at_85%_5%,rgba(244,114,182,0.14),transparent_35%)]" />
 			<div className="relative z-10 max-w-[1600px] mx-auto pb-10">
@@ -78,7 +78,7 @@ export default function StandingsPageClient() {
 					onTabChange={setActiveTab}
 				/>
 
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+				<div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
 					<div className="rounded-xl border border-white/20 bg-black/50 backdrop-blur-2xl p-4">
 						<p className="text-[10px] uppercase tracking-[0.18em] text-gray-400 mb-1">
 							Current Leader
