@@ -401,7 +401,7 @@ export default async function DriverDetailPage({ params }) {
 							</div>
 						</div>
 
-						<div className="relative z-20 min-h-[280px] lg:min-h-full overflow-hidden">
+						<div className="relative z-20 min-h-[320px] overflow-hidden lg:min-h-full">
 							{teamLogo && (
 								<div className="absolute top-5 right-5 z-20 h-12 w-12">
 									<Image
@@ -412,12 +412,12 @@ export default async function DriverDetailPage({ params }) {
 									/>
 								</div>
 							)}
-							<div className="absolute bottom-0 right-0 w-full h-full">
+							<div className="absolute right-0 bottom-0 h-[110%] w-full md:right-0 md:w-full">
 								<Image
 									src={driverImage}
 									alt={driver.fullName}
 									fill
-									className="object-contain object-bottom"
+									className="object-contain object-bottom scale-[1] md:scale-[1.12]"
 									priority
 								/>
 							</div>

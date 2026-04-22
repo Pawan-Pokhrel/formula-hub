@@ -2,18 +2,18 @@
 
 import { getTeamLogoPath } from '@/components/schedule/scheduleHelpers';
 import {
-  getConstructorStandings,
-  getDriverStandings,
+	getConstructorStandings,
+	getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-  ROUGH_CONSTRUCTOR_ORDER_2026,
-  readConstructorRankCache,
-  writeConstructorRankCache,
+	ROUGH_CONSTRUCTOR_ORDER_2026,
+	readConstructorRankCache,
+	writeConstructorRankCache,
 } from '@/lib/data/constructorStandingsRough';
 import {
-  CURRENT_SEASON,
-  DRIVER_CATALOG,
-  getAllTeams,
+	CURRENT_SEASON,
+	DRIVER_CATALOG,
+	getAllTeams,
 } from '@/lib/data/driversCatalog';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -377,12 +377,12 @@ export default function DriversPage() {
 	}, [query, team, constructorRankByKey, driverPointsBySlug]);
 
 	return (
-		<div className="min-h-screen bg-black text-white pt-24 px-6 md:px-12 lg:px-20 bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center">
+		<div className="min-h-screen bg-black bg-[url('/images/FormulaHub-BG.png')] bg-cover bg-fixed bg-center px-4 pt-24 text-white sm:px-5 md:px-8 xl:px-12">
 			<div className="fixed inset-0 bg-black/90 z-0" />
 			<div className="relative z-10 max-w-[1800px] mx-auto pb-12 animate-fade-in">
-				<div className="mb-6 md:mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+				<div className="mb-6 flex flex-col gap-3 md:mb-8 md:flex-row md:items-end md:justify-between">
 					<div>
-						<h1 className="text-3xl md:text-4xl font-black uppercase tracking-wide inline-flex items-center gap-3">
+						<h1 className="inline-flex items-center gap-3 text-2xl font-black uppercase tracking-wide sm:text-3xl md:text-4xl">
 							F1 Drivers 2026
 						</h1>
 						<p className="mt-2 text-sm text-gray-300 max-w-2xl">
@@ -391,7 +391,7 @@ export default function DriversPage() {
 					</div>
 				</div>
 
-				<div className="mb-7 grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4">
+				<div className="mb-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
 					<label className="relative block">
 						<FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
 						<input
@@ -466,7 +466,7 @@ export default function DriversPage() {
 				</div>
 
 				{!isStandingsResolved ?
-					<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
+					<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 						{skeletonCards.map((teamOption) => (
 							<div
 								key={`skeleton-${teamOption.name}-${teamOption.slot}`}
@@ -477,7 +477,7 @@ export default function DriversPage() {
 							/>
 						))}
 					</div>
-				:	<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
+				:	<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 						{filteredDrivers.map((driver) => {
 							const driverImage = getDriverCardImagePath(driver);
 							const teamLogo = getTeamLogoPath(driver.teamName);
@@ -491,7 +491,7 @@ export default function DriversPage() {
 								<Link
 									key={driver.slug}
 									href={`/drivers/${driver.slug}`}
-									className="group relative h-72 rounded-xl border border-white/15 overflow-hidden p-3.5 cursor-pointer hover:border-white/30 transition-all duration-300"
+									className="group relative min-h-[360px] overflow-hidden rounded-xl border border-white/15 p-4 transition-all duration-300 hover:border-white/30 sm:h-72 sm:p-3.5"
 									style={{
 										background: `linear-gradient(120deg, ${driver.teamColor}CC 0%, ${driver.teamColor}B8 58%, rgba(8,8,10,0.92) 100%)`,
 									}}
@@ -504,9 +504,9 @@ export default function DriversPage() {
 										}}
 									/>
 
-									<div className="relative z-10 flex h-full">
-										<div className="w-[60%] flex flex-col">
-											<h2 className="text-[35px] leading-[0.95] font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+									<div className="relative z-10 flex h-full flex-col sm:flex-row">
+										<div className="flex w-full min-w-0 flex-col pb-28 sm:w-[60%] sm:pb-0">
+											<h2 className="text-[28px] leading-[0.95] font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)] sm:text-[35px]">
 												{driver.fullName.split(' ')[0]}
 												<br />
 												{driver.fullName.split(' ').slice(1).join(' ')}
@@ -514,7 +514,7 @@ export default function DriversPage() {
 											<p className="text-sm font-semibold text-white/90 mt-1">
 												{driver.teamName}
 											</p>
-											<p className="mt-4 text-[46px] leading-none font-black italic text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.35)]">
+											<p className="mt-4 text-[38px] leading-none font-black italic text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.35)] sm:text-[46px]">
 												{displayNumber}
 											</p>
 											<div className="mt-auto inline-flex items-center gap-2">
@@ -538,9 +538,9 @@ export default function DriversPage() {
 											</div>
 										</div>
 
-										<div className="w-[40%] relative">
+										<div className="relative min-h-[190px] w-full sm:min-h-0 sm:w-[40%]">
 											{teamLogo && (
-												<div className="absolute top-0 right-0 z-20 h-11 w-11 rounded-lg bg-black/30 border border-white/20 p-1">
+												<div className="absolute right-0 -top-66 sm:top-0 z-20 h-10 w-10 rounded-lg border border-white/20 bg-black/30 p-1 sm:h-11 sm:w-11">
 													<Image
 														src={teamLogo}
 														alt={driver.teamName}
@@ -549,13 +549,13 @@ export default function DriversPage() {
 													/>
 												</div>
 											)}
-											<div className="absolute left-[-50%] bottom-[-35%] h-[280px] w-[200%]">
+											<div className="absolute bottom-[-8%] right-[-10%] h-[350px] w-[90%] sm:bottom-[-30%] sm:left-[-58%] sm:right-auto sm:h-80 sm:w-[220%]">
 												<Image
 													src={driverImage}
 													alt={driver.fullName}
 													fill
-													className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
-													style={{ objectPosition: '44% -8px' }}
+													className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+													style={{ objectPosition: '46% 2%' }}
 												/>
 											</div>
 										</div>
