@@ -3,46 +3,46 @@
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import { logActivity } from '@/lib/api/historyApi';
 import {
-  getOvertakeModelMetadata,
-  getOvertakeProbabilities,
-  getSessionData,
-  getYearSchedule,
-  toggleTrackFavorite,
+	getOvertakeModelMetadata,
+	getOvertakeProbabilities,
+	getSessionData,
+	getYearSchedule,
+	toggleTrackFavorite,
 } from '@/lib/api/trackApi';
 import { useAuth } from '@/providers/AuthProvider';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FaCalendarAlt,
-  FaChevronDown,
-  FaChevronLeft,
-  FaCloudRain,
-  FaCompress,
-  FaCrown,
-  FaExchangeAlt,
-  FaExclamationTriangle,
-  FaExpand,
-  FaFastBackward,
-  FaFastForward,
-  FaFlag,
-  FaFlagCheckered,
-  FaMapMarkerAlt,
-  FaPause,
-  FaPlay,
-  FaRedo,
-  FaSkullCrossbones,
-  FaStar,
-  FaStepBackward,
-  FaStepForward,
-  FaStopwatch,
-  FaSun,
-  FaTachometerAlt,
-  FaTimes,
-  FaTint,
-  FaTrophy,
-  FaWind,
-  FaWrench,
+	FaCalendarAlt,
+	FaChevronDown,
+	FaChevronLeft,
+	FaCloudRain,
+	FaCompress,
+	FaCrown,
+	FaExchangeAlt,
+	FaExclamationTriangle,
+	FaExpand,
+	FaFastBackward,
+	FaFastForward,
+	FaFlag,
+	FaFlagCheckered,
+	FaMapMarkerAlt,
+	FaPause,
+	FaPlay,
+	FaRedo,
+	FaSkullCrossbones,
+	FaStar,
+	FaStepBackward,
+	FaStepForward,
+	FaStopwatch,
+	FaSun,
+	FaTachometerAlt,
+	FaTimes,
+	FaTint,
+	FaTrophy,
+	FaWind,
+	FaWrench,
 } from 'react-icons/fa';
 
 /* ================================================================== */
@@ -1992,10 +1992,13 @@ export default function TrackPage() {
 		}
 	}, []);
 
-	const handleSelectRace = useCallback((race) => {
-		if (!race.is_past) return;
-		selectRace({ year: race.year, round: race.round });
-	}, [selectRace]);
+	const handleSelectRace = useCallback(
+		(race) => {
+			if (!race.is_past) return;
+			selectRace({ year: race.year, round: race.round });
+		},
+		[selectRace]
+	);
 
 	const handleBackToList = useCallback(() => {
 		setSelectedRace(null);
@@ -2652,8 +2655,17 @@ export default function TrackPage() {
 											</button>
 										</>
 									:	<>
-											<div className="w-48 h-1.5 rounded-full bg-white/5 overflow-hidden">
-												<div className="h-full w-1/2 bg-red-600/60 animate-shimmer" />
+											<div className="w-fit rounded-full  p-2 flex flex-col gap-2">
+												<p className="text-white/80 text-sm leading-none">
+													Generating session data... <br />{' '}
+													<span className="text-gray-500 text-xs">
+														This may take up to a minute.
+													</span>
+												</p>
+
+												<div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+													<div className="h-full w-1/2 bg-red-600/60 animate-shimmer rounded-full" />
+												</div>
 											</div>
 											<div className="flex gap-1.5 mt-2">
 												{[0, 1, 2].map((i) => (
@@ -3306,7 +3318,6 @@ export default function TrackPage() {
 											>
 												<div className="px-4 py-3 border-b border-white/10 flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur-md z-10 rounded-t-xl">
 													<h4 className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300 flex items-center gap-2">
-
 														Race Insights
 													</h4>
 													<span className="text-[9px] text-gray-500 font-mono">

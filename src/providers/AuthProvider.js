@@ -12,7 +12,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 const AuthContext = createContext(null);
 
 // ── User cache (localStorage) ────────────────────────────────────────
-// Industry-standard pattern: persist the user object locally so the
+// Persist the user object locally so the
 // avatar and display name render instantly on page load, then silently
 // refresh from the server in the background.
 
