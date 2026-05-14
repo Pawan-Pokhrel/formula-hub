@@ -9,7 +9,7 @@ export default function HomePage() {
 	return (
 		<div className="relative min-h-screen overflow-x-hidden bg-[#050507] text-white">
 			<WindyBackground />
-			<div className="relative z-10 space-y-32 pb-32">
+			<div className="relative z-10 space-y-32 pb-32 pt-16">
 				<Hero />
 				<LatestSessionTelemetry />
 				<Features />

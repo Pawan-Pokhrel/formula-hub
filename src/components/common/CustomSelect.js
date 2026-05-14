@@ -29,7 +29,10 @@ export default function CustomSelect({
 	const selectedOption = options.find((opt) => getOptionValue(opt) === value);
 
 	return (
-		<div className={`relative ${className}`} ref={wrapperRef}>
+		<div
+			className={`relative ${className}`}
+			ref={wrapperRef}
+		>
 			{label && (
 				<label className="block text-[11px] uppercase tracking-wider text-gray-500 mb-1.5 font-medium">
 					{label}
@@ -61,7 +64,7 @@ export default function CustomSelect({
 									onChange(optValue);
 									setIsOpen(false);
 								}}
-								className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${isSelected ? 'bg-red-600/20 text-red-100 border-l-2 border-red-500 pl-[14px]' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}
+								className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${isSelected ? 'bg-red-600/20 text-red-100 border-l-2 border-red-500 pl-3.5' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}
 							>
 								{renderOption(opt)}
 							</li>

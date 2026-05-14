@@ -20,7 +20,7 @@ import { notFound } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight, FaBalanceScale } from 'react-icons/fa';
 import DriverSeasonStatsClient from './DriverSeasonStatsClient';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 const NATIONALITY_FLAG_MAP = {
 	australian: 'aus',
@@ -176,10 +176,6 @@ function buildTimeline(driver) {
 	}
 
 	return timeline;
-}
-
-export async function generateStaticParams() {
-	return DRIVER_CATALOG.map((driver) => ({ slug: driver.slug }));
 }
 
 export default async function DriverDetailPage({ params }) {

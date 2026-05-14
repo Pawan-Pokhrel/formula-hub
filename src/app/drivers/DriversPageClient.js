@@ -549,7 +549,7 @@ export default function DriversPage() {
 													/>
 												</div>
 											)}
-											<div className="absolute bottom-[-8%] right-[-10%] h-[350px] w-[90%] sm:bottom-[-30%] sm:left-[-58%] sm:right-auto sm:h-80 sm:w-[220%]">
+											<div className="absolute bottom-[-8%] right-[-10%] h-[350px] w-[90%] sm:bottom-[-10%] sm:left-[-58%] sm:right-auto sm:h-80 sm:w-[220%]">
 												<Image
 													src={driverImage}
 													alt={driver.fullName}

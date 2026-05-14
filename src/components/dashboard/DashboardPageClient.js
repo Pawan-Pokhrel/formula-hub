@@ -3,60 +3,60 @@
 import DashboardShell from '@/components/dashboard/DashboardShell';
 
 import {
-  ChampionshipPulseWidget,
-  ConstructorBattleWidget,
-  F1NewsWidget,
-  GeneratedRacesWidget,
-  KpisWidget,
-  LastRaceWidget,
-  NextRaceWidget,
-  SessionResultsWidget,
-  StartingGridWidget,
-  TitleFightWidget,
-  UpcomingSessionsWidget,
-  WeekendStatusWidget,
+	ChampionshipPulseWidget,
+	ConstructorBattleWidget,
+	F1NewsWidget,
+	GeneratedRacesWidget,
+	KpisWidget,
+	LastRaceWidget,
+	NextRaceWidget,
+	SessionResultsWidget,
+	StartingGridWidget,
+	TitleFightWidget,
+	UpcomingSessionsWidget,
+	WeekendStatusWidget,
 } from '@/components/dashboard/widgets';
 import {
-  getCountryCode,
-  getDriverImagePath,
-  getTeamLogoPath,
-  getTrackImagePath,
-  parseRaceDateTime,
+	getCountryCode,
+	getDriverImagePath,
+	getTeamLogoPath,
+	getTrackImagePath,
+	parseRaceDateTime,
 } from '@/components/schedule/scheduleHelpers';
 import { getTelemetryDriverImage } from '@/components/telemetry/telemetryUiUtils';
 import {
-  clearHistory,
-  deleteHistoryItem,
-  getHistory,
+	clearHistory,
+	deleteHistoryItem,
+	getHistory,
 } from '@/lib/api/historyApi';
 import { getMyPreferences, updateMyFavorites } from '@/lib/api/preferencesApi';
 import {
-  getCurrentWeekendBrief,
-  getLastRace,
-  getLatestF1News,
-  getNextRace,
-  getSchedule,
+	getCurrentWeekendBrief,
+	getLastRace,
+	getLatestF1News,
+	getNextRace,
+	getSchedule,
 } from '@/lib/api/scheduleApi';
 import {
-  getConstructorStandings,
-  getDriverStandings,
+	getConstructorStandings,
+	getDriverStandings,
 } from '@/lib/api/standingsApi';
 import {
-  getTrackSessions,
-  getYearSchedule,
-  toggleTrackFavorite,
+	getTrackSessions,
+	getYearSchedule,
+	toggleTrackFavorite,
 } from '@/lib/api/trackApi';
 import {
-  FAVORITE_DRIVER_LIMIT,
-  FAVORITE_TEAM_LIMIT,
-  getDefaultDashboardPreferences,
-  normalizeDashboardPreferences,
-  readLocalDashboardPreferences,
-  writeLocalDashboardPreferences,
+	FAVORITE_DRIVER_LIMIT,
+	FAVORITE_TEAM_LIMIT,
+	getDefaultDashboardPreferences,
+	normalizeDashboardPreferences,
+	readLocalDashboardPreferences,
+	writeLocalDashboardPreferences,
 } from '@/lib/dashboard/preferences';
 import {
-  DEFAULT_WIDGET_ORDER,
-  WIDGET_REGISTRY,
+	DEFAULT_WIDGET_ORDER,
+	WIDGET_REGISTRY,
 } from '@/lib/dashboard/widgetRegistry';
 import { useAuth } from '@/providers/AuthProvider';
 import { getCarImage } from '@/utils/f1_images';
@@ -67,21 +67,21 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-  FaArrowRight,
-  FaBroadcastTower,
-  FaCalendarAlt,
-  FaChartLine,
-  FaClock,
-  FaExchangeAlt,
-  FaHistory,
-  FaList,
-  FaProjectDiagram,
-  FaSpinner,
-  FaStar,
-  FaThLarge,
-  FaTimes,
-  FaTrashAlt,
-  FaTrophy,
+	FaArrowRight,
+	FaBroadcastTower,
+	FaCalendarAlt,
+	FaChartLine,
+	FaClock,
+	FaExchangeAlt,
+	FaHistory,
+	FaList,
+	FaProjectDiagram,
+	FaSpinner,
+	FaStar,
+	FaThLarge,
+	FaTimes,
+	FaTrashAlt,
+	FaTrophy,
 } from 'react-icons/fa';
 
 const CARD_HISTORY_LIMIT = 25;
@@ -1522,7 +1522,7 @@ export default function DashboardPage() {
 												>
 													{/* Top section: Team Color Gradient & Driver Info */}
 													<div
-														className="relative p-4 sm:p-6 sm:px-7 pb-20"
+														className="relative p-4 sm:p-6 sm:px-7 pb-24 sm:pb-32"
 														style={{
 															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
 														}}
@@ -1576,8 +1576,8 @@ export default function DashboardPage() {
 															</div>
 														</div>
 
-														{/* Unobstructed Car Image sitting perfectly on the dividing line */}
-														<div className="absolute -bottom-5 sm:-bottom-6 left-0 sm:-right-5 h-32 sm:h-40 w-full sm:w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														{/* Unobstructed Car Image sitting perfectly on the right */}
+														<div className="absolute -bottom-2 right-0 sm:-bottom-4  h-32 sm:h-40 w-56 sm:w-72 md:w-[320px] transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}
@@ -1667,7 +1667,7 @@ export default function DashboardPage() {
 												>
 													{/* Top section */}
 													<div
-														className="relative p-4 sm:p-6 sm:px-7 pb-20"
+														className="relative p-4 sm:p-6 sm:px-7 pb-24 sm:pb-32"
 														style={{
 															background: `linear-gradient(135deg, ${teamColor}AA 0%, ${teamColor}22 100%)`,
 														}}
@@ -1712,7 +1712,7 @@ export default function DashboardPage() {
 														</div>
 
 														{/* Separated Car Image */}
-														<div className="absolute -bottom-5 sm:-bottom-6 left-0 sm:-right-5 h-32 sm:h-40 w-full sm:w-[110%] md:w-64 transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
+														<div className="absolute -bottom-2 right-0 sm:-bottom-4 h-32 sm:h-40 w-56 sm:w-72 md:w-[320px] transition-transform duration-500 group-hover:scale-105 group-hover:-translate-x-2">
 															{carImg && (
 																<Image
 																	src={carImg}

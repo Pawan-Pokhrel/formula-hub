@@ -1,5 +1,3 @@
-const DEFAULT_REVALIDATE_SECONDS = 300;
-
 function normalizeCareerRow(row) {
 	const code = String(row?.driver_code || '')
 		.trim()
@@ -25,11 +23,7 @@ function normalizeCareerRow(row) {
 	};
 }
 
-export async function getDriverCareerStats({
-	year,
-	refresh,
-	revalidateSeconds = DEFAULT_REVALIDATE_SECONDS,
-} = {}) {
+export async function getDriverCareerStats({ year, refresh } = {}) {
 	const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 	if (!baseUrl) return [];
 
@@ -46,7 +40,7 @@ export async function getDriverCareerStats({
 		const response = await fetch(
 			`${baseUrl}/standings/drivers/career?${query.toString()}`,
 			{
-				next: { revalidate: revalidateSeconds },
+				cache: 'no-store',
 			}
 		);
 		if (!response.ok) return [];
